@@ -1424,6 +1424,8 @@ export const ChartSDKAdvanced2 = () => {
 													<th>Avg Price</th>
 													<th>Current Price</th>
 													<th>P&L</th>
+													<th>Take Profit</th>
+													<th>Stop Loss</th>
 													<th>Actions</th>
 												</tr>
 											</thead>
@@ -1432,7 +1434,7 @@ export const ChartSDKAdvanced2 = () => {
 													.length === 0 ? (
 													<tr>
 														<td
-															colSpan={7}
+															colSpan={9}
 															className='empty-message'
 														>
 															No open positions
@@ -1441,46 +1443,79 @@ export const ChartSDKAdvanced2 = () => {
 												) : (
 													currentPositions.current.map(
 														(pos) => {
+															// Extract symbol name for LTP lookup
+															const symbolParts =
+																(
+																	pos.symbol ||
+																	""
+																).split(":");
+															const baseSymbol =
+																symbolParts[
+																	symbolParts.length -
+																		1
+																] || pos.symbol;
+
+															// Get current price from cache
 															const currentPrice =
+																symbolPrices[
+																	baseSymbol
+																] ||
 																getCurrentLTP();
-															const pnl =
-																(currentPrice -
-																	pos.price) *
+
+															// Calculate P&L correctly based on side
+															const size =
 																Math.abs(
-																	pos.size
+																	pos.size ||
+																		0
 																);
-															const side =
-																pos.size > 0
-																	? "BUY"
-																	: "SELL";
+															const avgPrice =
+																pos.price || 0;
+															const isBuy =
+																pos.size > 0;
+															const pnl = isBuy
+																? (currentPrice -
+																		avgPrice) *
+																	size
+																: (avgPrice -
+																		currentPrice) *
+																	size;
+
+															const side = isBuy
+																? "BUY"
+																: "SELL";
+															const takeProfit = (
+																pos as any
+															).takeProfit;
+															const stopLoss = (
+																pos as any
+															).stopLoss;
+
 															return (
 																<tr
 																	key={pos.id}
 																>
 																	<td>
-																		{
-																			pos.symbol
-																		}
+																		{pos.symbol ||
+																			"--"}
 																	</td>
 																	<td>
 																		{side}
 																	</td>
 																	<td>
-																		{
-																			pos.size
-																		}
+																		{size ||
+																			"--"}
 																	</td>
 																	<td>
-																		$
-																		{pos.price.toFixed(
-																			2
-																		)}
+																		{avgPrice >
+																		0
+																			? `$${avgPrice.toFixed(2)}`
+																			: "--"}
 																	</td>
 																	<td>
-																		$
-																		{currentPrice.toFixed(
-																			2
-																		)}
+																		{currentPrice >
+																		0
+																			? `$${currentPrice.toFixed(2)}`
+																			: "--"}
 																	</td>
 																	<td
 																		className={
@@ -1490,10 +1525,27 @@ export const ChartSDKAdvanced2 = () => {
 																				: "negative"
 																		}
 																	>
-																		$
+																		{pnl >=
+																		0
+																			? "+"
+																			: ""}
 																		{pnl.toFixed(
 																			2
 																		)}
+																	</td>
+																	<td>
+																		{takeProfit
+																			? takeProfit.toFixed(
+																					2
+																				)
+																			: "--"}
+																	</td>
+																	<td>
+																		{stopLoss
+																			? stopLoss.toFixed(
+																					2
+																				)
+																			: "--"}
 																	</td>
 																	<td>
 																		<button
@@ -1528,6 +1580,8 @@ export const ChartSDKAdvanced2 = () => {
 													<th>Side</th>
 													<th>Amount</th>
 													<th>Price</th>
+													<th>Stop Loss</th>
+													<th>Take Profit</th>
 													<th>Actions</th>
 												</tr>
 											</thead>
@@ -1536,7 +1590,7 @@ export const ChartSDKAdvanced2 = () => {
 													.length === 0 ? (
 													<tr>
 														<td
-															colSpan={6}
+															colSpan={8}
 															className='empty-message'
 														>
 															No pending orders
@@ -1547,6 +1601,12 @@ export const ChartSDKAdvanced2 = () => {
 														(order) => {
 															const extOrder =
 																order as ExtendedOrder;
+															const stopLoss = (
+																order as any
+															).stopLoss;
+															const takeProfit = (
+																order as any
+															).takeProfit;
 															return (
 																<tr
 																	key={
@@ -1582,20 +1642,37 @@ export const ChartSDKAdvanced2 = () => {
 																		)}
 																	</td>
 																	<td>
-																		<button
-																			className='action-btn close-btn'
-																			onClick={() =>
-																				cancelOrder(
-																					order.orderId
+																		{stopLoss
+																			? stopLoss.toFixed(
+																					2
 																				)
-																			}
-																			style={{
-																				marginRight:
-																					"4px",
-																			}}
-																		>
-																			Cancel
-																		</button>
+																			: "--"}
+																	</td>
+																	<td>
+																		{takeProfit
+																			? takeProfit.toFixed(
+																					2
+																				)
+																			: "--"}
+																	</td>
+																	<td>
+																		{order.orderType !==
+																			"market" && (
+																			<button
+																				className='action-btn close-btn'
+																				onClick={() =>
+																					cancelOrder(
+																						order.orderId
+																					)
+																				}
+																				style={{
+																					marginRight:
+																						"4px",
+																				}}
+																			>
+																				Cancel
+																			</button>
+																		)}
 																		{extOrder.hidden ? (
 																			<button
 																				className='action-btn'
