@@ -1,6 +1,5 @@
 /**
  * ChartDemo Component Styles
- *
  * Matches the styling from chart-sdk-codepen.html reference implementation.
  */
 
@@ -15,17 +14,17 @@
 .chart-demo-header {
 	text-align: center;
 	margin-bottom: 30px;
-}
 
-.chart-demo-header h1 {
-	font-size: 2.5rem;
-	margin-bottom: 10px;
-	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
+	h1 {
+		font-size: 2.5rem;
+		margin-bottom: 10px;
+		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+	}
 
-.chart-demo-header p {
-	font-size: 1.1rem;
-	opacity: 0.9;
+	p {
+		font-size: 1.1rem;
+		opacity: 0.9;
+	}
 }
 
 .chart-demo-controls {
@@ -41,42 +40,42 @@
 	max-width: 1200px;
 	margin-left: auto;
 	margin-right: auto;
-}
 
-.chart-demo-controls .btn {
-	border: none;
-	padding: 12px 24px;
-	border-radius: 8px;
-	cursor: pointer;
-	font-size: 14px;
-	font-weight: 600;
-	transition: all 0.3s ease;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	color: white;
-}
+	.btn {
+		border: none;
+		padding: 12px 24px;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 600;
+		transition: all 0.3s ease;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: white;
 
-.chart-demo-controls .btn:hover:not(:disabled) {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
+		&:hover:not(:disabled) {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		}
 
-.chart-demo-controls .btn:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
 
-.chart-demo-controls .btn.primary {
-	background: #4a90e2;
-}
+		&.primary {
+			background: #4a90e2;
 
-.chart-demo-controls .btn.primary:hover:not(:disabled) {
-	background: #357abd;
-}
+			&:hover:not(:disabled) {
+				background: #357abd;
+			}
 
-.chart-demo-controls .btn.primary.active {
-	background: #28a745;
-	box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.4);
+			&.active {
+				background: #28a745;
+				box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.4);
+			}
+		}
+	}
 }
 
 .chart-demo-wrapper {
@@ -131,11 +130,11 @@
 		flex-direction: column;
 		align-items: center;
 		padding: 15px;
-	}
 
-	.chart-demo-controls .btn {
-		width: 100%;
-		max-width: 200px;
+		.btn {
+			width: 100%;
+			max-width: 200px;
+		}
 	}
 
 	.chart-demo-chart {

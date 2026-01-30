@@ -6,14 +6,14 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { createChartDatafeed } from "../utils/chart-datafeed";
+import { createChartDatafeed } from "@/utils/chart-datafeed";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import type {
 	ChartInstance,
 	ChartWrapper,
 	ChartConfig,
 } from "@gocharting/chart-sdk";
-import "./ChartDemo.css";
+import "./ChartDemo.scss";
 
 // Type for the datafeed returned by createChartDatafeed
 type ChartDatafeed = ReturnType<typeof createChartDatafeed>;

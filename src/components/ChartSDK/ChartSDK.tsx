@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Box } from "./Box";
-import { Text } from "./Text";
-import { useResponsive } from "../hooks/useResponsive";
-import { createChartDatafeed } from "../utils/chart-datafeed";
+import { Box } from "@/components/Box";
+import { Text } from "@/components/Text";
+import { useResponsive } from "@/hooks/useResponsive";
+import { createChartDatafeed } from "@/utils/chart-datafeed";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import type { ChartInstance, ChartConfig } from "@gocharting/chart-sdk";
 
@@ -142,7 +142,10 @@ export const ChartSDK = () => {
 				debugLog: true,
 				licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
 				theme: "dark",
-				enableTrading: true,
+				trading: {
+					enableTrading: true,
+					showReverseButton: false,
+				},
 				appCallback: handleAppCallback,
 				onReady: (chartInstance) => {
 					chartInstanceRef.current = chartInstance;
@@ -595,3 +598,5 @@ export const ChartSDK = () => {
 		</Box>
 	);
 };
+
+export default ChartSDK;

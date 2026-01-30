@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import type { ChartInstance, ChartWrapper } from "@gocharting/chart-sdk";
-import { createChartDatafeed } from "../utils/chart-datafeed";
-import "./MultiBasicChart.css";
+import { createChartDatafeed } from "@/utils/chart-datafeed";
+import "./MultiBasicChart.scss";
 
 const MultiBasicChart = () => {
 	const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -157,49 +157,59 @@ const MultiBasicChart = () => {
 	};
 
 	return (
-		<div className='container'>
-			<div className='header'>
-				<h1>📈 GoCharting SDK Demo</h1>
-				<p>Professional Financial Charts with Built-in AutoFit ✨</p>
-			</div>
+		<div className='multi-basic-chart-container'>
+			<div className='container'>
+				<div className='header'>
+					<h1>📈 GoCharting SDK Demo</h1>
+					<p>
+						Professional Financial Charts with Built-in AutoFit ✨
+					</p>
+				</div>
 
-			<div className='controls'>
-				<button
-					id='symbol-btc-btn'
-					className='btn primary'
-					onClick={() => handleSymbolChange("BYBIT:FUTURE:BTCUSDT")}
-				>
-					₿ BTC/USDT
-				</button>
-				<button
-					id='symbol-eth-btn'
-					className='btn primary'
-					onClick={() => handleSymbolChange("BYBIT:FUTURE:ETHUSDT")}
-				>
-					Ξ ETH/USDT
-				</button>
-				<button
-					id='symbol-ogn-btn'
-					className='btn primary'
-					onClick={() => handleSymbolChange("BYBIT:FUTURE:OGNUSDT")}
-				>
-					🌐 OGN/USDT
-				</button>
-				<button
-					id='resubscribe-btn'
-					className='btn success'
-					onClick={handleResubscribeAll}
-				>
-					🔄 Resubscribe All
-				</button>
-			</div>
+				<div className='controls'>
+					<button
+						id='symbol-btc-btn'
+						className='btn primary'
+						onClick={() =>
+							handleSymbolChange("BYBIT:FUTURE:BTCUSDT")
+						}
+					>
+						₿ BTC/USDT
+					</button>
+					<button
+						id='symbol-eth-btn'
+						className='btn primary'
+						onClick={() =>
+							handleSymbolChange("BYBIT:FUTURE:ETHUSDT")
+						}
+					>
+						Ξ ETH/USDT
+					</button>
+					<button
+						id='symbol-ogn-btn'
+						className='btn primary'
+						onClick={() =>
+							handleSymbolChange("BYBIT:FUTURE:OGNUSDT")
+						}
+					>
+						🌐 OGN/USDT
+					</button>
+					<button
+						id='resubscribe-btn'
+						className='btn success'
+						onClick={handleResubscribeAll}
+					>
+						🔄 Resubscribe All
+					</button>
+				</div>
 
-			<div id='chart-container' ref={chartContainerRef}>
-				<div className='loading'>Loading chart...</div>
-			</div>
+				<div id='chart-container' ref={chartContainerRef}>
+					<div className='loading'>Loading chart...</div>
+				</div>
 
-			<div id='status' className='status'>
-				{status}
+				<div id='status' className='status'>
+					{status}
+				</div>
 			</div>
 		</div>
 	);

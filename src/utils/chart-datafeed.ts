@@ -467,8 +467,7 @@ export const createChartDatafeed = (): Datafeed => {
 					this.symbolCache.set(symbolName, symbolInfo);
 					onResolve(symbolInfo);
 					return;
-				} catch (apiError) {
-				}
+				} catch (apiError) {}
 				// Fallback to local symbol resolution
 				const symbolInfo = this.resolveSymbolLocally(symbolName);
 				this.symbolCache.set(symbolName, symbolInfo);
@@ -536,7 +535,7 @@ export const createChartDatafeed = (): Datafeed => {
 					contract_size: result.contract_size,
 					tick_size: result.tick_size,
 					max_tick_precision: result.max_tick_precision,
-					quote_currency: result.quote_currency,
+					quote_currency: result.quote_currency || "USDT",
 					future_type: result.future_type,
 					tradeable: result.tradeable,
 					delay_seconds: result.delay_seconds,
@@ -1517,11 +1516,9 @@ export const createChartDatafeed = (): Datafeed => {
 				const ws = new WebSocket(uri);
 				this.demoSocket = ws;
 
-				ws.addEventListener("open", () => {
-				});
+				ws.addEventListener("open", () => {});
 
-				ws.addEventListener("close", (event: CloseEvent) => {
-				});
+				ws.addEventListener("close", (event: CloseEvent) => {});
 
 				ws.addEventListener("error", (event: Event) => {
 					console.error(
@@ -1542,16 +1539,14 @@ export const createChartDatafeed = (): Datafeed => {
 					url: `wss://demo.gocharting.com/ws/${
 						symbolInfo.exchange || "DEMO"
 					}`,
-					send: (message: string) => {
-					},
+					send: (message: string) => {},
 					close: () => {
 						mockReadyState = 3; // WebSocket.CLOSED
 					},
 					addEventListener: (
 						event: string,
 						_callback: (event?: unknown) => void
-					) => {
-					},
+					) => {},
 				};
 				this.demoSocket = mockSocket;
 			}

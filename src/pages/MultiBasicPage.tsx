@@ -1,8 +1,7 @@
-import MultiBasicChart from "../components/MultiBasicChart";
+import MultiBasicChart from "@/components/MultiBasic";
 
 const MultiBasicPage = () => {
 	return <MultiBasicChart />;
 };
 
 export default MultiBasicPage;
-

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
-import { createChartDatafeed } from "../utils/chart-datafeed";
+import { createChartDatafeed } from "@/utils/chart-datafeed";
 import type {
 	ChartInstance,
 	ChartWrapper,
@@ -14,7 +14,7 @@ import type {
 	Datafeed,
 	SymbolInfo,
 } from "@gocharting/chart-sdk";
-import "./ChartSDKAdvanced.css";
+import "./ChartSDKAdvanced.scss";
 
 // Extract the appCallback type from ChartConfig
 type AppCallback = NonNullable<ChartConfig["appCallback"]>;
@@ -303,16 +303,15 @@ export const ChartSDKAdvanced = () => {
 					"gocharting-chart-container-advanced";
 			}
 
-			const chartConfig: ChartConfig = {
+			const chartConfig = {
 				symbol: "BYBIT:FUTURE:BTCUSDT",
 				interval: "1D",
 				datafeed: datafeed,
 				debugLog: true,
 				licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
 				theme: "dark",
-				enableTrading: true,
 				trading: {
-					enableTrading: false,
+					enableTrading: true,
 					showReverseButton: false,
 				},
 				disableSearch: true,
@@ -342,7 +341,7 @@ export const ChartSDKAdvanced = () => {
 						setStatus(`❌ Error creating chart: ${error.message}`);
 					}
 				},
-			};
+			} satisfies ChartConfig;
 
 			// Create chart - the same instance is returned and passed to onReady
 			const chart = GoChartingSDK.createChart(
@@ -1104,3 +1103,5 @@ export const ChartSDKAdvanced = () => {
 		</div>
 	);
 };
+
+export default ChartSDKAdvanced;

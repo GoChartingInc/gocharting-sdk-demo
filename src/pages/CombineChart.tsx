@@ -1,7 +1,7 @@
-import { ChartSDK } from "../components/ChartSDK";
-import { ResponsiveLayout } from "../components/ResponsiveLayout";
+import ChartSDK from "@/components/ChartSDK";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 
-import { useResponsive } from "../hooks/useResponsive";
+import { useResponsive } from "@/hooks/useResponsive";
 
 const CombineChart = () => {
 	const { isSmallDevice, isMediumDevice } = useResponsive();

@@ -15,7 +15,11 @@
 		"isolatedModules": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
-		"downlevelIteration": true
+		"downlevelIteration": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"]
+		}
 	},
 	"include": ["src"],
 	"exclude": ["src-old", "node_modules"]

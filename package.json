@@ -2,10 +2,30 @@
 	"name": "gocharting-sdk-demo-cra",
 	"version": "0.1.0",
 	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/akshay2796/gocharting-sdk-demo.git"
+	},
+	"scripts": {
+		"start": "craco start",
+		"build": "craco build",
+		"test": "craco test",
+		"eject": "react-scripts eject"
+	},
 	"dependencies": {
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.1",
-		"@gocharting/chart-sdk": "1.0.35",
+		"@gocharting/chart-sdk": "1.0.37",
+		"framer-motion": "^12.23.24",
+		"moment": "^2.30.1",
+		"react": "^19.2.0",
+		"react-app-polyfill": "^3.0.0",
+		"react-dom": "^19.2.0",
+		"react-router-dom": "^7.12.0",
+		"web-vitals": "^5.1.0"
+	},
+	"devDependencies": {
+		"@craco/craco": "^7.1.0",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/react": "^16.1.0",
@@ -15,21 +35,9 @@
 		"@types/react": "^19.0.0",
 		"@types/react-dom": "^19.0.0",
 		"@types/react-router-dom": "^5.3.3",
-		"framer-motion": "^12.23.24",
-		"moment": "^2.30.1",
-		"react": "^19.2.0",
-		"react-app-polyfill": "^3.0.0",
-		"react-dom": "^19.2.0",
-		"react-router-dom": "^7.12.0",
 		"react-scripts": "5.0.1",
-		"typescript": "^5.2.2",
-		"web-vitals": "^5.1.0"
-	},
-	"scripts": {
-		"start": "react-scripts start",
-		"build": "react-scripts build",
-		"test": "react-scripts test",
-		"eject": "react-scripts eject"
+		"sass": "^1.97.3",
+		"typescript": "^5.2.2"
 	},
 	"eslintConfig": {
 		"extends": [
