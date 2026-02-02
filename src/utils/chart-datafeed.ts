@@ -9,6 +9,8 @@ import {
 	UDFResponse,
 	BarsResult,
 	PeriodParams,
+	Mark,
+	TimescaleMark,
 } from "@gocharting/chart-sdk";
 
 type IResponse<T = any> = {
@@ -895,48 +897,116 @@ export const createChartDatafeed = (): Datafeed => {
 			}
 		},
 
+		// Convert resolution to Bybit interval format (mirroring helpers.js getExchangeInterval)
+		getExchangeInterval(scale: number, units: string): number | string {
+			switch (units) {
+				case "minutes":
+					return scale;
+				case "hours":
+					return 60 * scale;
+				case "days":
+					return "D";
+				case "weeks":
+					return "W";
+				case "months":
+					return "M";
+				default:
+					return 60;
+			}
+		},
+
+		// Legacy method for backward compatibility
+		getBybitInterval(resolution: string | number): string {
+			const intervalMap: Record<string | number, string> = {
+				1: "1",
+				5: "5",
+				15: "15",
+				30: "30",
+				60: "60",
+				240: "240",
+				"1D": "D",
+				"1W": "W",
+				"1M": "M",
+			};
+			return intervalMap[resolution] || "D";
+		},
+
 		generateDemoData(
 			from: Date,
 			to: Date,
 			resolution: string | Resolution,
-			_symbolInfo: SymbolInfo
+			symbolInfo: SymbolInfo
 		): RawBar[] {
 			const bars: RawBar[] = [];
-			const startTime = from.getTime() / 1000;
-			const endTime = to.getTime() / 1000;
-			let interval = 86400; // 1 day in seconds
 
-			if (typeof resolution === "string") {
-				const resolutionNum = parseInt(resolution);
-				if (!isNaN(resolutionNum)) {
-					interval = resolutionNum * 60; // minutes to seconds
-				}
+			// Calculate interval in milliseconds - matching HTML version exactly
+			let intervalMs: number;
+			const resolutionStr =
+				typeof resolution === "string"
+					? resolution
+					: String(resolution);
+			switch (resolutionStr) {
+				case "1":
+					intervalMs = 60 * 1000; // 1 minute
+					break;
+				case "5":
+					intervalMs = 5 * 60 * 1000; // 5 minutes
+					break;
+				case "15":
+					intervalMs = 15 * 60 * 1000; // 15 minutes
+					break;
+				case "30":
+					intervalMs = 30 * 60 * 1000; // 30 minutes
+					break;
+				case "60":
+					intervalMs = 60 * 60 * 1000; // 1 hour
+					break;
+				case "240":
+					intervalMs = 4 * 60 * 60 * 1000; // 4 hours
+					break;
+				case "1D":
+					intervalMs = 24 * 60 * 60 * 1000; // 1 day
+					break;
+				default:
+					intervalMs = 24 * 60 * 60 * 1000; // Default to 1 day
 			}
 
-			let basePrice = 50000; // Starting price
-			let currentTime = startTime;
+			let currentTime = from.getTime(); // Already in milliseconds
+			const endTime = to.getTime(); // Already in milliseconds
 
-			while (currentTime < endTime) {
-				const randomChange = (Math.random() - 0.5) * 1000;
-				const open = basePrice;
-				const close = basePrice + randomChange;
-				const high = Math.max(open, close) + Math.random() * 500;
-				const low = Math.min(open, close) - Math.random() * 500;
-				const volume = Math.random() * 1000000;
+			// Use realistic price ranges based on symbol
+			const symbol =
+				symbolInfo?.symbol ||
+				symbolInfo?.ticker ||
+				(symbolInfo as unknown as { name?: string })?.name ||
+				"UNKNOWN";
+			console.log(
+				"🎯 [DemoDatafeed] Generating demo data for symbol:",
+				symbol
+			);
+
+			// Generic price range for demo data
+			let price = 100 + Math.random() * 100;
+
+			while (currentTime <= endTime && bars.length < 500) {
+				const change = (Math.random() - 0.5) * 5;
+				const open = price;
+				const close = Math.max(0.01, price + change);
+				const high = Math.max(open, close) + Math.random() * 2;
+				const low = Math.min(open, close) - Math.random() * 2;
 
 				bars.push({
-					time: currentTime,
-					open,
-					high,
-					low,
-					close,
-					volume,
+					time: Math.floor(currentTime / 1000), // Convert back to seconds for timestamp
+					open: Math.round(open * 100) / 100,
+					high: Math.round(high * 100) / 100,
+					low: Math.round(Math.max(0.01, low) * 100) / 100,
+					close: Math.round(close * 100) / 100,
+					volume: Math.floor(Math.random() * 1000000) + 100000,
 				});
 
-				basePrice = close;
-				currentTime += interval;
+				price = close;
+				currentTime += intervalMs;
 			}
-
 			return bars;
 		},
 
@@ -1813,6 +1883,110 @@ export const createChartDatafeed = (): Datafeed => {
 					}
 				);
 			});
+		},
+
+		// Chart marks/events - shows important events on the chart
+		getMarks(
+			symbolInfo: SymbolInfo,
+			_startDate: number,
+			_endDate: number,
+			onDataCallback: (marks: Mark[]) => void,
+			_resolution: string | Resolution
+		): void {
+			console.log("[DemoDatafeed] getMarks called:", {
+				symbolInfo,
+				startDate: _startDate,
+				endDate: _endDate,
+				resolution: _resolution,
+			});
+
+			// Use current time for more visible marks
+			const now = Math.floor(Date.now() / 1000);
+			const marks: Mark[] = [
+				{
+					id: 1,
+					time: now - 86400 * 7, // 1 week ago
+					color: "red",
+					text: [
+						"Earnings Report",
+						"Q3 2025 Results",
+						"Beat expectations by 15%",
+					],
+					label: "E",
+					labelFontColor: "white",
+					minSize: 25,
+				},
+				{
+					id: 2,
+					time: now - 86400 * 3, // 3 days ago
+					color: "green",
+					text: ["Product Launch", "New AI feature released"],
+					label: "P",
+					labelFontColor: "white",
+					minSize: 25,
+				},
+				{
+					id: 3,
+					time: now - 86400, // Yesterday
+					color: "blue",
+					text: ["Market News", "Analyst upgrade to BUY"],
+					label: "N",
+					labelFontColor: "white",
+					minSize: 25,
+				},
+			];
+
+			console.log("[DemoDatafeed] getMarks returning marks:", marks);
+			onDataCallback(marks);
+		},
+
+		// Timescale marks - shows events on the time axis
+		getTimescaleMarks(
+			symbolInfo: SymbolInfo,
+			_startDate: number,
+			_endDate: number,
+			onDataCallback: (marks: TimescaleMark[]) => void,
+			_resolution: string | Resolution
+		): void {
+			console.log("[DemoDatafeed] getTimescaleMarks called:", {
+				symbolInfo,
+				startDate: _startDate,
+				endDate: _endDate,
+				resolution: _resolution,
+			});
+
+			// Use current time for more visible marks
+			const now = Math.floor(Date.now() / 1000);
+			const marks: TimescaleMark[] = [
+				{
+					id: "1",
+					time: now - 86400 * 5, // 5 days ago
+					color: "red",
+					label: "T1",
+					tooltip:
+						"Market Event - 5 days ago - Important trading session",
+				},
+				{
+					id: "2",
+					time: now - 86400 * 2, // 2 days ago
+					color: "blue",
+					label: "T2",
+					tooltip: "Economic Data - 2 days ago - GDP release",
+				},
+				{
+					id: "3",
+					time: now + 86400, // Tomorrow
+					color: "orange",
+					label: "T3",
+					tooltip: "Scheduled Event - Tomorrow - Fed meeting",
+				},
+			];
+
+			console.log(
+				"[DemoDatafeed] getTimescaleMarks returning marks:",
+				marks
+			);
+			onDataCallback(marks);
 		},
 	};
 
