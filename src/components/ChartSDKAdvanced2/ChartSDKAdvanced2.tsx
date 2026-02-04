@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import { createChartDatafeed } from "@/utils/chart-datafeed";
 import type {
+	ChartWrapper,
 	ChartInstance,
 	ChartConfig,
 	Order,
@@ -11,13 +12,14 @@ import type {
 	OrderSide,
 	Datafeed,
 	SymbolInfo,
+	AppCallbackEventHandler,
+	PlaceOrderMessage,
+	ModifyOrderMessage,
+	ModifyPositionMessage,
 } from "@gocharting/chart-sdk";
 import "./ChartSDKAdvanced2.scss";
 
-// Extract the appCallback type from ChartConfig
-type AppCallback = NonNullable<ChartConfig["appCallback"]>;
-
-// Extended Order type with hidden flag
+// Extended Order type with additional trading properties (hidden is not in SDK)
 interface ExtendedOrder extends Order {
 	hidden?: boolean;
 }
@@ -54,28 +56,6 @@ const createDemoSymbolInfo = (
 	};
 };
 
-interface SecurityData {
-	exchange?: string;
-	symbol?: string;
-	full_name?: string;
-	productType?: string;
-	segment?: string;
-}
-
-interface OrderDetails {
-	orderId?: string;
-	price?: number;
-	size?: number;
-	quantity?: number;
-	productId?: string;
-	orderType?: string;
-	side?: OrderSide;
-	takeProfit?: number | string | null;
-	stopLoss?: number | string | null;
-	stopPrice?: number | null;
-	symbol?: string;
-}
-
 interface DemoAccount {
 	id: string;
 	name: string;
@@ -105,7 +85,7 @@ const WATCHLIST_SYMBOLS = [
 export const ChartSDKAdvanced2 = () => {
 	const chartContainerRef = useRef<HTMLDivElement>(null);
 	const chartInstanceRef = useRef<ChartInstance | null>(null);
-	const chartWrapperRef = useRef<GoChartingSDK.ChartWrapper | null>(null);
+	const chartWrapperRef = useRef<ChartWrapper | null>(null);
 	const datafeedRef = useRef<Datafeed | null>(null);
 	const currentSymbol = useRef<string>("BYBIT:FUTURE:BTCUSDT");
 
@@ -127,7 +107,7 @@ export const ChartSDKAdvanced2 = () => {
 	const currentPositions = useRef<Position[]>([]);
 
 	// Ref to hold the latest app callback (to avoid stale closure in chart)
-	const handleAppCallbackRef = useRef<AppCallback | null>(null);
+	const handleAppCallbackRef = useRef<AppCallbackEventHandler | null>(null);
 
 	// UI State
 	const [status, setStatus] = useState<string>("Initializing chart...");
@@ -323,7 +303,7 @@ export const ChartSDKAdvanced2 = () => {
 
 	// Modify order in order book
 	const modifyOrderInOrderBook = useCallback(
-		(orderData: any) => {
+		(orderData: ModifyOrderMessage) => {
 			console.log("✏️ Modify order:", orderData);
 			const order = orderData.order || orderData;
 			const orderId = order.orderId || orderData.orderId;
@@ -353,7 +333,8 @@ export const ChartSDKAdvanced2 = () => {
 							existingOrder.stopLoss = null;
 							break;
 						case "LIMIT_PRICE":
-							existingOrder.price = order.price;
+							if (order.price !== undefined)
+								existingOrder.price = order.price;
 							break;
 						default:
 							if (order.price !== undefined)
@@ -446,14 +427,14 @@ export const ChartSDKAdvanced2 = () => {
 
 	// Modify position (for TP/SL line drag events)
 	const modifyPositionInPositions = useCallback(
-		(positionData: any) => {
+		(positionData: ModifyPositionMessage) => {
 			console.log("🔍 ===== MODIFY POSITION DEBUG =====");
 			console.log(
 				"📝 Modify position data received:",
 				JSON.stringify(positionData, null, 2)
 			);
 
-			const position = positionData.position || positionData;
+			const position = positionData.position;
 			const positionId = position.id || positionData.id;
 
 			console.log("📝 Extracted position ID:", positionId);
@@ -476,13 +457,13 @@ export const ChartSDKAdvanced2 = () => {
 					switch (position.updateType) {
 						case "DELETE_STOP_LOSS":
 							console.log("🗑️ Deleting stop loss from position");
-							(existingPosition as any).stopLoss = null;
+							existingPosition.stopLoss = null;
 							break;
 						case "DELETE_TAKE_PROFIT":
 							console.log(
 								"🗑️ Deleting take profit from position"
 							);
-							(existingPosition as any).takeProfit = null;
+							existingPosition.takeProfit = null;
 							break;
 						case "STOP_LOSS":
 						case "NEW_STOP_LOSS":
@@ -490,8 +471,7 @@ export const ChartSDKAdvanced2 = () => {
 								"📉 Updating position stop loss:",
 								position.stopLoss
 							);
-							(existingPosition as any).stopLoss =
-								position.stopLoss;
+							existingPosition.stopLoss = position.stopLoss;
 							// Also update associated orders
 							updateOrderTPSL(
 								existingPosition.productId,
@@ -505,8 +485,7 @@ export const ChartSDKAdvanced2 = () => {
 								"📈 Updating position take profit:",
 								position.takeProfit
 							);
-							(existingPosition as any).takeProfit =
-								position.takeProfit;
+							existingPosition.takeProfit = position.takeProfit;
 							// Also update associated orders
 							updateOrderTPSL(
 								existingPosition.productId,
@@ -520,12 +499,11 @@ export const ChartSDKAdvanced2 = () => {
 								position.updateType
 							);
 							if (position.takeProfit !== undefined) {
-								(existingPosition as any).takeProfit =
+								existingPosition.takeProfit =
 									position.takeProfit;
 							}
 							if (position.stopLoss !== undefined) {
-								(existingPosition as any).stopLoss =
-									position.stopLoss;
+								existingPosition.stopLoss = position.stopLoss;
 							}
 					}
 				} else {
@@ -533,11 +511,10 @@ export const ChartSDKAdvanced2 = () => {
 						"📝 Standard position modification (no update type)"
 					);
 					if (position.takeProfit !== undefined) {
-						(existingPosition as any).takeProfit =
-							position.takeProfit;
+						existingPosition.takeProfit = position.takeProfit;
 					}
 					if (position.stopLoss !== undefined) {
-						(existingPosition as any).stopLoss = position.stopLoss;
+						existingPosition.stopLoss = position.stopLoss;
 					}
 				}
 
@@ -598,27 +575,25 @@ export const ChartSDKAdvanced2 = () => {
 
 		// Create orderData in the same format as HTML reference (nested order structure)
 		// This matches the format used by chart SDK's appCallback
-		const orderData = {
+		const orderData: PlaceOrderMessage = {
 			order: {
 				productId: currentSymbol.current,
 				price: orderType === "limit" ? parseFloat(limitPrice) || 0 : 0,
-				stopPrice: "",
-				takeProfit: takeProfit || "",
-				stopLoss: stopLoss || "",
-				trailingSLSpread: "",
+				stopPrice: 0,
+				takeProfit: takeProfit ? parseFloat(takeProfit) : undefined,
+				stopLoss: stopLoss ? parseFloat(stopLoss) : undefined,
+				trailingSLSpread: 0,
 				size: quantity || 1,
 				task: "placement",
 				side: side,
 				orderType: orderType,
 				pnlMultiplier: pnlMultiplier || 1,
 			},
-			security: {
-				symbol: currentSymbol.current.replace("BYBIT:FUTURE:", ""),
-				full_name: currentSymbol.current,
-				exchange: "BYBIT",
-				segment: "FUTURE",
-				quote_currency: "USDT",
-			},
+			security: createDemoSymbolInfo(
+				currentSymbol.current.replace("BYBIT:FUTURE:", ""),
+				"BYBIT",
+				"FUTURE"
+			),
 			ltp: ltp,
 		};
 
@@ -628,7 +603,10 @@ export const ChartSDKAdvanced2 = () => {
 		);
 
 		// Use the same handleTradingEvent method as chart context menu
-		handleAppCallback("PLACE_ORDER", orderData);
+		handleAppCallback({
+			eventType: "PLACE_ORDER",
+			message: orderData,
+		});
 	};
 
 	const createPositionAndTrade = (newOrder: Order, ltp: number) => {
@@ -697,7 +675,7 @@ export const ChartSDKAdvanced2 = () => {
 						executionPrice * newOrder.size) /
 					totalSize;
 				existingPosition.size =
-					newOrder.side === "buy" ? totalSize : -totalSize;
+					newOrder.side === "sell" ? -totalSize : totalSize;
 				existingPosition.price = avgPrice;
 				console.log(
 					"📝 Updated existing position (same side):",
@@ -735,11 +713,12 @@ export const ChartSDKAdvanced2 = () => {
 			const positionId = `POS_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 			const newPosition: Position = {
 				id: positionId,
-				size: newOrder.side === "buy" ? newOrder.size : -newOrder.size,
+				size: newOrder.side === "sell" ? -newOrder.size : newOrder.size,
 				size_currency: newOrder.size,
 				price: executionPrice, // Use LTP for position price
 				amount: executionPrice * newOrder.size,
 				productId: newOrder.productId,
+				side: newOrder.side, // ✅ CRITICAL: Required for correct TP/SL PnL calculation
 				broker: "demo",
 				productType: "FUTURE",
 				currency: "USDT",
@@ -760,7 +739,7 @@ export const ChartSDKAdvanced2 = () => {
 				// Additional properties for feature parity with HTML reference
 				showStopLossButton: true,
 				showTakeProfitButton: true,
-				pnlMultiplier: (newOrder as any).pnlMultiplier || 1,
+				pnlMultiplier: newOrder.pnlMultiplier || 1,
 			} as Position;
 
 			console.log(
@@ -785,7 +764,7 @@ export const ChartSDKAdvanced2 = () => {
 
 	// Add order to order book from chart (PLACE_ORDER event)
 	const addOrderToOrderBook = useCallback(
-		(orderData: any) => {
+		(orderData: PlaceOrderMessage) => {
 			console.log("🔍 ===== ADD ORDER TO ORDER BOOK =====");
 			console.log(
 				"📝 Raw order data:",
@@ -797,15 +776,20 @@ export const ChartSDKAdvanced2 = () => {
 				return;
 			}
 
-			// Extract order details from nested structure
-			const order = orderData.order || orderData;
-			const security = orderData.security || {};
+			// Extract order details from PlaceOrderMessage structure
+			const order = orderData.order;
+			const security = orderData.security;
 			const ltp = orderData.ltp || getCurrentLTP();
+
+			// Get full_name from security if available (only on SymbolInfo)
+			const securityFullName =
+				security && "full_name" in security
+					? security.full_name
+					: undefined;
 
 			// Generate unique order ID
 			const orderId =
 				order.orderId ||
-				orderData.orderId ||
 				`ORDER_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
 			// Create order object with all properties matching HTML reference
@@ -815,30 +799,15 @@ export const ChartSDKAdvanced2 = () => {
 				timeStamp: new Date().getTime(),
 				lastTradeTimestamp: null,
 				status: "open",
-				price: order.price || orderData.price || 0,
-				size:
-					order.size ||
-					order.quantity ||
-					orderData.quantity ||
-					orderData.size ||
-					0,
+				price: order.price || 0,
+				size: order.size || 0,
 				productId:
 					order.productId ||
-					security.full_name ||
-					orderData.symbol ||
+					securityFullName ||
 					currentSymbol.current,
-				remainingSize:
-					order.size ||
-					order.quantity ||
-					orderData.quantity ||
-					orderData.size ||
-					0,
-				orderType:
-					order.orderType ||
-					orderData.orderType ||
-					orderData.type ||
-					"limit",
-				side: (order.side || orderData.side || "buy") as OrderSide,
+				remainingSize: order.size || 0,
+				orderType: order.orderType || "limit",
+				side: (order.side || "buy") as OrderSide,
 				cost: null,
 				trades: [],
 				fee: { currency: "USDT", cost: 0, rate: 0 },
@@ -847,26 +816,25 @@ export const ChartSDKAdvanced2 = () => {
 				avgFillPrice: null,
 				filledSize: 0,
 				modifiedAt: null,
-				exchange: security.exchange || "BYBIT",
+				exchange: security?.exchange || "BYBIT",
 				symbol: (
-					security.symbol ||
+					security?.symbol ||
 					order.symbol ||
-					orderData.symbol ||
 					currentSymbol.current
 				).replace("BYBIT:FUTURE:", ""),
-				takeProfit: order.takeProfit || orderData.takeProfit || null,
-				stopLoss: order.stopLoss || orderData.stopLoss || null,
+				takeProfit: order.takeProfit || null,
+				stopLoss: order.stopLoss || null,
 				isGC: true,
 				paperTraderKey: null,
-				key: `demo-${order.productId || security.full_name || orderData.symbol || currentSymbol.current}-${orderId}`,
+				key: `demo-${order.productId || securityFullName || currentSymbol.current}-${orderId}`,
 				validity: "DAY",
 				commissions: 0,
 				broker: "demo",
-				stopPrice: order.stopPrice || orderData.stopPrice || null,
+				stopPrice: order.stopPrice || null,
 				productType: "FUTURE",
 				rejReason: null,
 				security: createDemoSymbolInfo(
-					(orderData.symbol || currentSymbol.current).replace(
+					(order.symbol || currentSymbol.current).replace(
 						"BYBIT:FUTURE:",
 						""
 					),
@@ -879,17 +847,15 @@ export const ChartSDKAdvanced2 = () => {
 				// Additional properties for feature parity with HTML reference
 				showStopLossButton: true,
 				showTakeProfitButton: true,
-				pnlMultiplier:
-					order.pnlMultiplier || orderData.pnlMultiplier || 1,
-			} as Order;
+				pnlMultiplier: order.pnlMultiplier || 1,
+			};
 
 			// Add to order book
 			currentOrderBook.current.push(newOrder);
 
 			// Check if market order
 			const isMarketOrder =
-				(order.orderType || orderData.orderType || "").toLowerCase() ===
-				"market";
+				(order.orderType || "").toLowerCase() === "market";
 
 			if (isMarketOrder) {
 				console.log("🚀 Market order - creating position and trade...");
@@ -907,14 +873,20 @@ export const ChartSDKAdvanced2 = () => {
 
 	// Handle market orders with TP/SL - create additional orders
 	const handleMarketOrderWithTPSL = useCallback(
-		(originalOrder: Order, orderDetails: any, _ltp: number) => {
+		(originalOrder: Order, orderDetails: Partial<Order>, _ltp: number) => {
 			console.log("🔍 Checking for TP/SL on market order...");
 
-			const hasTP =
-				orderDetails.takeProfit &&
-				parseFloat(orderDetails.takeProfit) > 0;
-			const hasSL =
-				orderDetails.stopLoss && parseFloat(orderDetails.stopLoss) > 0;
+			const tpValue =
+				typeof orderDetails.takeProfit === "string"
+					? parseFloat(orderDetails.takeProfit)
+					: orderDetails.takeProfit;
+			const slValue =
+				typeof orderDetails.stopLoss === "string"
+					? parseFloat(orderDetails.stopLoss)
+					: orderDetails.stopLoss;
+
+			const hasTP = tpValue && tpValue > 0;
+			const hasSL = slValue && slValue > 0;
 
 			if (!hasTP && !hasSL) {
 				console.log("No TP/SL specified");
@@ -925,12 +897,12 @@ export const ChartSDKAdvanced2 = () => {
 				originalOrder.side === "buy" ? "sell" : "buy";
 
 			// Place Take Profit order (Limit) - matching HTML reference implementation
-			if (hasTP) {
+			if (hasTP && tpValue) {
 				const tpOrderId = `TP_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 				const tpOrder: Order = {
 					...originalOrder,
 					orderId: tpOrderId,
-					price: parseFloat(orderDetails.takeProfit),
+					price: tpValue,
 					orderType: "limit",
 					side: oppositeSide,
 					takeProfit: null,
@@ -941,22 +913,20 @@ export const ChartSDKAdvanced2 = () => {
 					parentOrderId: originalOrder.orderId,
 					showStopLossButton: true,
 					showTakeProfitButton: true,
-					pnlMultiplier: (originalOrder as any).pnlMultiplier || 1,
+					pnlMultiplier: originalOrder.pnlMultiplier || 1,
 				} as Order;
 				currentOrderBook.current.push(tpOrder);
-				setStatus(
-					`🎯 Take Profit order placed @ $${orderDetails.takeProfit}`
-				);
+				setStatus(`🎯 Take Profit order placed @ $${tpValue}`);
 			}
 
 			// Place Stop Loss order (Stop) - matching HTML reference implementation
-			if (hasSL) {
+			if (hasSL && slValue) {
 				const slOrderId = `SL_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 				const slOrder: Order = {
 					...originalOrder,
 					orderId: slOrderId,
 					price: 0,
-					stopPrice: parseFloat(orderDetails.stopLoss),
+					stopPrice: slValue,
 					orderType: "stop",
 					side: oppositeSide,
 					takeProfit: null,
@@ -967,12 +937,10 @@ export const ChartSDKAdvanced2 = () => {
 					parentOrderId: originalOrder.orderId,
 					showStopLossButton: true,
 					showTakeProfitButton: true,
-					pnlMultiplier: (originalOrder as any).pnlMultiplier || 1,
+					pnlMultiplier: originalOrder.pnlMultiplier || 1,
 				} as Order;
 				currentOrderBook.current.push(slOrder);
-				setStatus(
-					`🛑 Stop Loss order placed @ $${orderDetails.stopLoss}`
-				);
+				setStatus(`🛑 Stop Loss order placed @ $${slValue}`);
 			}
 
 			// Update chart with new TP/SL orders
@@ -981,64 +949,65 @@ export const ChartSDKAdvanced2 = () => {
 		[updateChartBrokerData]
 	);
 
-	// App callback handler
-	const handleAppCallback: AppCallback = useCallback(
-		(eventType, message, _onClose) => {
+	// App callback handler - using discriminated union for true type narrowing
+	// event.message is automatically narrowed based on event.eventType in switch cases
+	const handleAppCallback: AppCallbackEventHandler = useCallback(
+		({ eventType, message, onClose: _onClose }) => {
 			console.log("📞 App Callback:", eventType, message);
-			const msg = message as any;
 
 			switch (eventType) {
 				case "CREATE_ORDER": {
-					console.log("📝 Order creation requested from chart:", msg);
+					console.log(
+						"📝 Order creation requested from chart:",
+						message
+					);
 					setStatus(
-						`📝 Order creation: ${msg.side} ${msg.quantity || "N/A"} @ ${msg.price || "Market"}`
+						`📝 Order creation: ${message.side} ${message.quantity || "N/A"} @ ${message.price || "Market"}`
 					);
 					break;
 				}
-				case "PLACE_ORDER": {
-					console.log("📝 Order placed from chart:", msg);
-					const order = msg.order || msg;
 
-					// Check if this is an exit position request (X button on position)
-					if (order.exitPosition) {
+				case "PLACE_ORDER": {
+					console.log("📝 Order placed from chart:", message);
+					const order = message.order;
+
+					if (order?.exitPosition) {
 						console.log(
 							"🔴 Exit position requested from chart X button"
 						);
-						const positionId =
-							order.id || order.positionId || order.position?.id;
+						const positionId = order?.id; // POS_123456 (Position ID)
+
 						if (positionId) {
 							closePosition(positionId);
 						} else {
 							console.warn(
 								"Could not find position ID for exit:",
-								msg
+								message
 							);
 						}
 					} else {
-						addOrderToOrderBook(msg);
+						addOrderToOrderBook(message);
 						setStatus(
-							`✅ Order placed: ${msg.side || order.side} @ ${msg.price || order.price || "Market"}`
+							`✅ Order placed: ${order?.side} @ ${order?.price || "Market"}`
 						);
 					}
 					break;
 				}
+
 				case "CANCEL_ORDER": {
 					console.log(
 						"❌ Order cancelled from chart:",
-						JSON.stringify(msg, null, 2)
+						JSON.stringify(message, null, 2)
 					);
 					const orderId =
-						msg.orderId ||
-						msg.order?.orderId ||
-						msg.id ||
-						msg.order?.id;
+						message?.order?.orderId || message?.order?.id;
 					if (orderId) {
 						removeOrderFromOrderBook(orderId);
 						setStatus(`🗑️ Order cancelled: ${orderId}`);
 					} else {
 						console.error(
 							"No orderId found in cancel order message:",
-							msg
+							message
 						);
 						setStatus(
 							"❌ Failed to cancel order: No order ID found"
@@ -1046,42 +1015,28 @@ export const ChartSDKAdvanced2 = () => {
 					}
 					break;
 				}
+
 				case "MODIFY_ORDER": {
-					console.log("✏️ Order modified from chart:", msg);
-					modifyOrderInOrderBook(msg);
-					setStatus(
-						`✏️ Order modified: ${msg.orderId || msg.order?.orderId}`
-					);
+					console.log("✏️ Order modified from chart:", message);
+					modifyOrderInOrderBook(message);
+					setStatus(`✏️ Order modified: ${message.orderId}`);
 					break;
 				}
+
 				case "MODIFY_POSITION": {
-					console.log("✏️ Position modified from chart:", msg);
-					modifyPositionInPositions(msg);
-					setStatus(
-						`✏️ Position modified: ${msg.position?.id || msg.id}`
-					);
+					console.log("✏️ Position modified from chart:", message);
+					modifyPositionInPositions(message);
+					setStatus(`✏️ Position modified: ${message.position?.id}`);
 					break;
 				}
-				case "CLOSE_POSITION": {
-					console.log("🔴 Position close requested from chart:", msg);
-					const positionId =
-						msg.position?.id || msg.id || msg.positionId;
-					if (positionId) {
-						closePosition(positionId);
-					} else {
-						console.warn(
-							"Could not extract position ID from close event:",
-							msg
-						);
-					}
-					break;
-				}
+
 				case "OPEN_TRADING_WIDGET":
 					console.log("🎛️ Trading widget opened from chart");
 					setStatus("🎛️ Trading widget opened");
 					break;
+
 				default:
-					console.log(`🔔 Chart event: ${eventType}`, msg);
+					console.log(`🔔 Chart event: ${eventType}`, message);
 					break;
 			}
 		},
@@ -1149,23 +1104,19 @@ export const ChartSDKAdvanced2 = () => {
 					debugLog: true,
 					licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
 					theme: "dark",
+					disableSearch: true,
+					disableCompare: true,
 					trading: {
 						enableTrading: true,
 						showReverseButton: false,
 					},
 					// Use a stable wrapper that calls through the ref to avoid stale closures
-					appCallback: (eventType, message, onClose) => {
-						console.log(
-							"*** APP CALLBACK TRIGGERED ***",
-							eventType,
-							message
-						);
+					// SDK calls with (eventType, message, onClose), we convert to event object for type narrowing
+					appCallback: (event) => {
+						console.log("*** APP CALLBACK TRIGGERED ***", event);
 						if (handleAppCallbackRef.current) {
-							handleAppCallbackRef.current(
-								eventType,
-								message,
-								onClose
-							);
+							// Convert to discriminated union event object for type narrowing
+							handleAppCallbackRef.current(event);
 						}
 					},
 					onReady: (chartInstance) => {
@@ -1483,12 +1434,10 @@ export const ChartSDKAdvanced2 = () => {
 															const side = isBuy
 																? "BUY"
 																: "SELL";
-															const takeProfit = (
-																pos as any
-															).takeProfit;
-															const stopLoss = (
-																pos as any
-															).stopLoss;
+															const takeProfit =
+																pos.takeProfit;
+															const stopLoss =
+																pos.stopLoss;
 
 															return (
 																<tr
@@ -1601,12 +1550,20 @@ export const ChartSDKAdvanced2 = () => {
 														(order) => {
 															const extOrder =
 																order as ExtendedOrder;
-															const stopLoss = (
-																order as any
-															).stopLoss;
-															const takeProfit = (
-																order as any
-															).takeProfit;
+															const stopLoss =
+																typeof order.stopLoss ===
+																"string"
+																	? parseFloat(
+																			order.stopLoss
+																		)
+																	: order.stopLoss;
+															const takeProfit =
+																typeof order.takeProfit ===
+																"string"
+																	? parseFloat(
+																			order.takeProfit
+																		)
+																	: order.takeProfit;
 															return (
 																<tr
 																	key={

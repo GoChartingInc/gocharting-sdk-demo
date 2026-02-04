@@ -268,7 +268,11 @@ export const ChartSDKAdvanced = () => {
 		return 110000;
 	};
 
-	const handleAppCallback: AppCallback = (eventType, message, onClose) => {
+	const handleAppCallback: AppCallback = ({
+		eventType,
+		message,
+		onClose,
+	}) => {
 		console.log("*** APP CALLBACK TRIGGERED ***");
 		console.log("Event Type:", eventType);
 		console.log("Message:", message);

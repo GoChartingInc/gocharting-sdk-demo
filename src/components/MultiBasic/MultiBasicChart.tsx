@@ -114,6 +114,7 @@ const MultiBasicChart = () => {
 			chartInstanceRef.current = null;
 			chartWrapperRef.current = null;
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const handleSymbolChange = (newSymbol: string) => {

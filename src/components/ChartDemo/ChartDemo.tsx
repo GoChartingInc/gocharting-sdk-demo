@@ -96,7 +96,7 @@ export const ChartDemo = () => {
 					indicators: EXCLUDED_INDICATORS,
 				} as unknown as ChartConfig["exclude"],
 				theme: "dark",
-				appCallback: (eventType, message) => {
+				appCallback: ({ eventType, message }) => {
 					if (eventType === "CHART_SELECTED") {
 						console.log("📊 CHART_SELECTED event:", message);
 					}
