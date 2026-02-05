@@ -94,7 +94,7 @@ export const ChartDemo = () => {
 				// This is a known type mismatch in the SDK
 				exclude: {
 					indicators: EXCLUDED_INDICATORS,
-				} as unknown as ChartConfig["exclude"],
+				},
 				theme: "dark",
 				appCallback: ({ eventType, message }) => {
 					if (eventType === "CHART_SELECTED") {
@@ -199,10 +199,10 @@ export const ChartDemo = () => {
 				chartWrapperRef.current = null;
 
 				// Cleanup datafeed
-				if (datafeedRef.current) {
+				if (datafeedRef.current && datafeedRef.current.destroy) {
 					try {
 						// Cast to any to access optional destroy method
-						(datafeedRef.current as any).destroy?.();
+						datafeedRef.current.destroy();
 					} catch (e) {
 						console.error("Error destroying datafeed:", e);
 					}

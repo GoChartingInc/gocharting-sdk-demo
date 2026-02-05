@@ -83,7 +83,7 @@ interface OrderDetails {
 	size?: number;
 	quantity?: number;
 	productId?: string;
-	orderType?: string;
+	orderType?: SDKOrderType;
 	side?: OrderSide;
 	takeProfit?: number | string | null;
 	stopLoss?: number | string | null;
@@ -91,6 +91,7 @@ interface OrderDetails {
 	symbol?: string;
 }
 
+type OrderType = "market" | "limit";
 /**
  * Input data for creating/modifying orders from UI or SDK callbacks
  */
@@ -102,8 +103,8 @@ interface OrderInputData {
 	size?: number;
 	quantity?: number;
 	symbol?: string;
-	orderType?: string;
-	type?: string;
+	orderType?: OrderType;
+	type?: SDKOrderType;
 	side?: OrderSide;
 	takeProfit?: number | string | null;
 	stopLoss?: number | string | null;
@@ -145,7 +146,7 @@ export const ChartSDKAdvanced = () => {
 	const [quantity, setQuantity] = useState(100);
 	const [stopLoss, setStopLoss] = useState("");
 	const [takeProfit, setTakeProfit] = useState("");
-	const [orderType, setOrderType] = useState<"market" | "limit">("market");
+	const [orderType, setOrderType] = useState<OrderType>("market");
 	const [limitPrice, setLimitPrice] = useState("");
 	const [pnlMultiplier, setPnlMultiplier] = useState(1);
 	const [status, setStatus] = useState("Loading chart...");
@@ -208,10 +209,10 @@ export const ChartSDKAdvanced = () => {
 				chartWrapperRef.current = null;
 			}
 			// Cleanup datafeed
-			if (datafeedRef.current) {
+			if (datafeedRef.current && datafeedRef.current.destroy) {
 				try {
 					// Cast to any to access optional destroy method
-					(datafeedRef.current as any).destroy?.();
+					datafeedRef.current.destroy?.();
 				} catch (e) {
 					console.error("Error destroying datafeed:", e);
 				}
@@ -471,21 +472,22 @@ export const ChartSDKAdvanced = () => {
 			orderData.symbol ||
 			currentSymbol.current;
 
-		const newOrder: Order = {
+		const newOrder = {
 			orderId: orderId,
 			datetime: new Date(),
 			timeStamp: new Date().getTime(),
 			lastTradeTimestamp: null,
-			status: "open" as OrderStatus,
+			status: "open",
 			price: order.price || orderData.price || 0,
 			size: orderSize,
 			productId: productId,
 			remainingSize: orderSize,
-			orderType: (order.orderType ||
+			orderType:
+				order.orderType ||
 				orderData.orderType ||
 				orderData.type ||
-				"limit") as SDKOrderType,
-			side: (order.side || orderData.side || "buy") as OrderSide,
+				"limit",
+			side: order.side || orderData.side || "buy",
 			cost: null,
 			trades: [],
 			fee: {
@@ -527,7 +529,7 @@ export const ChartSDKAdvanced = () => {
 			showStopLossButton: true,
 			showTakeProfitButton: true,
 			pnlMultiplier: pnlMultiplier,
-		};
+		} satisfies Order;
 
 		currentOrderBook.current.push(newOrder);
 
@@ -896,7 +898,7 @@ export const ChartSDKAdvanced = () => {
 	// UI Handlers
 	const handleBuyOrder = () => {
 		const orderData: OrderInputData = {
-			side: "buy" as OrderSide,
+			side: "buy",
 			quantity: quantity,
 			orderType: orderType,
 			price: orderType === "limit" ? parseFloat(limitPrice) || 0 : 0,
@@ -912,7 +914,7 @@ export const ChartSDKAdvanced = () => {
 
 	const handleSellOrder = () => {
 		const orderData: OrderInputData = {
-			side: "sell" as OrderSide,
+			side: "sell",
 			quantity: quantity,
 			orderType: orderType,
 			price: orderType === "limit" ? parseFloat(limitPrice) || 0 : 0,
@@ -995,9 +997,7 @@ export const ChartSDKAdvanced = () => {
 							id='order-type'
 							value={orderType}
 							onChange={(e) =>
-								setOrderType(
-									e.target.value as "market" | "limit"
-								)
+								setOrderType(e.target.value as OrderType)
 							}
 						>
 							<option value='market'>Market</option>

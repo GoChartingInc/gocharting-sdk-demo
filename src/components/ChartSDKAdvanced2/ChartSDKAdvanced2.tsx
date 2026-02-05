@@ -24,6 +24,8 @@ interface ExtendedOrder extends Order {
 	hidden?: boolean;
 }
 
+type OrderType = "market" | "limit";
+
 /**
  * Helper function to create a proper SymbolInfo object for demo trading
  */
@@ -102,7 +104,7 @@ export const ChartSDKAdvanced2 = () => {
 			marginAvailable: 100000,
 		},
 	]);
-	const currentOrderBook = useRef<Order[]>([]);
+	const currentOrderBook = useRef<ExtendedOrder[]>([]);
 	const currentTradeBook = useRef<Trade[]>([]);
 	const currentPositions = useRef<Position[]>([]);
 
@@ -129,7 +131,7 @@ export const ChartSDKAdvanced2 = () => {
 	const [quantity, setQuantity] = useState<number>(1);
 	const [stopLoss, setStopLoss] = useState<string>("");
 	const [takeProfit, setTakeProfit] = useState<string>("");
-	const [orderType, setOrderType] = useState<"market" | "limit">("market");
+	const [orderType, setOrderType] = useState<OrderType>("market");
 	const [limitPrice, setLimitPrice] = useState<string>("");
 	const [pnlMultiplier, setPnlMultiplier] = useState<number>(1);
 
@@ -142,7 +144,7 @@ export const ChartSDKAdvanced2 = () => {
 
 		// Filter out hidden orders for chart display
 		const visibleOrders = currentOrderBook.current.filter(
-			(order) => !(order as ExtendedOrder).hidden
+			(order) => !order.hidden
 		);
 
 		const demoBrokerData: GoChartingSDK.BrokerAccountData = {
@@ -258,7 +260,7 @@ export const ChartSDKAdvanced2 = () => {
 			console.log("👁️ Hide order:", orderId);
 			const order = currentOrderBook.current.find(
 				(o) => o.orderId === orderId
-			) as ExtendedOrder | undefined;
+			);
 			if (order) {
 				order.hidden = true;
 				updateChartBrokerData();
@@ -274,7 +276,7 @@ export const ChartSDKAdvanced2 = () => {
 			console.log("👁️ Unhide order:", orderId);
 			const order = currentOrderBook.current.find(
 				(o) => o.orderId === orderId
-			) as ExtendedOrder | undefined;
+			);
 			if (order) {
 				order.hidden = false;
 				updateChartBrokerData();
@@ -375,7 +377,10 @@ export const ChartSDKAdvanced2 = () => {
 		(
 			productId: string,
 			symbol: string,
-			updates: { stopLoss?: number | null; takeProfit?: number | null }
+			updates: {
+				takeProfit?: Order["takeProfit"];
+				stopLoss?: Order["stopLoss"];
+			}
 		) => {
 			console.log("🔍 ===== UPDATE ORDER TP/SL DEBUG =====");
 			console.log("📝 Looking for order with productId:", productId);
@@ -645,7 +650,7 @@ export const ChartSDKAdvanced2 = () => {
 			broker: "demo",
 			productType: "FUTURE",
 			security: newOrder.security,
-		} as Trade;
+		};
 
 		console.log("📝 Created trade:", JSON.stringify(newTrade, null, 2));
 		currentTradeBook.current.push(newTrade);
@@ -740,7 +745,7 @@ export const ChartSDKAdvanced2 = () => {
 				showStopLossButton: true,
 				showTakeProfitButton: true,
 				pnlMultiplier: newOrder.pnlMultiplier || 1,
-			} as Position;
+			};
 
 			console.log(
 				"📝 Created new position:",
@@ -807,7 +812,7 @@ export const ChartSDKAdvanced2 = () => {
 					currentSymbol.current,
 				remainingSize: order.size || 0,
 				orderType: order.orderType || "limit",
-				side: (order.side || "buy") as OrderSide,
+				side: order.side || "buy",
 				cost: null,
 				trades: [],
 				fee: { currency: "USDT", cost: 0, rate: 0 },
@@ -876,14 +881,8 @@ export const ChartSDKAdvanced2 = () => {
 		(originalOrder: Order, orderDetails: Partial<Order>, _ltp: number) => {
 			console.log("🔍 Checking for TP/SL on market order...");
 
-			const tpValue =
-				typeof orderDetails.takeProfit === "string"
-					? parseFloat(orderDetails.takeProfit)
-					: orderDetails.takeProfit;
-			const slValue =
-				typeof orderDetails.stopLoss === "string"
-					? parseFloat(orderDetails.stopLoss)
-					: orderDetails.stopLoss;
+			const tpValue = orderDetails.takeProfit;
+			const slValue = orderDetails.stopLoss;
 
 			const hasTP = tpValue && tpValue > 0;
 			const hasSL = slValue && slValue > 0;
@@ -914,7 +913,7 @@ export const ChartSDKAdvanced2 = () => {
 					showStopLossButton: true,
 					showTakeProfitButton: true,
 					pnlMultiplier: originalOrder.pnlMultiplier || 1,
-				} as Order;
+				};
 				currentOrderBook.current.push(tpOrder);
 				setStatus(`🎯 Take Profit order placed @ $${tpValue}`);
 			}
@@ -938,7 +937,7 @@ export const ChartSDKAdvanced2 = () => {
 					showStopLossButton: true,
 					showTakeProfitButton: true,
 					pnlMultiplier: originalOrder.pnlMultiplier || 1,
-				} as Order;
+				};
 				currentOrderBook.current.push(slOrder);
 				setStatus(`🛑 Stop Loss order placed @ $${slValue}`);
 			}
@@ -1248,9 +1247,7 @@ export const ChartSDKAdvanced2 = () => {
 							id='order-type'
 							value={orderType}
 							onChange={(e) =>
-								setOrderType(
-									e.target.value as "market" | "limit"
-								)
+								setOrderType(e.target.value as OrderType)
 							}
 						>
 							<option value='market'>Market</option>
@@ -1548,22 +1545,10 @@ export const ChartSDKAdvanced2 = () => {
 												) : (
 													currentOrderBook.current.map(
 														(order) => {
-															const extOrder =
-																order as ExtendedOrder;
 															const stopLoss =
-																typeof order.stopLoss ===
-																"string"
-																	? parseFloat(
-																			order.stopLoss
-																		)
-																	: order.stopLoss;
+																order.stopLoss;
 															const takeProfit =
-																typeof order.takeProfit ===
-																"string"
-																	? parseFloat(
-																			order.takeProfit
-																		)
-																	: order.takeProfit;
+																order.takeProfit;
 															return (
 																<tr
 																	key={
@@ -1571,7 +1556,7 @@ export const ChartSDKAdvanced2 = () => {
 																	}
 																	style={{
 																		opacity:
-																			extOrder.hidden
+																			order.hidden
 																				? 0.5
 																				: 1,
 																	}}
@@ -1630,7 +1615,7 @@ export const ChartSDKAdvanced2 = () => {
 																				Cancel
 																			</button>
 																		)}
-																		{extOrder.hidden ? (
+																		{order.hidden ? (
 																			<button
 																				className='action-btn'
 																				onClick={() =>
