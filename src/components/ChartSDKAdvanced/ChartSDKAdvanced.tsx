@@ -10,7 +10,6 @@ import type {
 	Position,
 	OrderSide,
 	OrderType as SDKOrderType,
-	OrderStatus,
 	Datafeed,
 	SymbolInfo,
 } from "@gocharting/chart-sdk";
@@ -502,8 +501,14 @@ export const ChartSDKAdvanced = () => {
 			modifiedAt: null,
 			exchange: security.exchange || "BYBIT",
 			symbol: symbolName,
-			takeProfit: order.takeProfit || orderData.takeProfit || null,
-			stopLoss: order.stopLoss || orderData.stopLoss || null,
+			takeProfit:
+				typeof order.takeProfit === "string"
+					? parseFloat(order.takeProfit)
+					: order.takeProfit || null,
+			stopLoss:
+				typeof order.stopLoss === "string"
+					? parseFloat(order.stopLoss)
+					: order.stopLoss || null,
 			isGC: true,
 			paperTraderKey: null,
 			key: `demo-${
@@ -668,6 +673,7 @@ export const ChartSDKAdvanced = () => {
 				id: positionId,
 				productId: newOrder.productId,
 				symbol: newOrder.symbol,
+				side: newOrder.side,
 				size: orderSizeWithSign,
 				size_currency: Math.abs(newOrder.size),
 				price: executionPrice,

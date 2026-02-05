@@ -122,7 +122,7 @@ export const ChartSDKAdvanced2 = () => {
 	const [symbolPrices, setSymbolPrices] = useState<Record<string, number>>(
 		{}
 	);
-	const [closedPositions, setClosedPositions] = useState<any[]>([]);
+	const [closedPositions, setClosedPositions] = useState<Position[]>([]);
 	// Force update counter to trigger re-renders when refs change
 	const [, forceUpdate] = useState(0);
 	const triggerUpdate = useCallback(() => forceUpdate((n) => n + 1), []);
@@ -214,7 +214,7 @@ export const ChartSDKAdvanced2 = () => {
 					: (avgPrice - exitPrice) * size;
 
 				// Create closed position record
-				const closedPosition = {
+				const closedPosition: Position = {
 					...position,
 					exitPrice: exitPrice,
 					pnl: pnl,
@@ -694,7 +694,7 @@ export const ChartSDKAdvanced2 = () => {
 						(newOrder.side === "buy" && oldSize < 0 ? 1 : 1);
 				if (Math.abs(newSize) < 0.0001) {
 					// Position closed
-					const closedPos = {
+					const closedPos: Position = {
 						...existingPosition,
 						exitPrice: executionPrice,
 						closedAt: new Date().toLocaleTimeString(),
@@ -884,8 +884,8 @@ export const ChartSDKAdvanced2 = () => {
 			const tpValue = orderDetails.takeProfit;
 			const slValue = orderDetails.stopLoss;
 
-			const hasTP = tpValue && tpValue > 0;
-			const hasSL = slValue && slValue > 0;
+			const hasTP = !!tpValue && tpValue > 0;
+			const hasSL = !!slValue && slValue > 0;
 
 			if (!hasTP && !hasSL) {
 				console.log("No TP/SL specified");
@@ -1109,10 +1109,10 @@ export const ChartSDKAdvanced2 = () => {
 						enableTrading: true,
 						showReverseButton: false,
 					},
-					// Use a stable wrapper that calls through the ref to avoid stale closures
-					// SDK calls with (eventType, message, onClose), we convert to event object for type narrowing
 					appCallback: (event) => {
 						console.log("*** APP CALLBACK TRIGGERED ***", event);
+
+						// Use a stable wrapper that calls through the ref to avoid stale closures
 						if (handleAppCallbackRef.current) {
 							// Convert to discriminated union event object for type narrowing
 							handleAppCallbackRef.current(event);
@@ -1152,10 +1152,7 @@ export const ChartSDKAdvanced2 = () => {
 			) {
 				chartWrapperRef.current.destroy();
 			}
-			if (
-				datafeedRef.current &&
-				typeof datafeedRef.current.destroy === "function"
-			) {
+			if (datafeedRef.current && datafeedRef.current.destroy) {
 				datafeedRef.current.destroy();
 			}
 		};
@@ -1379,7 +1376,7 @@ export const ChartSDKAdvanced2 = () => {
 											</thead>
 											<tbody>
 												{currentPositions.current
-													.length === 0 ? (
+													?.length === 0 ? (
 													<tr>
 														<td
 															colSpan={9}
@@ -1389,7 +1386,7 @@ export const ChartSDKAdvanced2 = () => {
 														</td>
 													</tr>
 												) : (
-													currentPositions.current.map(
+													currentPositions.current?.map(
 														(pos) => {
 															// Extract symbol name for LTP lookup
 															const symbolParts =
@@ -1713,7 +1710,7 @@ export const ChartSDKAdvanced2 = () => {
 																	</td>
 																	<td>
 																		$
-																		{pos.exitPrice.toFixed(
+																		{pos.exitPrice?.toFixed(
 																			2
 																		)}
 																	</td>

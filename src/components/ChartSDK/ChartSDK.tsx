@@ -4,7 +4,14 @@ import { Text } from "@/components/Text";
 import { useResponsive } from "@/hooks/useResponsive";
 import { createChartDatafeed } from "@/utils/chart-datafeed";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
-import type { ChartInstance, ChartConfig } from "@gocharting/chart-sdk";
+import type {
+	ChartInstance,
+	ChartConfig,
+	Order,
+	Trade,
+	Position,
+	Account,
+} from "@gocharting/chart-sdk";
 
 // Extract the appCallback type from ChartConfig
 type AppCallback = NonNullable<ChartConfig["appCallback"]>;
@@ -25,20 +32,19 @@ export const ChartSDK = () => {
 
 	// Broker data state
 	const currentSymbol = useRef("BYBIT:FUTURE:BTCUSDT");
-	const currentOrderBook = useRef<any[]>([]);
-	const currentTradeBook = useRef<any[]>([]);
-	const currentPositions = useRef<any[]>([]);
-	const currentAccountList = useRef<any[]>([
+	const currentOrderBook = useRef<Order[]>([]);
+	const currentTradeBook = useRef<Trade[]>([]);
+	const currentPositions = useRef<Position[]>([]);
+	const currentAccountList = useRef<Account[]>([
 		{
-			account_id: "DEMO_001",
-			AccountID: "DEMO_001",
-			AccountType: "Demo Trading",
-			label: "Demo Account (Trading)",
+			id: "DEMO_001",
+			name: "Demo Account (Trading)",
 			currency: "USD",
 			balance: 100000,
-			equity: 100000,
-			margin: 0,
-			freeMargin: 100000,
+			broker: "demo",
+			leverage: 1,
+			marginUsed: 0,
+			marginAvailable: 100000,
 		},
 	]);
 
@@ -222,22 +228,39 @@ export const ChartSDK = () => {
 		const orderId = `ORDER_${Date.now()}_${Math.random()
 			.toString(36)
 			.substring(2, 11)}`;
-		const newOrder = {
+		const newOrder: Order = {
 			orderId: orderId,
 			datetime: new Date(),
 			timeStamp: new Date().getTime(),
-			status: "open",
+			status: "open" as const,
 			price: orderData.order.price,
 			size: orderData.order.size,
 			productId: orderData.order.productId,
 			remainingSize: orderData.order.size,
 			orderType: orderData.order.orderType,
-			side: orderData.order.side,
+			side: orderData.order.side as "buy",
 			exchange: orderData.security.exchange,
 			symbol: orderData.security.symbol,
-			takeProfit: orderData.order.takeProfit,
-			stopLoss: orderData.order.stopLoss,
+			takeProfit: orderData.order.takeProfit
+				? parseFloat(orderData.order.takeProfit)
+				: undefined,
+			stopLoss: orderData.order.stopLoss
+				? parseFloat(orderData.order.stopLoss)
+				: undefined,
 			broker: "demo",
+			productType: "FUTURE",
+			segment: "FUTURE",
+			currency: "USDT",
+			key: `demo-${orderData.order.productId}-${orderId}`,
+			isGC: true,
+			security: {
+				symbol: orderData.security.symbol,
+				exchange: orderData.security.exchange,
+				segment: orderData.security.segment,
+				tick_size: 0.01,
+				lot_size: 0.001,
+				quote_currency: "USDT",
+			},
 		};
 
 		currentOrderBook.current.push(newOrder);
@@ -279,22 +302,39 @@ export const ChartSDK = () => {
 		const orderId = `ORDER_${Date.now()}_${Math.random()
 			.toString(36)
 			.substring(2, 11)}`;
-		const newOrder = {
+		const newOrder: Order = {
 			orderId: orderId,
 			datetime: new Date(),
 			timeStamp: new Date().getTime(),
-			status: "open",
+			status: "open" as const,
 			price: orderData.order.price,
 			size: orderData.order.size,
 			productId: orderData.order.productId,
 			remainingSize: orderData.order.size,
 			orderType: orderData.order.orderType,
-			side: orderData.order.side,
+			side: orderData.order.side as "sell",
 			exchange: orderData.security.exchange,
 			symbol: orderData.security.symbol,
-			takeProfit: orderData.order.takeProfit,
-			stopLoss: orderData.order.stopLoss,
+			takeProfit: orderData.order.takeProfit
+				? parseFloat(orderData.order.takeProfit)
+				: undefined,
+			stopLoss: orderData.order.stopLoss
+				? parseFloat(orderData.order.stopLoss)
+				: undefined,
 			broker: "demo",
+			productType: "FUTURE",
+			segment: "FUTURE",
+			currency: "USDT",
+			key: `demo-${orderData.order.productId}-${orderId}`,
+			isGC: true,
+			security: {
+				symbol: orderData.security.symbol,
+				exchange: orderData.security.exchange,
+				segment: orderData.security.segment,
+				tick_size: 0.01,
+				lot_size: 0.001,
+				quote_currency: "USDT",
+			},
 		};
 
 		currentOrderBook.current.push(newOrder);
