@@ -573,6 +573,13 @@ export const ChartSDKAdvanced2 = () => {
 		setStatus("🔄 Broker data reset");
 	};
 
+	const getAllCharts = () => {
+		if (chartInstanceRef.current) {
+			const multiChartInfo = chartInstanceRef.current.getAllCharts();
+			console.log("Multicharting status:", multiChartInfo);
+		}
+	};
+
 	const placeDemoOrder = (side: OrderSide) => {
 		console.log(`🚀 [Trading Panel] ${side.toUpperCase()} button clicked`);
 
@@ -1034,6 +1041,11 @@ export const ChartSDKAdvanced2 = () => {
 					setStatus("🎛️ Trading widget opened");
 					break;
 
+				case "CHART_SELECTED":
+					console.log("CHART_SELECTED", message);
+					setStatus("CHART_SELECTED");
+					break;
+
 				default:
 					console.log(`🔔 Chart event: ${eventType}`, message);
 					break;
@@ -1109,6 +1121,9 @@ export const ChartSDKAdvanced2 = () => {
 						enableTrading: true,
 						showReverseButton: false,
 					},
+					contextMenu: {
+						showTradingOptions: false,
+					},
 					appCallback: (event) => {
 						console.log("*** APP CALLBACK TRIGGERED ***", event);
 
@@ -1120,6 +1135,7 @@ export const ChartSDKAdvanced2 = () => {
 					},
 					onReady: (chartInstance) => {
 						chartInstanceRef.current = chartInstance;
+
 						setStatus(
 							"Chart loaded with advanced trading features!"
 						);
@@ -1292,6 +1308,12 @@ export const ChartSDKAdvanced2 = () => {
 							onClick={handleResetBrokerData}
 						>
 							🔄 Reset Broker
+						</button>
+						<button
+							className='btn secondary'
+							onClick={getAllCharts}
+						>
+							Get All Charts
 						</button>
 					</div>
 				</div>
