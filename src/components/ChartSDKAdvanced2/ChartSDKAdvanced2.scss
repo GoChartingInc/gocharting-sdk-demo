@@ -345,6 +345,11 @@
 	font-size: 14px;
 }
 
+/* Mobile Bottom Navigation Bar - Hidden on desktop */
+.advanced-trading-container-2 .mobile-bottom-bar {
+	display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
 	.advanced-trading-container-2 .main-layout {
@@ -384,5 +389,66 @@
 
 	.advanced-trading-container-2 .account-tab {
 		flex: 1 1 33%;
+	}
+
+	/* Add padding to prevent chart overlap with bottom bar */
+	.advanced-trading-container-2 {
+		padding-bottom: 70px;
+	}
+
+	/* Show mobile bottom bar */
+	.advanced-trading-container-2 .mobile-bottom-bar {
+		display: flex;
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 60px;
+		background: rgba(19, 23, 34, 0.98);
+		backdrop-filter: blur(10px);
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		padding: 5px 10px;
+		justify-content: space-around;
+		align-items: center;
+		box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+	}
+
+	.advanced-trading-container-2 .bottom-bar-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+		flex: 1;
+		padding: 8px;
+		background: transparent;
+		border: none;
+		color: #8a8a8a;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		border-radius: 8px;
+	}
+
+	.advanced-trading-container-2 .bottom-bar-item .icon {
+		font-size: 22px;
+		line-height: 1;
+	}
+
+	.advanced-trading-container-2 .bottom-bar-item .label {
+		font-size: 10px;
+		font-weight: 500;
+		text-transform: capitalize;
+	}
+
+	.advanced-trading-container-2 .bottom-bar-item:active {
+		transform: scale(0.95);
+	}
+
+	.advanced-trading-container-2 .bottom-bar-item.active {
+		color: #4a90e2;
+	}
+
+	.advanced-trading-container-2 .bottom-bar-item.active .icon {
+		filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.5));
 	}
 }

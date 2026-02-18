@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import { createChartDatafeed } from "@/utils/chart-datafeed";
 import type {
@@ -18,6 +18,7 @@ import type {
 	ModifyPositionMessage,
 } from "@gocharting/chart-sdk";
 import "./ChartSDKAdvanced2.scss";
+import { createTwelveDataChartDatafeed } from "@/utils/twelve-chart-datafeed";
 
 // Extended Order type with additional trading properties (hidden is not in SDK)
 interface ExtendedOrder extends Order {
@@ -85,6 +86,10 @@ const WATCHLIST_SYMBOLS = [
 ];
 
 export const ChartSDKAdvanced2 = () => {
+	const [searchParams] = useSearchParams();
+	const datafeed = (searchParams.get("datafeed") ?? "bybit") as
+		| "bybit"
+		| "twelvedata";
 	const chartContainerRef = useRef<HTMLDivElement>(null);
 	const chartInstanceRef = useRef<ChartInstance | null>(null);
 	const chartWrapperRef = useRef<ChartWrapper | null>(null);
@@ -1105,25 +1110,32 @@ export const ChartSDKAdvanced2 = () => {
 				setStatus("Creating chart...");
 
 				// Create datafeed
-				const datafeed = createChartDatafeed();
-				datafeedRef.current = datafeed;
+				const currentDatafeed =
+					datafeed === "bybit"
+						? createChartDatafeed()
+						: createTwelveDataChartDatafeed();
+				datafeedRef.current = currentDatafeed;
 
 				const chartConfig = {
-					symbol: "BYBIT:FUTURE:BTCUSDT",
-					interval: "1D",
-					datafeed: datafeed,
+					symbol:
+						datafeed === "bybit"
+							? "BYBIT:FUTURE:BTCUSDT"
+							: "Coinbase Pro:SPOT:BTC/USD",
+					interval: "1m",
+					datafeed: currentDatafeed,
 					debugLog: true,
 					licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
 					theme: "dark",
-					disableSearch: true,
+					disableSearch: false,
 					disableCompare: true,
 					trading: {
 						enableTrading: true,
 						showReverseButton: false,
 					},
 					contextMenu: {
-						showTradingOptions: false,
+						showTradingOptions: true,
 					},
+
 					appCallback: (event) => {
 						console.log("*** APP CALLBACK TRIGGERED ***", event);
 
@@ -1769,6 +1781,26 @@ export const ChartSDKAdvanced2 = () => {
 				</div>
 
 				<div className='status'>{status}</div>
+
+				{/* Mobile Bottom Navigation Bar - Demo */}
+				<div className='mobile-bottom-bar'>
+					<button className='bottom-bar-item active'>
+						<span className='icon'>🏠</span>
+						<span className='label'>Home</span>
+					</button>
+					<button className='bottom-bar-item'>
+						<span className='icon'>📊</span>
+						<span className='label'>Markets</span>
+					</button>
+					<button className='bottom-bar-item'>
+						<span className='icon'>💼</span>
+						<span className='label'>Portfolio</span>
+					</button>
+					<button className='bottom-bar-item'>
+						<span className='icon'>💰</span>
+						<span className='label'>Funds</span>
+					</button>
+				</div>
 			</div>
 		</div>
 	);
