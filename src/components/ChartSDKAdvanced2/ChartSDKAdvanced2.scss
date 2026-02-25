@@ -362,13 +362,7 @@
 	}
 
 	.advanced-trading-container-2 .symbol-list {
-		flex-direction: row;
-		flex-wrap: wrap;
-	}
-
-	.advanced-trading-container-2 .symbol-btn {
-		flex: 1;
-		min-width: 100px;
+		flex-direction: column;
 	}
 
 	.advanced-trading-container-2 .trading-panel {

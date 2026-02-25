@@ -77,13 +77,21 @@ interface DemoAccount {
 	freeMargin?: number;
 }
 
-// Watchlist symbols
+// Watchlist symbols (always Bybit format — prices fetched from Bybit API)
 const WATCHLIST_SYMBOLS = [
 	{ symbol: "BYBIT:FUTURE:BTCUSDT", name: "BTCUSDT" },
 	{ symbol: "BYBIT:FUTURE:ETHUSDT", name: "ETHUSDT" },
 	{ symbol: "BYBIT:FUTURE:SOLUSDT", name: "SOLUSDT" },
 	{ symbol: "BYBIT:FUTURE:XRPUSDT", name: "XRPUSDT" },
 ];
+
+// Map Bybit watchlist symbols → Twelve Data chart symbols
+const BYBIT_TO_TWELVEDATA_SYMBOL: Record<string, string> = {
+	"BYBIT:FUTURE:BTCUSDT": "Coinbase Pro:SPOT:BTC/USD",
+	"BYBIT:FUTURE:ETHUSDT": "Coinbase Pro:SPOT:ETH/USD",
+	"BYBIT:FUTURE:SOLUSDT": "Coinbase Pro:SPOT:SOL/USD",
+	"BYBIT:FUTURE:XRPUSDT": "Coinbase Pro:SPOT:XRP/USD",
+};
 
 export const ChartSDKAdvanced2 = () => {
 	const [searchParams] = useSearchParams();
@@ -549,11 +557,16 @@ export const ChartSDKAdvanced2 = () => {
 	// Symbol switching
 	const handleSymbolChange = (symbol: string) => {
 		setSelectedSymbol(symbol);
-		currentSymbol.current = symbol;
+		currentSymbol.current = symbol; // Always Bybit format for internal trading logic
 
 		if (chartInstanceRef.current) {
 			try {
-				chartInstanceRef.current.setSymbol(symbol);
+				// When using Twelve Data datafeed, map Bybit symbol to Twelve Data equivalent
+				const chartSymbol =
+					datafeed === "twelvedata"
+						? (BYBIT_TO_TWELVEDATA_SYMBOL[symbol] ?? symbol)
+						: symbol;
+				chartInstanceRef.current.setSymbol(chartSymbol);
 			} catch (error) {
 				console.error("Failed to change symbol:", error);
 			}
@@ -1050,6 +1063,12 @@ export const ChartSDKAdvanced2 = () => {
 					console.log("CHART_SELECTED", message);
 					setStatus("CHART_SELECTED");
 					break;
+
+                case 'CHART_MODE_CHANGED':
+                    console.log("CHART_MODE_CHANGED", message);
+                    setStatus("CHART_MODE_CHANGED");
+                    console.log("MultiCharting Enabled: %s", message.isMultichartingEnabled ? "Yes" : "No")
+                    break;
 
 				default:
 					console.log(`🔔 Chart event: ${eventType}`, message);

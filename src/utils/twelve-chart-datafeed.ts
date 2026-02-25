@@ -616,18 +616,21 @@ export const createTwelveDataChartDatafeed = (): Datafeed => {
 
 			const url = new URL("https://api.twelvedata.com/time_series");
 			const symbol = symbolInfo.symbol || symbolInfo.ticker || "";
+			const exchange = symbolInfo.exchange || "";
 
 			if (firstDataRequest) {
 				// Use current time to get recent data up to today
 				const currentTime = Date.now();
-				url.search = new URLSearchParams({
+				const params: Record<string, string> = {
 					apikey: API_KEY,
 					symbol: symbol,
 					interval: twelveDataInterval,
 					outputsize: rows?.toString() || "200",
 					end_date: new Date(currentTime).toISOString(),
 					format: "JSON",
-				}).toString();
+				};
+				if (exchange) params.exchange = exchange;
+				url.search = new URLSearchParams(params).toString();
 			} else {
 				// Convert to milliseconds if needed (from is in seconds in SDK)
 				const startDate =
@@ -637,7 +640,7 @@ export const createTwelveDataChartDatafeed = (): Datafeed => {
 				const endDate =
 					typeof to === "number" ? to * 1000 : (to as Date).getTime();
 
-				url.search = new URLSearchParams({
+				const params: Record<string, string> = {
 					apikey: API_KEY,
 					symbol: symbol,
 					interval: twelveDataInterval,
@@ -645,7 +648,9 @@ export const createTwelveDataChartDatafeed = (): Datafeed => {
 					end_date: new Date(endDate).toISOString(),
 					outputsize: rows?.toString() || "200",
 					format: "JSON",
-				}).toString();
+				};
+				if (exchange) params.exchange = exchange;
+				url.search = new URLSearchParams(params).toString();
 			}
 
 			const response = await fetch(url);
