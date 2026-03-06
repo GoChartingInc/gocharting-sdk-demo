@@ -1,4 +1,5 @@
 const path = require('path');
+const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
 
 module.exports = {
   webpack: {
@@ -7,6 +8,11 @@ module.exports = {
       '@gocharting/chart-sdk': path.resolve(__dirname, '../gocharting-web-sdk/GoCharting-SDK/dist'),
     },
     configure: (webpackConfig) => {
+      // Allow imports from outside src/ (needed for local SDK alias)
+      webpackConfig.resolve.plugins = webpackConfig.resolve.plugins.filter(
+        plugin => !(plugin instanceof ModuleScopePlugin)
+      );
+
       webpackConfig.watchOptions = {
         ...webpackConfig.watchOptions,
         ignored: /node_modules\/(?!@gocharting)/,
