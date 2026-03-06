@@ -1163,11 +1163,12 @@ export const ChartSDKAdvanced2 = () => {
 				debugLog: true,
 				licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
 				theme: "dark",
-				disableSearch: true,
-				disableCompare: true,
+				disableSearch: false,
+				disableCompare: false,
+				autoSave: true,
 				trading: {
 					enableTrading: true,
-					showReverseButton: false,
+					showReverseButton: true,
 				},
 				contextMenu: {
 					showTradingOptions: true,
@@ -1185,9 +1186,7 @@ export const ChartSDKAdvanced2 = () => {
 				onReady: (chartInstance) => {
 					chartInstanceRef.current = chartInstance;
 
-					setStatus(
-						"Chart loaded with advanced trading features!"
-					);
+					setStatus("Chart loaded with advanced trading features!");
 					setupDemoBrokerData(chartInstance);
 				},
 				onError: (error) => {
@@ -1210,10 +1209,7 @@ export const ChartSDKAdvanced2 = () => {
 	}, []);
 
 	const destroyChart = useCallback(() => {
-		if (
-			chartWrapperRef.current &&
-			!chartWrapperRef.current.isDestroyed()
-		) {
+		if (chartWrapperRef.current && !chartWrapperRef.current.isDestroyed()) {
 			chartWrapperRef.current.destroy();
 		}
 		if (datafeedRef.current && datafeedRef.current.destroy) {
@@ -1429,8 +1425,18 @@ export const ChartSDKAdvanced2 = () => {
 								</div>
 							</div>
 						) : (
-							<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#888", fontSize: "16px" }}>
-								Chart is unmounted. Click "Mount Chart" to re-initialize.
+							<div
+								style={{
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									height: "100%",
+									color: "#888",
+									fontSize: "16px",
+								}}
+							>
+								Chart is unmounted. Click "Mount Chart" to
+								re-initialize.
 							</div>
 						)}
 
@@ -1456,12 +1462,14 @@ export const ChartSDKAdvanced2 = () => {
 									✅ Closed Positions
 								</button>
 								<button
-									className="toggle-chart-btn"
+									className='toggle-chart-btn'
 									onClick={toggleChart}
 									style={{
 										marginLeft: "auto",
 										padding: "6px 16px",
-										backgroundColor: isChartMounted ? "#e74c3c" : "#27ae60",
+										backgroundColor: isChartMounted
+											? "#e74c3c"
+											: "#27ae60",
 										color: "#fff",
 										border: "none",
 										borderRadius: "4px",
@@ -1473,7 +1481,9 @@ export const ChartSDKAdvanced2 = () => {
 										flexShrink: 0,
 									}}
 								>
-									{isChartMounted ? "Unmount Chart" : "Mount Chart"}
+									{isChartMounted
+										? "Unmount Chart"
+										: "Mount Chart"}
 								</button>
 							</div>
 							<div className='account-content'>
