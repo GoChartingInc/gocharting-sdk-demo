@@ -98,11 +98,17 @@ export const ChartSDKAdvanced2 = () => {
 	const datafeed = (searchParams.get("datafeed") ?? "bybit") as
 		| "bybit"
 		| "twelvedata";
+	const chartSymbol = searchParams.get("symbol");
 	const chartContainerRef = useRef<HTMLDivElement>(null);
 	const chartInstanceRef = useRef<ChartInstance | null>(null);
 	const chartWrapperRef = useRef<ChartWrapper | null>(null);
 	const datafeedRef = useRef<Datafeed | null>(null);
-	const currentSymbol = useRef<string>("BYBIT:FUTURE:BTCUSDT");
+	const currentSymbol = useRef<string>(
+		chartSymbol ??
+			(datafeed === "bybit"
+				? "BYBIT:FUTURE:BTCUSDT"
+				: "Coinbase Pro:SPOT:BTC/USD")
+	);
 
 	// Trading data refs
 	const currentAccountList = useRef<DemoAccount[]>([
@@ -147,6 +153,7 @@ export const ChartSDKAdvanced2 = () => {
 	const [orderType, setOrderType] = useState<OrderType>("market");
 	const [limitPrice, setLimitPrice] = useState<string>("");
 	const [pnlMultiplier, setPnlMultiplier] = useState<number>(1);
+	const [isChartMounted, setIsChartMounted] = useState<boolean>(true);
 
 	// Helper methods
 	const updateChartBrokerData = useCallback(() => {
@@ -1064,11 +1071,14 @@ export const ChartSDKAdvanced2 = () => {
 					setStatus("CHART_SELECTED");
 					break;
 
-                case 'CHART_MODE_CHANGED':
-                    console.log("CHART_MODE_CHANGED", message);
-                    setStatus("CHART_MODE_CHANGED");
-                    console.log("MultiCharting Enabled: %s", message.isMultichartingEnabled ? "Yes" : "No")
-                    break;
+				case "CHART_MODE_CHANGED":
+					console.log("CHART_MODE_CHANGED", message);
+					setStatus("CHART_MODE_CHANGED");
+					console.log(
+						"MultiCharting Enabled: %s",
+						message.isMultichartingEnabled ? "Yes" : "No"
+					);
+					break;
 
 				default:
 					console.log(`🔔 Chart event: ${eventType}`, message);
@@ -1122,89 +1132,120 @@ export const ChartSDKAdvanced2 = () => {
 		return () => clearInterval(interval);
 	}, []);
 
-	// Chart initialization
-	useEffect(() => {
-		const initChart = async () => {
-			try {
-				setStatus("Creating chart...");
+	const initChart = useCallback(async () => {
+		try {
+			setStatus("Creating chart...");
 
-				// Create datafeed
-				const currentDatafeed =
-					datafeed === "bybit"
-						? createChartDatafeed()
-						: createTwelveDataChartDatafeed();
-				datafeedRef.current = currentDatafeed;
+			// Create datafeed
+			const currentDatafeed =
+				datafeed === "bybit"
+					? createChartDatafeed()
+					: createTwelveDataChartDatafeed();
+			datafeedRef.current = currentDatafeed;
 
-				const chartConfig = {
-					symbol:
-						datafeed === "bybit"
-							? "BYBIT:FUTURE:BTCUSDT"
-							: "Coinbase Pro:SPOT:BTC/USD",
-					interval: "1m",
-					datafeed: currentDatafeed,
-					debugLog: true,
-					licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
-					theme: "dark",
-					disableSearch: false,
-					disableCompare: true,
-					trading: {
-						enableTrading: true,
-						showReverseButton: false,
-					},
-					contextMenu: {
-						showTradingOptions: true,
-					},
+			console.log({
+				chartSymbol,
+				symbol:
+					chartSymbol ??
+					(datafeed === "bybit"
+						? "BYBIT:FUTURE:BTCUSDT"
+						: "Coinbase Pro:SPOT:BTC/USD"),
+			});
 
-					appCallback: (event) => {
-						console.log("*** APP CALLBACK TRIGGERED ***", event);
+			const chartConfig = {
+				symbol:
+					chartSymbol ??
+					(datafeed === "bybit"
+						? "BYBIT:FUTURE:BTCUSDT"
+						: "Coinbase Pro:SPOT:BTC/USD"),
+				interval: "1m",
+				datafeed: currentDatafeed,
+				debugLog: true,
+				licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
+				theme: "dark",
+				disableSearch: true,
+				disableCompare: true,
+				trading: {
+					enableTrading: true,
+					showReverseButton: false,
+				},
+				contextMenu: {
+					showTradingOptions: true,
+				},
 
-						// Use a stable wrapper that calls through the ref to avoid stale closures
-						if (handleAppCallbackRef.current) {
-							// Convert to discriminated union event object for type narrowing
-							handleAppCallbackRef.current(event);
-						}
-					},
-					onReady: (chartInstance) => {
-						chartInstanceRef.current = chartInstance;
+				appCallback: (event) => {
+					console.log("*** APP CALLBACK TRIGGERED ***", event);
 
-						setStatus(
-							"Chart loaded with advanced trading features!"
-						);
-						setupDemoBrokerData(chartInstance);
-					},
-					onError: (error) => {
-						console.error("Chart creation error:", error);
-						setStatus(
-							`❌ Error creating chart: ${typeof error === "string" ? error : error.message}`
-						);
-					},
-				} satisfies ChartConfig;
+					// Use a stable wrapper that calls through the ref to avoid stale closures
+					if (handleAppCallbackRef.current) {
+						// Convert to discriminated union event object for type narrowing
+						handleAppCallbackRef.current(event);
+					}
+				},
+				onReady: (chartInstance) => {
+					chartInstanceRef.current = chartInstance;
 
-				chartWrapperRef.current = GoChartingSDK.createChart(
-					"#gocharting-chart-container-advanced2",
-					chartConfig
-				);
-			} catch (error) {
-				console.error("Error initializing chart:", error);
-				setStatus("Failed to initialize chart");
-			}
-		};
+					setStatus(
+						"Chart loaded with advanced trading features!"
+					);
+					setupDemoBrokerData(chartInstance);
+				},
+				onError: (error) => {
+					console.error("Chart creation error:", error);
+					setStatus(
+						`❌ Error creating chart: ${typeof error === "string" ? error : error.message}`
+					);
+				},
+			} satisfies ChartConfig;
 
-		initChart();
-
-		return () => {
-			if (
-				chartWrapperRef.current &&
-				!chartWrapperRef.current.isDestroyed()
-			) {
-				chartWrapperRef.current.destroy();
-			}
-			if (datafeedRef.current && datafeedRef.current.destroy) {
-				datafeedRef.current.destroy();
-			}
-		};
+			chartWrapperRef.current = GoChartingSDK.createChart(
+				"#gocharting-chart-container-advanced2",
+				chartConfig
+			);
+		} catch (error) {
+			console.error("Error initializing chart:", error);
+			setStatus("Failed to initialize chart");
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const destroyChart = useCallback(() => {
+		if (
+			chartWrapperRef.current &&
+			!chartWrapperRef.current.isDestroyed()
+		) {
+			chartWrapperRef.current.destroy();
+		}
+		if (datafeedRef.current && datafeedRef.current.destroy) {
+			datafeedRef.current.destroy();
+		}
+		chartWrapperRef.current = null;
+		chartInstanceRef.current = null;
+		datafeedRef.current = null;
+	}, []);
+
+	const toggleChart = useCallback(() => {
+		if (isChartMounted) {
+			destroyChart();
+			setIsChartMounted(false);
+			setStatus("Chart unmounted");
+		} else {
+			setIsChartMounted(true);
+			// initChart will run after re-render via the effect below
+		}
+	}, [isChartMounted, destroyChart]);
+
+	// Chart initialization
+	useEffect(() => {
+		if (isChartMounted) {
+			initChart();
+		}
+
+		return () => {
+			destroyChart();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isChartMounted]);
 
 	return (
 		<div className='advanced-trading-container-2'>
@@ -1378,14 +1419,20 @@ export const ChartSDKAdvanced2 = () => {
 
 					{/* Chart Area */}
 					<div className='chart-area'>
-						<div
-							ref={chartContainerRef}
-							id='gocharting-chart-container-advanced2'
-						>
-							<div className='loading'>
-								Loading advanced trading chart...
+						{isChartMounted ? (
+							<div
+								ref={chartContainerRef}
+								id='gocharting-chart-container-advanced2'
+							>
+								<div className='loading'>
+									Loading advanced trading chart...
+								</div>
 							</div>
-						</div>
+						) : (
+							<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#888", fontSize: "16px" }}>
+								Chart is unmounted. Click "Mount Chart" to re-initialize.
+							</div>
+						)}
 
 						{/* Account Manager */}
 						<div className='account-manager'>
@@ -1407,6 +1454,26 @@ export const ChartSDKAdvanced2 = () => {
 									onClick={() => setActiveTab("closed")}
 								>
 									✅ Closed Positions
+								</button>
+								<button
+									className="toggle-chart-btn"
+									onClick={toggleChart}
+									style={{
+										marginLeft: "auto",
+										padding: "6px 16px",
+										backgroundColor: isChartMounted ? "#e74c3c" : "#27ae60",
+										color: "#fff",
+										border: "none",
+										borderRadius: "4px",
+										cursor: "pointer",
+										fontSize: "12px",
+										fontWeight: "600",
+										alignSelf: "center",
+										marginRight: "8px",
+										flexShrink: 0,
+									}}
+								>
+									{isChartMounted ? "Unmount Chart" : "Mount Chart"}
 								</button>
 							</div>
 							<div className='account-content'>

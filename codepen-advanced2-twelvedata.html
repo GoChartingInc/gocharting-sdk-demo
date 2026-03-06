@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>GoCharting SDK - Advanced Trading (Twelve Data)</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				background: #131722;
+				color: white;
+				min-height: 100vh;
+				padding: 10px;
+			}
+
+			.container {
+				max-width: 1400px;
+				margin: 0 auto;
+			}
+
+			.header {
+				text-align: center;
+				margin-bottom: 20px;
+			}
+
+			.header h1 {
+				font-size: 2.2rem;
+				margin-bottom: 8px;
+				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+			}
+
+			.header p {
+				font-size: 1rem;
+				opacity: 0.9;
+			}
+
+			/* Trading Panel Styles */
+			.trading-panel {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+				gap: 15px;
+				background: #1e222d;
+				padding: 20px;
+				border-radius: 12px;
+				margin-bottom: 15px;
+				border: 1px solid #2a2e39;
+			}
+
+			.trading-group {
+				display: flex;
+				flex-direction: column;
+				gap: 5px;
+			}
+
+			.trading-group label {
+				font-size: 12px;
+				font-weight: 600;
+				color: #b0b0b0;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.trading-group input,
+			.trading-group select {
+				padding: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				border-radius: 6px;
+				background: rgba(255, 255, 255, 0.1);
+				color: white;
+				font-size: 14px;
+				transition: all 0.3s ease;
+			}
+
+			.trading-group input:focus,
+			.trading-group select:focus {
+				outline: none;
+				border-color: #4a90e2;
+				background: rgba(255, 255, 255, 0.15);
+			}
+
+			.trading-group input:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			.trading-buttons {
+				grid-column: 1 / -1;
+				display: flex;
+				gap: 15px;
+				justify-content: center;
+				margin-top: 10px;
+			}
+
+			.btn {
+				border: none;
+				padding: 12px 24px;
+				border-radius: 8px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: 600;
+				transition: all 0.3s ease;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				color: white;
+				min-width: 100px;
+			}
+
+			.btn:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+			}
+
+			.btn.buy {
+				background: linear-gradient(135deg, #28a745, #20c997);
+			}
+
+			.btn.buy:hover {
+				background: linear-gradient(135deg, #218838, #1ea085);
+				box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+			}
+
+			.btn.sell {
+				background: linear-gradient(135deg, #dc3545, #e74c3c);
+			}
+
+			.btn.sell:hover {
+				background: linear-gradient(135deg, #c82333, #dc2626);
+				box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+			}
+
+			.btn.secondary {
+				background: linear-gradient(135deg, #6c757d, #545b62);
+			}
+
+			.btn.secondary:hover {
+				background: linear-gradient(135deg, #545b62, #495057);
+			}
+
+			/* Main Layout - Sidebar + Chart + Account Manager */
+			.main-layout {
+				display: flex;
+				gap: 10px;
+				margin-bottom: 15px;
+			}
+
+			/* Sidebar - Symbol Watchlist */
+			.sidebar {
+				width: 200px;
+				flex-shrink: 0;
+				background: rgba(30, 30, 40, 0.95);
+				border-radius: 12px;
+				padding: 15px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.sidebar h3 {
+				font-size: 14px;
+				color: #b0b0b0;
+				margin-bottom: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				padding-bottom: 10px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.symbol-list {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+
+			.symbol-btn {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 12px 14px;
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				color: white;
+				font-size: 13px;
+				font-weight: 500;
+			}
+
+			.symbol-btn:hover {
+				background: rgba(74, 144, 226, 0.2);
+				border-color: rgba(74, 144, 226, 0.5);
+			}
+
+			.symbol-btn.active {
+				background: rgba(74, 144, 226, 0.3);
+				border-color: #4a90e2;
+			}
+
+			.symbol-btn .symbol-name {
+				font-weight: 600;
+			}
+
+			.symbol-btn .symbol-price {
+				font-size: 11px;
+				color: #8bc34a;
+			}
+
+			.symbol-btn .symbol-price.negative {
+				color: #f44336;
+			}
+
+			/* Chart Container - Flex grow */
+			.chart-area {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+
+			#chart-container {
+				width: 100%;
+				height: 500px;
+				border-radius: 12px;
+				overflow: hidden;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+				background: #1a1a1a;
+			}
+
+			/* Account Manager */
+			.account-manager {
+				background: rgba(30, 30, 40, 0.95);
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				overflow: hidden;
+			}
+
+			.account-tabs {
+				display: flex;
+				background: rgba(0, 0, 0, 0.3);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.account-tab {
+				flex: 1;
+				padding: 12px 20px;
+				background: transparent;
+				border: none;
+				color: #b0b0b0;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				border-bottom: 2px solid transparent;
+			}
+
+			.account-tab:hover {
+				color: white;
+				background: rgba(255, 255, 255, 0.05);
+			}
+
+			.account-tab.active {
+				color: #4a90e2;
+				border-bottom-color: #4a90e2;
+				background: rgba(74, 144, 226, 0.1);
+			}
+
+			.account-content {
+				padding: 0;
+				max-height: 200px;
+				overflow-y: auto;
+			}
+
+			.account-panel {
+				display: none;
+			}
+
+			.account-panel.active {
+				display: block;
+			}
+
+			.account-table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 12px;
+			}
+
+			.account-table th {
+				background: rgba(0, 0, 0, 0.3);
+				padding: 10px 12px;
+				text-align: left;
+				color: #b0b0b0;
+				font-weight: 600;
+				text-transform: uppercase;
+				font-size: 11px;
+				letter-spacing: 0.5px;
+				position: sticky;
+				top: 0;
+			}
+
+			.account-table td {
+				padding: 10px 12px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+				color: #e0e0e0;
+			}
+
+			.account-table tr:hover td {
+				background: rgba(255, 255, 255, 0.03);
+			}
+
+			.account-table .positive {
+				color: #8bc34a;
+			}
+
+			.account-table .negative {
+				color: #f44336;
+			}
+
+			.account-table .action-btn {
+				padding: 4px 10px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 11px;
+				font-weight: 500;
+				margin-right: 4px;
+			}
+
+			.account-table .close-btn {
+				background: rgba(244, 67, 54, 0.2);
+				color: #f44336;
+			}
+
+			.account-table .close-btn:hover {
+				background: rgba(244, 67, 54, 0.4);
+			}
+
+			.account-table .modify-btn {
+				background: rgba(74, 144, 226, 0.2);
+				color: #4a90e2;
+			}
+
+			.account-table .modify-btn:hover {
+				background: rgba(74, 144, 226, 0.4);
+			}
+
+			.empty-message {
+				padding: 30px;
+				text-align: center;
+				color: #666;
+				font-size: 13px;
+			}
+
+			.loading {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 100%;
+				font-size: 18px;
+			}
+
+			.status {
+				margin-top: 15px;
+				padding: 15px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				text-align: center;
+				font-size: 14px;
+			}
+
+			@media (max-width: 768px) {
+				.main-layout {
+					flex-direction: column;
+				}
+
+				.sidebar {
+					width: 100%;
+					order: 2;
+				}
+
+				.symbol-list {
+					flex-direction: row;
+					flex-wrap: wrap;
+				}
+
+				.symbol-btn {
+					flex: 1;
+					min-width: 100px;
+				}
+
+				.trading-panel {
+					grid-template-columns: 1fr;
+				}
+
+				.trading-buttons {
+					flex-direction: column;
+				}
+
+				#chart-container {
+					height: 350px;
+				}
+
+				.account-tabs {
+					flex-wrap: wrap;
+				}
+
+				.account-tab {
+					flex: 1 1 33%;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>📈 GoCharting SDK - Advanced Trading (Twelve Data)</h1>
+				<p>
+					Professional Financial Charts with Integrated Trading
+					Interface ⚡
+				</p>
+			</div>
+
+			<!-- Trading Panel -->
+			<div class="trading-panel">
+				<div class="trading-group">
+					<label for="quantity">Quantity</label>
+					<input
+						type="number"
+						id="quantity"
+						placeholder="1"
+						value="1"
+						min="1"
+						step="1"
+					/>
+				</div>
+
+				<div class="trading-group">
+					<label for="stop-loss">Stop Loss</label>
+					<input
+						type="number"
+						id="stop-loss"
+						placeholder="180"
+						step="0.01"
+					/>
+				</div>
+
+				<div class="trading-group">
+					<label for="take-profit">Take Profit</label>
+					<input
+						type="number"
+						id="take-profit"
+						placeholder="220"
+						step="0.01"
+					/>
+				</div>
+
+				<div class="trading-group">
+					<label for="order-type">Order Type</label>
+					<select id="order-type">
+						<option value="market">Market</option>
+						<option value="limit">Limit</option>
+					</select>
+				</div>
+
+				<div class="trading-group">
+					<label for="limit-price">Limit Price</label>
+					<input
+						type="number"
+						id="limit-price"
+						placeholder="200"
+						step="0.01"
+						disabled
+					/>
+				</div>
+
+				<div class="trading-group">
+					<label for="pnl-multiplier">PnL Multiplier</label>
+					<input
+						type="number"
+						id="pnl-multiplier"
+						placeholder="1"
+						value="1"
+						min="0.001"
+						step="0.001"
+					/>
+				</div>
+
+				<div class="trading-buttons">
+					<button id="buy-btn" class="btn buy">🚀 BUY</button>
+					<button id="sell-btn" class="btn sell">📉 SELL</button>
+					<button id="reset-broker-btn" class="btn secondary">
+						🔄 Reset Broker
+					</button>
+					<button id="get-all-charts-btn" class="btn secondary" onclick="getAllCharts()">
+						Get All Charts
+					</button>
+				</div>
+			</div>
+
+			<!-- Main Layout: Sidebar + Chart + Account Manager -->
+			<div class="main-layout">
+				<!-- Sidebar - Symbol Watchlist -->
+				<div class="sidebar">
+					<h3>📊 Watchlist</h3>
+					<div class="symbol-list" id="symbol-list">
+						<button
+							class="symbol-btn active"
+							data-symbol="BYBIT:FUTURE:BTCUSDT"
+						>
+							<span class="symbol-name">BTCUSDT</span>
+							<span class="symbol-price" id="price-BTCUSDT">--</span>
+						</button>
+						<button
+							class="symbol-btn"
+							data-symbol="BYBIT:FUTURE:ETHUSDT"
+						>
+							<span class="symbol-name">ETHUSDT</span>
+							<span class="symbol-price" id="price-ETHUSDT">--</span>
+						</button>
+						<button
+							class="symbol-btn"
+							data-symbol="BYBIT:FUTURE:SOLUSDT"
+						>
+							<span class="symbol-name">SOLUSDT</span>
+							<span class="symbol-price" id="price-SOLUSDT">--</span>
+						</button>
+						<button
+							class="symbol-btn"
+							data-symbol="BYBIT:FUTURE:XRPUSDT"
+						>
+							<span class="symbol-name">XRPUSDT</span>
+							<span class="symbol-price" id="price-XRPUSDT">--</span>
+						</button>
+					</div>
+				</div>
+
+				<!-- Chart Area -->
+				<div class="chart-area">
+					<div id="chart-container">
+						<div class="loading">
+							Loading advanced trading chart...
+						</div>
+					</div>
+
+					<!-- Account Manager -->
+					<div class="account-manager">
+						<div class="account-tabs">
+							<button
+								class="account-tab active"
+								data-tab="positions"
+							>
+								📊 Open Positions
+							</button>
+							<button class="account-tab" data-tab="orders">
+								📋 Pending Orders
+							</button>
+							<button class="account-tab" data-tab="closed">
+								✅ Closed Positions
+							</button>
+						</div>
+						<div class="account-content">
+							<!-- Open Positions Panel -->
+							<div
+								class="account-panel active"
+								id="positions-panel"
+							>
+								<table class="account-table">
+									<thead>
+										<tr>
+											<th>Instrument</th>
+											<th>Type</th>
+											<th>Amount</th>
+											<th>Avg Price</th>
+											<th>Current Price</th>
+											<th>P&L</th>
+											<th>Take Profit</th>
+											<th>Stop Loss</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody id="positions-body">
+										<tr>
+											<td
+												colspan="9"
+												class="empty-message"
+											>
+												No open positions
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<!-- Pending Orders Panel -->
+							<div class="account-panel" id="orders-panel">
+								<table class="account-table">
+									<thead>
+										<tr>
+											<th>Instrument</th>
+											<th>Type</th>
+											<th>Side</th>
+											<th>Amount</th>
+											<th>Price</th>
+											<th>Stop Loss</th>
+											<th>Take Profit</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody id="orders-body">
+										<tr>
+											<td
+												colspan="8"
+												class="empty-message"
+											>
+												No pending orders
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<!-- Closed Positions Panel -->
+							<div class="account-panel" id="closed-panel">
+								<table class="account-table">
+									<thead>
+										<tr>
+											<th>Instrument</th>
+											<th>Type</th>
+											<th>Amount</th>
+											<th>Entry Price</th>
+											<th>Exit Price</th>
+											<th>P&L</th>
+											<th>Closed At</th>
+										</tr>
+									</thead>
+									<tbody id="closed-body">
+										<tr>
+											<td
+												colspan="7"
+												class="empty-message"
+											>
+												No closed positions
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="status" class="status">
+				Ready to load advanced trading chart...
+			</div>
+		</div>
+
+		<!-- GoCharting SDK - Local Build -->
+		<!--<script src="https://gocharting.com/sdk/library/demo-550e8400-e29b-41d4-a716-446655440000/index.umd.js"></script>-->
+		<script src="../dist/index.umd.js"></script>
+
+		<script>
+			// ============================================================
+			// Twelve Data datafeed — mirrors src/utils/twelve-chart-datafeed.ts
+			// ============================================================
+			const API_KEY = "0c8d6ab2284847b58505e2159b6f2d0c";
+
+			// Map Bybit watchlist symbols → Twelve Data chart symbols
+			const BYBIT_TO_TWELVEDATA = {
+				"BYBIT:FUTURE:BTCUSDT": "Coinbase Pro:SPOT:BTC/USD",
+				"BYBIT:FUTURE:ETHUSDT": "Coinbase Pro:SPOT:ETH/USD",
+				"BYBIT:FUTURE:SOLUSDT": "Coinbase Pro:SPOT:SOL/USD",
+				"BYBIT:FUTURE:XRPUSDT": "Coinbase Pro:SPOT:XRP/USD",
+			};
+
+			const twelveDatafeed = {
+				symbolCache: new Map(),
+				searchSymbolController: null,
+				streamingIntervals: {},
+				channelToSubscription: null,
+				demoSocket: null,
+
+				destroy() {
+					Object.values(this.streamingIntervals).forEach((interval) =>
+						clearInterval(interval)
+					);
+					this.streamingIntervals = {};
+					if (this.searchSymbolController) {
+						this.searchSymbolController.abort();
+					}
+					this.symbolCache.clear();
+				},
+
+				// ---- getBars ----
+				async getBars(symbolInfo, resolution, periodParams) {
+					const { from, to } = periodParams;
+					try {
+						try {
+							const rawBars = await this.getTwelveDataBars(
+								symbolInfo,
+								resolution,
+								periodParams
+							);
+							return this.convertToUDFFormat(rawBars);
+						} catch (err) {
+							console.warn(
+								"⚠️ [TwelveDatafeed] Twelve Data API failed, using demo data:",
+								err
+							);
+						}
+
+						// Fallback to demo data
+						const fromDate =
+							typeof from === "number"
+								? new Date(from * 1000)
+								: from;
+						const toDate =
+							typeof to === "number" ? new Date(to * 1000) : to;
+						const rawBars = this.generateDemoData(
+							fromDate,
+							toDate,
+							resolution,
+							symbolInfo
+						);
+						return this.convertToUDFFormat(rawBars);
+					} catch (error) {
+						console.error(
+							"❌ [TwelveDatafeed] getBars failed:",
+							error
+						);
+						const fromDate =
+							typeof from === "number"
+								? new Date(from * 1000)
+								: from;
+						const toDate =
+							typeof to === "number" ? new Date(to * 1000) : to;
+						const rawBars = this.generateDemoData(
+							fromDate,
+							toDate,
+							resolution,
+							symbolInfo
+						);
+						return this.convertToUDFFormat(rawBars);
+					}
+				},
+
+				convertToUDFFormat(rawBars) {
+					if (!rawBars || rawBars.length === 0) {
+						return { s: "no_data", nextTime: null };
+					}
+					const t = [],
+						o = [],
+						h = [],
+						l = [],
+						c = [],
+						v = [];
+					rawBars.forEach((bar) => {
+						let timestamp;
+						if (bar.time) {
+							timestamp =
+								typeof bar.time === "number"
+									? bar.time
+									: Math.floor(
+											new Date(bar.time).getTime() / 1000
+									  );
+						} else if (bar.date) {
+							timestamp = Math.floor(
+								new Date(bar.date).getTime() / 1000
+							);
+						} else {
+							console.warn("Bar missing time/date:", bar);
+							return;
+						}
+						t.push(timestamp);
+						o.push(Number(bar.open));
+						h.push(Number(bar.high));
+						l.push(Number(bar.low));
+						c.push(Number(bar.close));
+						v.push(Number(bar.volume || 0));
+					});
+					return { s: "ok", t, o, h, l, c, v };
+				},
+
+				// ---- resolveSymbol ----
+				async resolveSymbol(symbolName, onResolve, onError) {
+					try {
+						if (this.symbolCache.has(symbolName)) {
+							onResolve(this.symbolCache.get(symbolName));
+							return;
+						}
+						try {
+							const symbolInfo =
+								await this.resolveTwelveDataSymbol(symbolName);
+							this.symbolCache.set(symbolName, symbolInfo);
+							onResolve(symbolInfo);
+							return;
+						} catch (err) {
+							console.warn(
+								"⚠️ [TwelveDatafeed] Twelve Data resolve failed, using local fallback:",
+								err
+							);
+						}
+						const symbolInfo =
+							this.resolveSymbolLocally(symbolName);
+						this.symbolCache.set(symbolName, symbolInfo);
+						onResolve(symbolInfo);
+					} catch (error) {
+						console.error(
+							"❌ [TwelveDatafeed] Error resolving symbol:",
+							error
+						);
+						onError("Failed to resolve symbol");
+					}
+				},
+
+				async resolveTwelveDataSymbol(symbolName) {
+					const parts = symbolName.split(":");
+					const ticker =
+						parts.length >= 3
+							? parts[2]
+							: parts.length === 2
+							? parts[1]
+							: symbolName;
+
+					const url = new URL(
+						"https://api.twelvedata.com/symbol_search"
+					);
+					url.search = new URLSearchParams({
+						apikey: API_KEY,
+						symbol: ticker,
+						outputsize: "200",
+						show_plan: "false",
+					}).toString();
+
+					const res = await fetch(url);
+					if (!res.ok)
+						throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+					const data = await res.json();
+					if (data.status === "ok" && data.data?.length > 0) {
+						const result = data.data[0];
+						const typeMap = {
+							"Common Stock": "stock",
+							"Depositary Receipt": "dr",
+							ETF: "etf",
+							"Mutual Fund": "fund",
+							Index: "index",
+						};
+						return {
+							symbol: result.symbol,
+							full_name: `${result.exchange}:${result.symbol}`,
+							description: result.instrument_name,
+							exchange: result.exchange,
+							type: typeMap[result.instrument_type] || "stock",
+							session: "0930-1600",
+							session_label: "0930-1600",
+							timezone: result.exchange_timezone,
+							ticker: result.symbol,
+							has_intraday: true,
+							intraday_multipliers: [
+								"1",
+								"5",
+								"15",
+								"30",
+								"60",
+								"240",
+								"1D",
+							],
+							supported_resolutions: [
+								"1",
+								"5",
+								"15",
+								"30",
+								"60",
+								"240",
+								"1D",
+								"1W",
+								"1M",
+							],
+							volume_precision: 0,
+							data_status: "streaming",
+							tick_size: 0.01,
+							max_tick_precision: 2,
+							quote_currency: result.currency,
+							segment: "SPOT",
+							exchange_info: {
+								name: result.exchange.toLowerCase(),
+								code: result.mic_code,
+								country_cd: result.country,
+								zone: result.exchange_timezone,
+								has_unique_trade_id: true,
+								holidays: null,
+								hours: [
+									{ open: false },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: false },
+								],
+								contains_ambiguous_symbols: false,
+								valid_intervals: [
+									"1",
+									"5",
+									"15",
+									"30",
+									"60",
+									"240",
+									"1D",
+									"1W",
+									"1M",
+								],
+							},
+						};
+					}
+					throw new Error(`No symbol found for: ${symbolName}`);
+				},
+
+				resolveSymbolLocally(symbolName) {
+					if (symbolName === "INVALID:SYMBOL") {
+						throw new Error(
+							`Symbol not found: ${symbolName}. This symbol does not exist in our database.`
+						);
+					}
+					if (
+						symbolName === "NASDAQ:AAPL" ||
+						symbolName === "NASDAQ:TSLA"
+					) {
+						return this.createMockSymbolInfo(symbolName);
+					}
+					const parts = symbolName.split(":");
+					let exchange, ticker, instrumentType;
+					if (parts.length === 3) {
+						[exchange, instrumentType, ticker] = parts;
+					} else {
+						[exchange, ticker] = parts;
+						instrumentType = null;
+					}
+					const exchangeInfo = this.getExchangeInfo(exchange);
+					return {
+						symbol: ticker,
+						full_name: symbolName,
+						description: this.getSymbolDescription(
+							ticker,
+							instrumentType
+						),
+						type: this.getSymbolType(exchange),
+						session: exchangeInfo.session,
+						session_label: exchangeInfo.session,
+						timezone: exchangeInfo.timezone,
+						ticker: ticker,
+						exchange: exchange,
+						segment: instrumentType || "SPOT",
+						has_intraday: true,
+						has_daily: true,
+						supported_resolutions: [
+							"1",
+							"5",
+							"15",
+							"30",
+							"60",
+							"240",
+							"1D",
+							"1W",
+							"1M",
+						],
+						volume_precision: this.getVolumePrecision(exchange),
+						data_status: "streaming",
+						tick_size: 1 / this.getPriceScale(exchange, ticker),
+						max_tick_precision: Math.log10(
+							this.getPriceScale(exchange, ticker)
+						),
+						quote_currency: this.getCurrencyCode(exchange, ticker),
+						exchange_info: {
+							name: exchange.toLowerCase(),
+							code: exchange,
+							country_cd: exchangeInfo.country_cd || "US",
+							zone: exchangeInfo.timezone,
+							has_unique_trade_id: true,
+							holidays: null,
+							hours:
+								exchangeInfo.session === "24x7"
+									? [
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+									  ]
+									: [
+											{ open: false },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: true },
+											{ open: false },
+									  ],
+							contains_ambiguous_symbols: false,
+							valid_intervals: [
+								"1",
+								"5",
+								"15",
+								"30",
+								"60",
+								"240",
+								"1D",
+								"1W",
+								"1M",
+							],
+						},
+					};
+				},
+
+				createMockSymbolInfo(symbolName) {
+					const symbolData = {
+						"NASDAQ:AAPL": {
+							symbol: "AAPL",
+							description: "Apple Inc. - Common Stock",
+							industry: "technology",
+							logo_url:
+								"https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+						},
+						"NASDAQ:TSLA": {
+							symbol: "TSLA",
+							description: "Tesla Inc. - Common Stock",
+							industry: "automotive",
+							logo_url:
+								"https://upload.wikimedia.org/wikipedia/commons/b/bb/Tesla_T_symbol.svg",
+						},
+					};
+					const data = symbolData[symbolName];
+					if (!data)
+						throw new Error(
+							`Mock symbol data not found for: ${symbolName}`
+						);
+					return {
+						symbol: data.symbol,
+						full_name: symbolName,
+						description: data.description,
+						exchange: "NASDAQ",
+						type: "stock",
+						session: "0930-1600",
+						timezone: "America/New_York",
+						ticker: data.symbol,
+						has_intraday: true,
+						supported_resolutions: [
+							"1",
+							"5",
+							"15",
+							"30",
+							"60",
+							"240",
+							"1D",
+							"1W",
+							"1M",
+						],
+						segment: "SPOT",
+						asset_type: "EQUITY",
+						session_label: "0930-1600",
+						tradeable: true,
+						is_index: false,
+						is_formula: false,
+						delay_seconds: 0,
+						data_status: "streaming",
+						industry: data.industry,
+						symbol_logo_urls: [data.logo_url],
+						contract_size: 1,
+						volume_size_increment: 1,
+						tick_size: 0.01,
+						display_tick_size: 0.01,
+						max_tick_precision: 2,
+						max_volume_precision: 0,
+						quote_currency: "USD",
+						has_daily: true,
+						volume_precision: 0,
+						source_id: data.symbol,
+						intraday_multipliers: ["1", "5", "15", "30", "60", "240"],
+						exchange_info: {
+							name: "nasdaq",
+							code: "NASDAQ",
+							country_cd: "US",
+							zone: "America/New_York",
+							has_unique_trade_id: true,
+							logo_url: "https://upload.wikimedia.org/wikipedia/commons/4/48/Nasdaq_Logo.svg",
+							holidays: null,
+							hours: [
+								{ open: false },
+								{ open: true },
+								{ open: true },
+								{ open: true },
+								{ open: true },
+								{ open: true },
+								{ open: false },
+							],
+							contains_ambiguous_symbols: false,
+							valid_intervals: [
+								"1",
+								"5",
+								"15",
+								"30",
+								"60",
+								"240",
+								"1D",
+								"1W",
+								"1M",
+							],
+						},
+					};
+				},
+
+				// ---- getTwelveDataBars ----
+				async getTwelveDataBars(symbolInfo, resolution, periodParams) {
+					const { from, to, firstDataRequest, rows } = periodParams;
+
+					let interval;
+					if (typeof resolution === "string") {
+						interval =
+							this.convertIntervalToResolution(resolution).label;
+					} else if (resolution && typeof resolution === "object") {
+						const scale = resolution.scale;
+						const units = resolution.units;
+						interval = this.deriveIntervalLabel(scale, units);
+					} else {
+						throw new Error("Invalid resolution format");
+					}
+
+					const intervalMap = {
+						"1": "1min",
+						"5": "5min",
+						"15": "15min",
+						"30": "30min",
+						"60": "1h",
+						"240": "4h",
+						D: "1day",
+						W: "1week",
+						M: "1month",
+					};
+					const twelveDataInterval =
+						intervalMap[interval] || "1day";
+
+					const url = new URL(
+						"https://api.twelvedata.com/time_series"
+					);
+					const symbol =
+						symbolInfo.symbol || symbolInfo.ticker || "";
+					const exchange = symbolInfo.exchange || "";
+
+					if (firstDataRequest) {
+						const currentTime = Date.now();
+						const params = {
+							apikey: API_KEY,
+							symbol: symbol,
+							interval: twelveDataInterval,
+							outputsize: (rows || 200).toString(),
+							end_date: new Date(currentTime).toISOString(),
+							format: "JSON",
+						};
+						if (exchange) params.exchange = exchange;
+						url.search = new URLSearchParams(params).toString();
+					} else {
+						const startDate =
+							typeof from === "number"
+								? from * 1000
+								: from.getTime();
+						const endDate =
+							typeof to === "number" ? to * 1000 : to.getTime();
+						const params = {
+							apikey: API_KEY,
+							symbol: symbol,
+							interval: twelveDataInterval,
+							start_date: new Date(startDate).toISOString(),
+							end_date: new Date(endDate).toISOString(),
+							outputsize: (rows || 200).toString(),
+							format: "JSON",
+						};
+						if (exchange) params.exchange = exchange;
+						url.search = new URLSearchParams(params).toString();
+					}
+
+					const response = await fetch(url);
+					if (!response.ok)
+						throw new Error(
+							`HTTP ${response.status}: ${response.statusText}`
+						);
+
+					const data = await response.json();
+					if (
+						data.status === "ok" &&
+						data.values &&
+						data.values.length > 0
+					) {
+						// Twelve Data returns newest first — reverse to oldest first
+						const reversedValues = [...data.values].reverse();
+						return reversedValues.map((value) => ({
+							time: Math.floor(
+								new Date(value.datetime).getTime() / 1000
+							),
+							open: Number(value.open),
+							high: Number(value.high),
+							low: Number(value.low),
+							close: Number(value.close),
+							volume: value.volume ? Number(value.volume) : 0,
+						}));
+					}
+					throw new Error("No data from Twelve Data API");
+				},
+
+				// ---- searchSymbols ----
+				searchSymbols(userInput, exchangeOrCallback, symbolType, onResultReadyCallback) {
+					const callback =
+						typeof exchangeOrCallback === "function"
+							? exchangeOrCallback
+							: onResultReadyCallback;
+
+					if (!callback) {
+						console.error(
+							"[TwelveDatafeed] No callback provided to searchSymbols"
+						);
+						return;
+					}
+
+					(async () => {
+						try {
+							await this.searchTwelveDataSymbol(
+								userInput,
+								callback
+							);
+						} catch (error) {
+							this.searchSymbolsMock(userInput, callback);
+						}
+					})();
+				},
+
+				async searchTwelveDataSymbol(userInput, callback) {
+					const url = new URL(
+						"https://api.twelvedata.com/symbol_search"
+					);
+					url.search = new URLSearchParams({
+						apikey: API_KEY,
+						symbol: userInput,
+						outputsize: "200",
+						show_plan: "false",
+					}).toString();
+
+					if (this.searchSymbolController) {
+						this.searchSymbolController.abort();
+					}
+					this.searchSymbolController = new AbortController();
+
+					const res = await fetch(url, {
+						signal: this.searchSymbolController.signal,
+					});
+					if (!res.ok)
+						throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+					const data = await res.json();
+					if (data.status === "ok" && data.data?.length > 0) {
+						const typeMap = {
+							"Common Stock": "stock",
+							"Depositary Receipt": "dr",
+							ETF: "etf",
+							"Mutual Fund": "fund",
+							Index: "index",
+						};
+						const transformedResults = data.data.map((result) => ({
+							symbol: result.symbol,
+							full_name: `${result.exchange}:${result.symbol}`,
+							description: result.instrument_name,
+							exchange: result.exchange,
+							ticker: result.symbol,
+							type: typeMap[result.instrument_type] || "stock",
+						}));
+						callback({
+							searchInProgress: false,
+							items: transformedResults,
+						});
+					} else {
+						callback({ searchInProgress: false, items: [] });
+					}
+				},
+
+				searchSymbolsMock(userInput, callback) {
+					const symbols = [
+						{
+							symbol: "BTC/USD",
+							full_name: "Coinbase Pro:SPOT:BTC/USD",
+							description: "Bitcoin / US Dollar",
+							exchange: "Coinbase Pro",
+							ticker: "BTC/USD",
+							type: "crypto",
+							key: "Coinbase Pro:SPOT:BTC/USD",
+						},
+						{
+							symbol: "ETH/USD",
+							full_name: "Coinbase Pro:SPOT:ETH/USD",
+							description: "Ethereum / US Dollar",
+							exchange: "Coinbase Pro",
+							ticker: "ETH/USD",
+							type: "crypto",
+							key: "Coinbase Pro:SPOT:ETH/USD",
+						},
+						{
+							symbol: "AAPL",
+							full_name: "NASDAQ:AAPL",
+							description: "Apple (AAPL)",
+							exchange: "NASDAQ",
+							ticker: "AAPL",
+							type: "stock",
+							key: "NASDAQ:AAPL",
+						},
+						{
+							symbol: "TSLA",
+							full_name: "NASDAQ:TSLA",
+							description: "Tesla (TSLA)",
+							exchange: "NASDAQ",
+							ticker: "TSLA",
+							type: "stock",
+							key: "NASDAQ:TSLA",
+						},
+						{
+							symbol: "BTCUSDT",
+							full_name: "BYBIT:FUTURE:BTCUSDT",
+							description: "Bitcoin Future (BTCUSDT)",
+							exchange: "BYBIT",
+							ticker: "BTCUSDT",
+							type: "crypto",
+							key: "BYBIT:FUTURE:BTCUSDT",
+						},
+					];
+					const q = userInput.toLowerCase();
+					const filtered = symbols.filter(
+						(s) =>
+							s.symbol.toLowerCase().includes(q) ||
+							s.description.toLowerCase().includes(q)
+					);
+					callback({ searchInProgress: false, items: filtered });
+				},
+
+				// ---- Streaming (subscribeBars / subscribeTicks) ----
+				subscribeBars(symbolInfo, resolution, onRealtimeCallback, subscriberUID, _onResetCacheNeededCallback) {
+					this.startDemoStreaming(
+						symbolInfo,
+						resolution,
+						onRealtimeCallback,
+						subscriberUID
+					);
+				},
+
+				unsubscribeBars(subscriberUID) {
+					if (this.streamingIntervals[subscriberUID]) {
+						clearInterval(this.streamingIntervals[subscriberUID]);
+						delete this.streamingIntervals[subscriberUID];
+					}
+				},
+
+				subscribeTicks(symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) {
+					this.subscribeOnStream(
+						symbolInfo,
+						resolution,
+						onRealtimeCallback,
+						subscriberUID,
+						onResetCacheNeededCallback,
+						null
+					);
+				},
+
+				unsubscribeTicks(subscriberUID) {
+					this.unsubscribeFromStream(subscriberUID);
+				},
+
+				startDemoStreaming(_symbolInfo, _resolution, onRealtimeCallback, subscriberUID) {
+					if (!this.streamingIntervals) this.streamingIntervals = {};
+					if (this.streamingIntervals[subscriberUID]) {
+						clearInterval(this.streamingIntervals[subscriberUID]);
+					}
+					let lastPrice = 50000 + Math.random() * 10000;
+					this.streamingIntervals[subscriberUID] = setInterval(() => {
+						const change = (Math.random() - 0.5) * 100;
+						lastPrice = Math.max(1000, lastPrice + change); // Ensure price does not go below $1000
+						const price = Math.round(lastPrice * 100) / 100;
+						const now = Date.now();
+						const tick = {
+							time: Math.floor(now / 1000),
+							open: price,
+							high: price,
+							low: price,
+							close: price,
+							volume: Math.floor(Math.random() * 1000) + 100,
+						};
+						onRealtimeCallback(tick);
+					}, 2000);
+				},
+
+				subscribeOnStream(symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback, lastDailyBar) {
+					if (!this.channelToSubscription) {
+						this.channelToSubscription = new Map();
+					}
+					if (!this.demoSocket) {
+						this.initializeTwelveDataSocket();
+					}
+
+					const symbol = symbolInfo.symbol || symbolInfo.ticker || "";
+					const channelString = `price:${symbol}`;
+
+					const handler = {
+						id: subscriberUID,
+						callback: onRealtimeCallback,
+						resolution,
+						lastDailyBar,
+						onResetCacheNeededCallback,
+					};
+
+					let subscriptionItem = this.channelToSubscription.get(channelString);
+					if (subscriptionItem) {
+						subscriptionItem.handlers.push(handler);
+						return;
+					}
+
+					subscriptionItem = {
+						subscriberUID,
+						resolution,
+						lastDailyBar,
+						handlers: [handler],
+						symbolInfo,
+						channelString,
+					};
+					this.channelToSubscription.set(channelString, subscriptionItem);
+
+					const subRequest = {
+						action: "subscribe",
+						params: {
+							symbols: [{ symbol, exchange: symbolInfo.exchange }],
+						},
+					};
+					this.sendTwelveDataSubscription(subRequest, subscriptionItem);
+				},
+
+				unsubscribeFromStream(subscriberUID) {
+					if (!this.channelToSubscription) return;
+					for (const channelString of this.channelToSubscription.keys()) {
+						const subscriptionItem =
+							this.channelToSubscription.get(channelString);
+						if (!subscriptionItem) continue;
+						const handlerIndex = subscriptionItem.handlers.findIndex(
+							(h) => h.id === subscriberUID
+						);
+						if (handlerIndex !== -1) {
+							subscriptionItem.handlers.splice(handlerIndex, 1);
+							if (subscriptionItem.handlers.length === 0) {
+								if (
+									this.demoSocket &&
+									this.demoSocket.readyState === 1
+								) {
+									this.demoSocket.send(
+										JSON.stringify({
+											op: "unsubscribe",
+											args: [channelString],
+										})
+									);
+								}
+								this.channelToSubscription.delete(channelString);
+								if (this.streamingIntervals[channelString]) {
+									clearInterval(
+										this.streamingIntervals[channelString]
+									);
+									delete this.streamingIntervals[channelString];
+								}
+							}
+							break;
+						}
+					}
+				},
+
+				initializeTwelveDataSocket() {
+					if (
+						this.demoSocket &&
+						this.demoSocket.readyState === WebSocket.OPEN
+					) {
+						return this.demoSocket;
+					}
+					const uri = `wss://ws.twelvedata.com/v1/quotes/price?apikey=${API_KEY}`;
+					const ws = new WebSocket(uri);
+					this.demoSocket = ws;
+
+					ws.addEventListener("open", () => {
+						console.log("✅ [TwelveData] WebSocket connected");
+						const heartbeatInterval = setInterval(() => {
+							if (ws.readyState === WebSocket.OPEN) {
+								ws.send(
+									JSON.stringify({ action: "heartbeat" })
+								);
+							} else {
+								clearInterval(heartbeatInterval);
+							}
+						}, 10000);
+					});
+
+					ws.addEventListener("close", () => {
+						console.log("🔌 [TwelveData] WebSocket disconnected");
+					});
+
+					ws.addEventListener("error", (error) => {
+						console.error(
+							"❌ [TwelveData] WebSocket error:",
+							error
+						);
+					});
+
+					ws.addEventListener("message", (event) => {
+						this.handleTwelveDataMessage(event);
+					});
+
+					return this.demoSocket;
+				},
+
+				handleTwelveDataMessage(event) {
+					try {
+						const message = JSON.parse(event.data);
+						if (message.event === "heartbeat") return;
+						if (message.event === "subscribe-status") {
+							console.log(
+								"📡 [TwelveData] Subscription status:",
+								message.status
+							);
+							return;
+						}
+						if (
+							message.event === "price" &&
+							message.symbol &&
+							message.price !== undefined
+						) {
+							const channelString = `price:${message.symbol}`;
+							const subscriptionItem =
+								this.channelToSubscription?.get(channelString);
+							if (!subscriptionItem) {
+								console.warn(`⚠️ [TwelveData] No subscription found for ${channelString}`);
+								return;
+							}
+
+							const { symbol, exchange, timestamp, price } = message;
+							const tradeID = `${Date.now()}-${Math.random()
+								.toString(36)
+								.substring(2, 11)}`;
+							const quantity = 1;
+							const tradeMessage = {
+								type: "trade",
+								productId: `${exchange}:SPOT:${symbol}`,
+								symbol: symbol || "",
+								exchange: exchange || "TWELVEDATA",
+								segment: "SPOT",
+								timeStamp: new Date(
+									(timestamp || Date.now() / 1000) * 1000
+								),
+								tradeID,
+								price: Number(price),
+								quantity,
+								amount: Number(price) * quantity,
+								side: "BUY",
+							};
+							subscriptionItem.handlers.forEach((handler) => {
+								try {
+									handler.callback(tradeMessage);
+								} catch (err) {
+									console.error(
+										`❌ [TwelveData] Error in handler ${handler.id}:`,
+										err
+									);
+								}
+							});
+						}
+					} catch (error) {
+						console.error(
+							"❌ [TwelveData] Error parsing message:",
+							error
+						);
+					}
+				},
+
+				sendTwelveDataSubscription(subRequest, subscriptionItem) {
+					console.log(
+						`📤 [TwelveData] Subscribing to ${subscriptionItem.symbolInfo.symbol}:`,
+						subRequest
+					);
+					if (
+						this.demoSocket &&
+						this.demoSocket.readyState === WebSocket.OPEN
+					) {
+						console.log("✅ [TwelveData] Socket is OPEN, sending subscription", subRequest);
+						this.demoSocket.send(JSON.stringify(subRequest));
+					} else if (
+						this.demoSocket &&
+						this.demoSocket.readyState === WebSocket.CONNECTING
+					) {
+						if (this.demoSocket instanceof WebSocket) {
+							const socket = this.demoSocket;
+							socket.addEventListener(
+								"open",
+								() => {
+									socket.send(JSON.stringify(subRequest));
+								},
+								{ once: true }
+							);
+						}
+					} else {
+						this.initializeTwelveDataSocket();
+						if (this.demoSocket instanceof WebSocket) {
+							const socket = this.demoSocket;
+							socket.addEventListener(
+								"open",
+								() => {
+									socket.send(JSON.stringify(subRequest));
+								},
+								{ once: true }
+							);
+						}
+					}
+				},
+
+				// ---- Helpers ----
+				getExchangeInfo(exchange) {
+					const map = {
+						NASDAQ: {
+							timezone: "America/New_York",
+							session: "0930-1600",
+							country_cd: "US",
+						},
+						NYSE: {
+							timezone: "America/New_York",
+							session: "0930-1600",
+							country_cd: "US",
+						},
+						BYBIT: { timezone: "Etc/UTC", session: "24x7" },
+						BINANCE: { timezone: "Etc/UTC", session: "24x7" },
+						FOREX: { timezone: "Etc/UTC", session: "24x5" },
+						"Coinbase Pro": { timezone: "Etc/UTC", session: "24x7" },
+					};
+					return map[exchange] || { timezone: "Etc/UTC", session: "24x7" };
+				},
+
+				getSymbolDescription(ticker, instrumentType) {
+					const descriptions = {
+						AAPL: "Apple Inc.",
+						MSFT: "Microsoft Corporation",
+						GOOGL: "Alphabet Inc.",
+						TSLA: "Tesla Inc.",
+						BTCUSDT: "Bitcoin / Tether",
+						ETHUSDT: "Ethereum / Tether",
+						"BTC/USD": "Bitcoin / US Dollar",
+						"ETH/USD": "Ethereum / US Dollar",
+					};
+					const base = descriptions[ticker] || ticker;
+					return instrumentType === "FUTURE"
+						? `${base} Future`
+						: base;
+				},
+
+				getSymbolType(exchange) {
+					const types = {
+						NASDAQ: "stock",
+						NYSE: "stock",
+						BYBIT: "crypto",
+						BINANCE: "crypto",
+						"Coinbase Pro": "crypto",
+						FOREX: "forex",
+					};
+					return types[exchange] || "crypto";
+				},
+
+				getPriceScale(exchange, ticker) {
+					if (exchange === "BYBIT" || exchange === "BINANCE" || exchange === "Coinbase Pro") {
+						if (ticker.includes("USDT") || ticker.includes("USD")) return 100;
+						return 100000000;
+					}
+					return 100;
+				},
+
+				getVolumePrecision(exchange) {
+					if (
+						exchange === "BYBIT" ||
+						exchange === "BINANCE" ||
+						exchange === "Coinbase Pro"
+					)
+						return 8;
+					return 0;
+				},
+
+				getCurrencyCode(exchange, ticker) {
+					if (
+						exchange === "BYBIT" ||
+						exchange === "BINANCE" ||
+						exchange === "Coinbase Pro"
+					) {
+						if (ticker.includes("USDT")) return "USDT";
+						if (ticker.includes("USD")) return "USD";
+						if (ticker.includes("BTC")) return "BTC";
+					}
+					return "USD";
+				},
+
+				convertIntervalToResolution(intervalString) {
+					const map = {
+						"1": { scale: 1, units: "minutes", label: "1" },
+						"5": { scale: 5, units: "minutes", label: "5" },
+						"15": { scale: 15, units: "minutes", label: "15" },
+						"30": { scale: 30, units: "minutes", label: "30" },
+						"60": { scale: 1, units: "hours", label: "60" },
+						"240": { scale: 4, units: "hours", label: "240" },
+						"1D": { scale: 1, units: "days", label: "D" },
+						"1W": { scale: 1, units: "weeks", label: "W" },
+						"1M": { scale: 1, units: "months", label: "M" },
+						"1m": { scale: 1, units: "minutes", label: "1" },
+						"5m": { scale: 5, units: "minutes", label: "5" },
+						"15m": { scale: 15, units: "minutes", label: "15" },
+						"30m": { scale: 30, units: "minutes", label: "30" },
+						"1h": { scale: 1, units: "hours", label: "60" },
+						"4h": { scale: 4, units: "hours", label: "240" },
+					};
+					return (
+						map[intervalString] || {
+							scale: 1,
+							units: "days",
+							label: "D",
+						}
+					);
+				},
+
+				deriveIntervalLabel(scale, units) {
+					switch (units) {
+						case "minutes":
+							return scale.toString();
+						case "hours":
+							return (scale * 60).toString();
+						case "days":
+							return scale === 1 ? "D" : `${scale}D`;
+						case "weeks":
+							return scale === 1 ? "W" : `${scale * 7}W`;
+						case "months":
+							return scale === 1 ? "M" : `${scale * 30}M`;
+						default:
+							return "D";
+					}
+				},
+
+				generateDemoData(from, to, resolution, symbolInfo) {
+					const bars = [];
+					let intervalMs;
+					const resStr =
+						typeof resolution === "string"
+							? resolution
+							: String(resolution);
+					switch (resStr) {
+						case "1":
+							intervalMs = 60 * 1000;
+							break;
+						case "5":
+							intervalMs = 5 * 60 * 1000;
+							break;
+						case "15":
+							intervalMs = 15 * 60 * 1000;
+							break;
+						case "30":
+							intervalMs = 30 * 60 * 1000;
+							break;
+						case "60":
+							intervalMs = 60 * 60 * 1000;
+							break;
+						case "240":
+							intervalMs = 4 * 60 * 60 * 1000;
+							break;
+						case "1D":
+							intervalMs = 24 * 60 * 60 * 1000; // 1 day
+							break;
+						default:
+							intervalMs = 24 * 60 * 60 * 1000;
+					}
+					let currentTime = from.getTime();
+					const endTime = to.getTime();
+					let price = 100 + Math.random() * 100;
+					while (currentTime <= endTime && bars.length < 500) {
+						const change = (Math.random() - 0.5) * 5;
+						const open = price;
+						const close = Math.max(0.01, price + change);
+						const high =
+							Math.max(open, close) + Math.random() * 2;
+						const low =
+							Math.min(open, close) - Math.random() * 2;
+						bars.push({
+							time: Math.floor(currentTime / 1000),
+							open: Math.round(open * 100) / 100,
+							high: Math.round(high * 100) / 100,
+							low: Math.round(Math.max(0.01, low) * 100) / 100,
+							close: Math.round(close * 100) / 100,
+							volume:
+								Math.floor(Math.random() * 1000000) + 100000,
+						});
+						price = close;
+						currentTime += intervalMs;
+					}
+					return bars;
+				},
+
+				// ---- Chart marks (mirrors twelve-chart-datafeed.ts) ----
+				getMarks(symbolInfo, _startDate, _endDate, onDataCallback, _resolution) {
+					const now = Math.floor(Date.now() / 1000);
+					onDataCallback([
+						{
+							id: 1,
+							time: now - 86400 * 7,
+							color: "red",
+							text: [
+								"Earnings Report",
+								"Q3 2025 Results",
+								"Beat expectations by 15%",
+							],
+							label: "E",
+							labelFontColor: "white",
+							minSize: 25,
+						},
+						{
+							id: 2,
+							time: now - 86400 * 3,
+							color: "green",
+							text: ["Product Launch", "New AI feature released"],
+							label: "P",
+							labelFontColor: "white",
+							minSize: 25,
+						},
+						{
+							id: 3,
+							time: now - 86400,
+							color: "blue",
+							text: ["Market News", "Analyst upgrade to BUY"],
+							label: "N",
+							labelFontColor: "white",
+							minSize: 25,
+						},
+					]);
+				},
+
+				getTimescaleMarks(symbolInfo, _startDate, _endDate, onDataCallback, _resolution) {
+					const now = Math.floor(Date.now() / 1000);
+					onDataCallback([
+						{
+							id: "1",
+							time: now - 86400 * 5,
+							color: "red",
+							label: "T1",
+							tooltip:
+								"Market Event - 5 days ago - Important trading session",
+						},
+						{
+							id: "2",
+							time: now - 86400 * 2,
+							color: "blue",
+							label: "T2",
+							tooltip: "Economic Data - 2 days ago - GDP release",
+						},
+						{
+							id: "3",
+							time: now + 86400,
+							color: "orange",
+							label: "T3",
+							tooltip:
+								"Scheduled Event - Tomorrow - Fed meeting",
+						},
+					]);
+				},
+
+				// ---- onReady ----
+				onReady(callback) {
+					setTimeout(
+						() =>
+							callback({
+								supported_resolutions: [
+									"1",
+									"5",
+									"15",
+									"30",
+									"60",
+									"240",
+									"1D",
+									"1W",
+									"1M",
+								],
+								supports_marks: false,
+								supports_timescale_marks: false,
+								supports_time: true,
+							}),
+						0
+					);
+				},
+			};
+
+			// ============================================================
+			// State
+			// ============================================================
+			let chartInstance = null;
+			let chartWrapper = null;
+			let currentSymbol = "BYBIT:FUTURE:BTCUSDT"; // Bybit format for internal tracking
+			const accountList = [
+				{
+					id: "demo-account-1",
+					name: "Demo Trading Account",
+					balance: 100000,
+					currency: "USD",
+					broker: "demo",
+					leverage: 10,
+					marginUsed: 0,
+					marginAvailable: 100000,
+				},
+			];
+			let orderBook = [];
+			let tradeBook = [];
+			let positions = [];
+			let closedPositions = [];
+			const symbolPrices = {};
+
+			// ============================================================
+			// Helpers
+			// ============================================================
+			function setStatus(msg) {
+				document.getElementById("status").textContent = msg;
+			}
+
+			function getCurrentLTP(symbol) {
+				const name = symbol || currentSymbol.split(":").pop();
+				return symbolPrices[name] || 200;
+			}
+
+			function updateChartBrokerData() {
+				if (!chartInstance) return;
+				const visibleOrders = orderBook.filter((o) => !o.hidden);
+				try {
+					chartInstance.setBrokerAccounts({
+						accountList,
+						orderBook: visibleOrders,
+						tradeBook,
+						positions,
+					});
+				} catch (e) {
+					console.error("❌ setBrokerAccounts failed:", e);
+				}
+				renderTables();
+			}
+
+			function createDemoSymbolInfo(ticker, exchange, segment) {
+				exchange = exchange || "Coinbase Pro";
+				segment = segment || "SPOT";
+				return {
+					symbol: ticker,
+					full_name: `${exchange}:${segment}:${ticker}`,
+					description: `${ticker} Demo`,
+					exchange,
+					type: "crypto",
+					session: "24x7",
+					timezone: "Etc/UTC",
+					ticker,
+					has_intraday: true,
+					quote_currency: "USD",
+					supported_resolutions: [
+						"1", "5", "15", "30", "60", "240", "1D", "1W",
+					],
+					segment,
+					tick_size: 0.01,
+					contract_size: 1,
+				};
+			}
+
+			// ============================================================
+			// Order / Position logic  (mirrors ChartSDKAdvanced2.tsx)
+			// ============================================================
+			function createPositionAndTrade(newOrder, ltp) {
+				const tradeId = `TRADE_${Date.now()}_${Math.random()
+					.toString(36)
+					.substring(2, 9)}`;
+				const executionPrice = ltp;
+
+				const newTrade = {
+					tradeId,
+					orderId: newOrder.orderId,
+					datetime: new Date(),
+					timeStamp: Date.now(),
+					price: executionPrice,
+					size: newOrder.size,
+					tradeSize: newOrder.size,
+					side: newOrder.side,
+					productId: newOrder.productId,
+					status: "filled",
+					cost: executionPrice * newOrder.size,
+					fee: {
+						currency: "USD",
+						cost: executionPrice * newOrder.size * 0.001,
+						rate: 0.001,
+					},
+					exchange: newOrder.exchange,
+					symbol: newOrder.symbol,
+					key: `demo-${newOrder.productId}-${tradeId}`,
+					broker: "demo",
+					productType: "SPOT",
+					security: newOrder.security,
+				};
+				tradeBook.push(newTrade);
+
+				const existingIdx = positions.findIndex(
+					(p) =>
+						p.symbol === newOrder.symbol &&
+						p.productId === newOrder.productId
+				);
+
+				if (existingIdx >= 0) {
+					const ep = positions[existingIdx];
+					const oldSize = ep.size;
+					const oldPrice = ep.price;
+					if (
+						(newOrder.side === "buy" && oldSize > 0) ||
+						(newOrder.side === "sell" && oldSize < 0)
+					) {
+						const totalSize = Math.abs(oldSize) + newOrder.size;
+						const avgPrice =
+							(oldPrice * Math.abs(oldSize) +
+								executionPrice * newOrder.size) /
+							totalSize;
+						ep.size =
+							newOrder.side === "sell" ? -totalSize : totalSize;
+						ep.price = avgPrice;
+					} else {
+						const newSize =
+							Math.abs(oldSize) - newOrder.size;
+						if (Math.abs(newSize) < 0.0001) {
+							const closed = {
+								...ep,
+								exitPrice: executionPrice,
+								closedAt: new Date().toLocaleTimeString(),
+								pnl:
+									(executionPrice - ep.price) *
+									Math.abs(ep.size),
+							};
+							closedPositions.unshift(closed);
+							positions.splice(existingIdx, 1);
+						} else {
+							positions[existingIdx] = {
+								...ep,
+								size: ep.size > 0 ? newSize : -newSize,
+							};
+						}
+					}
+				} else {
+					const positionId = `POS_${Date.now()}_${Math.random()
+						.toString(36)
+						.substring(2, 9)}`;
+					positions.push({
+						id: positionId,
+						size:
+							newOrder.side === "sell"
+								? -newOrder.size
+								: newOrder.size,
+						size_currency: newOrder.size,
+						price: executionPrice,
+						amount: executionPrice * newOrder.size,
+						productId: newOrder.productId,
+						side: newOrder.side,
+						broker: "demo",
+						productType: "SPOT",
+						currency: "USD",
+						underlying: newOrder.symbol,
+						symbol: newOrder.symbol,
+						segment: "SPOT",
+						exchange: newOrder.exchange,
+						key: `demo-${newOrder.productId}-${positionId}`,
+						isGC: true,
+						unPnl: 0,
+						rPnl: 0,
+						pnl: 0,
+						security: newOrder.security,
+						paperTraderKey: null,
+						takeProfit: newOrder.takeProfit,
+						stopLoss: newOrder.stopLoss,
+						showStopLossButton: true,
+						showTakeProfitButton: true,
+						pnlMultiplier: newOrder.pnlMultiplier || 1,
+					});
+				}
+
+				newOrder.status = "filled";
+				newOrder.filledSize = newOrder.size;
+				newOrder.remainingSize = 0;
+				newOrder.fillPrice = executionPrice;
+				newOrder.avgFillPrice = executionPrice;
+			}
+
+			function handleMarketOrderWithTPSL(originalOrder, orderDetails, ltp) {
+				const tpValue = orderDetails.takeProfit;
+				const slValue = orderDetails.stopLoss;
+				const hasTP = !!tpValue && tpValue > 0;
+				const hasSL = !!slValue && slValue > 0;
+				if (!hasTP && !hasSL) return;
+
+				const oppositeSide =
+					originalOrder.side === "buy" ? "sell" : "buy";
+
+				if (hasTP) {
+					const tpOrderId = `TP_${Date.now()}_${Math.random()
+						.toString(36)
+						.substring(2, 9)}`;
+					orderBook.push({
+						...originalOrder,
+						orderId: tpOrderId,
+						price: tpValue,
+						orderType: "limit",
+						side: oppositeSide,
+						takeProfit: null,
+						stopLoss: null,
+						key: `demo-${originalOrder.productId}-${tpOrderId}`,
+						userTag: `takeProfit_for_${originalOrder.orderId}`,
+						parentOrderId: originalOrder.orderId,
+					});
+					setStatus(`🎯 Take Profit order placed @ $${tpValue}`);
+				}
+
+				if (hasSL) {
+					const slOrderId = `SL_${Date.now()}_${Math.random()
+						.toString(36)
+						.substring(2, 9)}`;
+					orderBook.push({
+						...originalOrder,
+						orderId: slOrderId,
+						price: 0,
+						stopPrice: slValue,
+						orderType: "stop",
+						side: oppositeSide,
+						takeProfit: null,
+						stopLoss: null,
+						key: `demo-${originalOrder.productId}-${slOrderId}`,
+						userTag: `stopLoss_for_${originalOrder.orderId}`,
+						parentOrderId: originalOrder.orderId,
+					});
+					setStatus(`🛑 Stop Loss order placed @ $${slValue}`);
+				}
+
+				updateChartBrokerData();
+			}
+
+			function addOrderToOrderBook(orderData) {
+				if (!chartInstance) return;
+				const order = orderData.order;
+				const security = orderData.security;
+				const ltp = orderData.ltp || getCurrentLTP();
+				const securityFullName =
+					security && security.full_name
+						? security.full_name
+						: undefined;
+				const orderId =
+					order.orderId ||
+					`ORDER_${Date.now()}_${Math.random()
+						.toString(36)
+						.substring(2, 9)}`;
+
+				const symbolRaw =
+					security?.symbol ||
+					order.symbol ||
+					currentSymbol;
+				// Strip exchange prefix if present
+				const cleanSymbol = symbolRaw.includes(":")
+					? symbolRaw.split(":").pop()
+					: symbolRaw;
+
+				const newOrder = {
+					orderId,
+					datetime: new Date(),
+					timeStamp: Date.now(),
+					lastTradeTimestamp: null,
+					status: "open",
+					price: order.price || 0,
+					size: order.size || 0,
+					productId:
+						order.productId ||
+						securityFullName ||
+						currentSymbol,
+					remainingSize: order.size || 0,
+					orderType: order.orderType || "limit",
+					side: order.side || "buy",
+					cost: null,
+					trades: [],
+					fee: { currency: "USD", cost: 0, rate: 0 },
+					info: {},
+					fillPrice: null,
+					avgFillPrice: null,
+					filledSize: 0,
+					modifiedAt: null,
+					exchange: security?.exchange || "Coinbase Pro",
+					symbol: cleanSymbol,
+					takeProfit: order.takeProfit || null,
+					stopLoss: order.stopLoss || null,
+					isGC: true,
+					paperTraderKey: null,
+					key: `demo-${
+						order.productId ||
+						securityFullName ||
+						currentSymbol
+					}-${orderId}`,
+					validity: "DAY",
+					commissions: 0,
+					broker: "demo",
+					stopPrice: order.stopPrice || null,
+					productType: "SPOT",
+					rejReason: null,
+					security: createDemoSymbolInfo(cleanSymbol),
+					userTag: null,
+					segment: "SPOT",
+					currency: "USD",
+					showStopLossButton: true,
+					showTakeProfitButton: true,
+					pnlMultiplier: order.pnlMultiplier || 1,
+				};
+
+				orderBook.push(newOrder);
+
+				const isMarketOrder =
+					(order.orderType || "").toLowerCase() === "market";
+				if (isMarketOrder) {
+					createPositionAndTrade(newOrder, ltp);
+					handleMarketOrderWithTPSL(newOrder, order, ltp);
+				}
+
+				updateChartBrokerData();
+			}
+
+			function closePosition(positionId) {
+				const idx = positions.findIndex((p) => p.id === positionId);
+				if (idx >= 0) {
+					const pos = positions[idx];
+					const symbolParts = (pos.symbol || "").split(":");
+					const baseSymbol =
+						symbolParts[symbolParts.length - 1] || pos.symbol;
+					const exitPrice =
+						symbolPrices[baseSymbol] || pos.price || 200;
+					const avgPrice = pos.price || 0;
+					const size = Math.abs(pos.size || 0);
+					const isBuy = pos.size > 0;
+					const pnl = isBuy
+						? (exitPrice - avgPrice) * size
+						: (avgPrice - exitPrice) * size;
+					closedPositions.unshift({
+						...pos,
+						exitPrice,
+						pnl,
+						closedAt: new Date().toLocaleTimeString(),
+					});
+					positions.splice(idx, 1);
+					updateChartBrokerData();
+					setStatus(
+						`Position ${positionId} closed with P&L: ${
+							pnl >= 0 ? "+" : ""
+						}${pnl.toFixed(2)}`
+					);
+				}
+			}
+
+			function cancelOrder(orderId) {
+				const idx = orderBook.findIndex((o) => o.orderId === orderId);
+				if (idx >= 0) {
+					orderBook.splice(idx, 1);
+					updateChartBrokerData();
+					setStatus(`Order ${orderId} cancelled`);
+				}
+			}
+
+			function modifyOrderInOrderBook(orderData) {
+				const order = orderData.order || orderData;
+				const orderId = order.orderId || orderData.orderId;
+				const existingOrder = orderBook.find(
+					(o) => o.orderId === orderId
+				);
+				if (!existingOrder) return;
+
+				if (order.update === "SHAPE_MODIFY") {
+					switch (order.updateType) {
+						case "TAKE_PROFIT":
+						case "NEW_TAKE_PROFIT":
+							existingOrder.takeProfit = order.takeProfit;
+							break;
+						case "STOP_LOSS":
+						case "NEW_STOP_LOSS":
+							existingOrder.stopLoss = order.stopLoss;
+							break;
+						case "DELETE_TAKE_PROFIT":
+							existingOrder.takeProfit = null;
+							break;
+						case "DELETE_STOP_LOSS":
+							existingOrder.stopLoss = null;
+							break;
+						case "LIMIT_PRICE":
+							if (order.price !== undefined)
+								existingOrder.price = order.price;
+							break;
+						default:
+							if (order.price !== undefined)
+								existingOrder.price = order.price;
+							if (order.size !== undefined) {
+								existingOrder.size = order.size;
+								existingOrder.remainingSize = order.size;
+							}
+					}
+				} else if (order.update === "DELETE_SL") {
+					existingOrder.stopLoss = null;
+				} else if (order.update === "DELETE_TP") {
+					existingOrder.takeProfit = null;
+				} else {
+					if (order.price !== undefined)
+						existingOrder.price = order.price;
+					if (order.size !== undefined) {
+						existingOrder.size = order.size;
+						existingOrder.remainingSize = order.size;
+					}
+					if (order.takeProfit !== undefined)
+						existingOrder.takeProfit = order.takeProfit;
+					if (order.stopLoss !== undefined)
+						existingOrder.stopLoss = order.stopLoss;
+				}
+				existingOrder.modifiedAt = Date.now();
+				updateChartBrokerData();
+				setStatus(`Order ${orderId} modified`);
+			}
+
+			function modifyPositionInPositions(positionData) {
+				console.log("🔍 ===== MODIFY POSITION DEBUG =====");
+				console.log("📝 Modify position data received:", JSON.stringify(positionData, null, 2));
+
+				const position = positionData.position;
+				const positionId = position.id || positionData.id;
+
+				console.log("📝 Extracted position ID:", positionId);
+				console.log("📝 Update type:", position.update);
+				console.log("📝 Update subtype:", position.updateType);
+
+				const existingPosition = positions.find(
+					(p) => p.id === positionId
+				);
+				if (!existingPosition) {
+					console.warn("Position not found for modification:", positionId);
+					return;
+				}
+
+				console.log("📝 Found existing position:", JSON.stringify(existingPosition, null, 2));
+
+				if (position.update === "SHAPE_MODIFY") {
+					switch (position.updateType) {
+						case "DELETE_STOP_LOSS":
+							console.log("🗑️ Deleting stop loss from position");
+							existingPosition.stopLoss = null;
+							break;
+						case "DELETE_TAKE_PROFIT":
+							console.log("🗑️ Deleting take profit from position");
+							existingPosition.takeProfit = null;
+							break;
+						case "STOP_LOSS":
+						case "NEW_STOP_LOSS":
+							console.log("📉 Updating position stop loss:", position.stopLoss);
+							existingPosition.stopLoss = position.stopLoss;
+							// Also update associated orders
+							updateOrderTPSL(
+								existingPosition.productId,
+								existingPosition.symbol,
+								{ stopLoss: position.stopLoss }
+							);
+							break;
+						case "TAKE_PROFIT":
+						case "NEW_TAKE_PROFIT":
+							console.log("📈 Updating position take profit:", position.takeProfit);
+							existingPosition.takeProfit = position.takeProfit;
+							// Also update associated orders
+							updateOrderTPSL(
+								existingPosition.productId,
+								existingPosition.symbol,
+								{ takeProfit: position.takeProfit }
+							);
+							break;
+						default:
+							console.log("📝 Other position shape modification:", position.updateType);
+							if (position.takeProfit !== undefined)
+								existingPosition.takeProfit =
+									position.takeProfit;
+							if (position.stopLoss !== undefined)
+								existingPosition.stopLoss = position.stopLoss;
+					}
+				} else {
+					console.log("📝 Standard position modification (no update type)");
+					if (position.takeProfit !== undefined)
+						existingPosition.takeProfit = position.takeProfit;
+					if (position.stopLoss !== undefined)
+						existingPosition.stopLoss = position.stopLoss;
+				}
+
+				console.log("✅ Position modified:", JSON.stringify(existingPosition, null, 2));
+				console.log("🔍 ===== END MODIFY POSITION DEBUG =====");
+
+				updateChartBrokerData();
+				setStatus(`Position ${positionId} modified`);
+			}
+
+			// Update TP/SL on orders associated with a position (mirrors ChartSDKAdvanced2.tsx updateOrderTPSL)
+			function updateOrderTPSL(productId, symbol, updates) {
+				console.log("🔍 ===== UPDATE ORDER TP/SL DEBUG =====");
+				console.log("📝 Looking for order with productId:", productId);
+				console.log("📝 Symbol:", symbol);
+				console.log("📝 Updates to apply:", updates);
+
+				if (orderBook.length === 0) {
+					console.log("📝 No orders in order book to update");
+					return;
+				}
+
+				const matchingOrders = orderBook.filter(
+					(order) =>
+						(order.productId === productId ||
+							order.symbol === symbol) &&
+						order.status === "open"
+				);
+
+				if (matchingOrders.length === 0) {
+					console.log("📝 No matching open orders found for this position");
+					return;
+				}
+
+				console.log(`📝 Found ${matchingOrders.length} matching order(s)`);
+
+				matchingOrders.forEach((order) => {
+					if (updates.stopLoss !== undefined) {
+						console.log(`📉 Adding stopLoss ${updates.stopLoss} to order ${order.orderId}`);
+						order.stopLoss = updates.stopLoss;
+					}
+					if (updates.takeProfit !== undefined) {
+						console.log(`📈 Adding takeProfit ${updates.takeProfit} to order ${order.orderId}`);
+						order.takeProfit = updates.takeProfit;
+					}
+					order.modifiedAt = Date.now();
+				});
+
+				console.log("🔍 ===== END UPDATE ORDER TP/SL DEBUG =====");
+			}
+
+			// Hide order from chart display
+			function hideOrder(orderId) {
+				console.log("👁️ Hide order:", orderId);
+				const order = orderBook.find((o) => o.orderId === orderId);
+				if (order) {
+					order.hidden = true;
+					updateChartBrokerData();
+					setStatus(`Order ${orderId} hidden from chart`);
+				}
+			}
+
+			// Unhide order
+			function unhideOrder(orderId) {
+				console.log("👁️ Unhide order:", orderId);
+				const order = orderBook.find((o) => o.orderId === orderId);
+				if (order) {
+					order.hidden = false;
+					updateChartBrokerData();
+					setStatus(`Order ${orderId} shown on chart`);
+				}
+			}
+
+			// Get all charts info
+			function getAllCharts() {
+				if (chartInstance) {
+					const multiChartInfo = chartInstance.getAllCharts();
+					console.log("Multicharting status:", multiChartInfo);
+				}
+			}
+
+			// ============================================================
+			// App callback (mirrors ChartSDKAdvanced2.tsx handleAppCallback)
+			// ============================================================
+			function handleAppCallback({ eventType, message }) {
+				console.log("📞 App Callback:", eventType, message);
+				switch (eventType) {
+					case "PLACE_ORDER": {
+						const order = message.order;
+						if (order?.exitPosition) {
+							const positionId = order?.id;
+							if (positionId) closePosition(positionId);
+						} else {
+							addOrderToOrderBook(message);
+							setStatus(
+								`✅ Order placed: ${order?.side} @ ${
+									order?.price || "Market"
+								}`
+							);
+						}
+						break;
+					}
+					case "CANCEL_ORDER": {
+						const orderId =
+							message?.order?.orderId || message?.order?.id;
+						if (orderId) {
+							cancelOrder(orderId);
+							setStatus(`🗑️ Order cancelled: ${orderId}`);
+						}
+						break;
+					}
+					case "MODIFY_ORDER": {
+						modifyOrderInOrderBook(message);
+						setStatus(`✏️ Order modified: ${message.orderId}`);
+						break;
+					}
+					case "MODIFY_POSITION": {
+						modifyPositionInPositions(message);
+						setStatus(
+							`✏️ Position modified: ${message.position?.id}`
+						);
+						break;
+					}
+					case "CREATE_ORDER": {
+						setStatus(
+							`📝 Order creation: ${message.side} ${
+								message.quantity || "N/A"
+							} @ ${message.price || "Market"}`
+						);
+						break;
+					}
+					case "OPEN_TRADING_WIDGET":
+						console.log("🎛️ Trading widget opened from chart");
+						setStatus("🎛️ Trading widget opened");
+						break;
+
+					case "CHART_SELECTED":
+						console.log("CHART_SELECTED", message);
+						setStatus("CHART_SELECTED");
+						break;
+
+					default:
+						console.log(`🔔 Chart event: ${eventType}`, message);
+				}
+			}
+
+			// ============================================================
+			// Price fetching (Bybit REST)
+			// ============================================================
+			async function fetchPrices() {
+				const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"];
+				// Map Bybit symbol → Twelve Data short form (for getCurrentLTP compatibility)
+				const shortKeyMap = { BTCUSDT: "BTC/USD", ETHUSDT: "ETH/USD", SOLUSDT: "SOL/USD", XRPUSDT: "XRP/USD" };
+				for (const symbol of symbols) {
+					try {
+						const res = await fetch(
+							`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${symbol}`
+						);
+						const data = await res.json();
+						const ticker = data.result?.list?.[0];
+						if (ticker) {
+							const price = parseFloat(ticker.lastPrice);
+							symbolPrices[symbol] = price;
+							// Also store under Twelve Data short-form key for LTP lookups
+							if (shortKeyMap[symbol]) symbolPrices[shortKeyMap[symbol]] = price;
+							const el = document.getElementById(`price-${symbol}`);
+							if (el) el.textContent = `$${price.toFixed(2)}`;
+						}
+					} catch (e) {
+						console.warn(`Failed to fetch price for ${symbol}:`, e);
+					}
+				}
+			}
+
+			// ============================================================
+			// Chart initialization
+			// ============================================================
+			async function initChart() {
+				setStatus("Creating chart...");
+				try {
+					const chartConfig = {
+						symbol: BYBIT_TO_TWELVEDATA[currentSymbol] || currentSymbol,
+						interval: "1D",
+						datafeed: twelveDatafeed,
+						debugLog: true,
+						licenseKey:
+							"demo-550e8400-e29b-41d4-a716-446655440000",
+						theme: "dark",
+						disableSearch: false,
+						disableCompare: true,
+						trading: {
+							enableTrading: true,
+							showReverseButton: false,
+						},
+						contextMenu: {
+							showTradingOptions: true,
+						},
+						appCallback: handleAppCallback,
+						onReady: (instance) => {
+							chartInstance = instance;
+							setStatus(
+								"Chart loaded with advanced trading features!"
+							);
+							chartInstance.setBrokerAccounts({
+								accountList,
+								orderBook,
+								tradeBook,
+								positions,
+							});
+						},
+						onError: (error) => {
+							console.error("Chart creation error:", error);
+							setStatus(
+								`❌ Error creating chart: ${
+									typeof error === "string"
+										? error
+										: error.message
+								}`
+							);
+						},
+					};
+
+					chartWrapper = GoChartingSDK.createChart(
+						"#chart-container",
+						chartConfig
+					);
+				} catch (error) {
+					console.error("Error initializing chart:", error);
+					setStatus("Failed to initialize chart");
+				}
+			}
+
+			// ============================================================
+			// UI Wiring
+			// ============================================================
+
+			// Tabs
+			document.querySelectorAll(".account-tab").forEach((tab) => {
+				tab.addEventListener("click", () => {
+					document
+						.querySelectorAll(".account-tab")
+						.forEach((t) => t.classList.remove("active"));
+					document
+						.querySelectorAll(".account-panel")
+						.forEach((p) => p.classList.remove("active"));
+					tab.classList.add("active");
+					const panelId = `${tab.dataset.tab}-panel`;
+					const panel = document.getElementById(panelId);
+					if (panel) panel.classList.add("active");
+				});
+			});
+
+			// Watchlist buttons
+			document.querySelectorAll(".symbol-btn").forEach((btn) => {
+				btn.addEventListener("click", () => {
+					document
+						.querySelectorAll(".symbol-btn")
+						.forEach((b) => b.classList.remove("active"));
+					btn.classList.add("active");
+					currentSymbol = btn.dataset.symbol; // Bybit format
+					if (chartInstance) {
+						try {
+							// Map to Twelve Data format for the chart datafeed
+							const chartSymbol = BYBIT_TO_TWELVEDATA[currentSymbol] || currentSymbol;
+							chartInstance.setSymbol(chartSymbol);
+						} catch (e) {
+							console.error("Failed to change symbol:", e);
+						}
+					}
+				});
+			});
+
+			// Order type toggle
+			document
+				.getElementById("order-type")
+				.addEventListener("change", (e) => {
+					const limitPriceInput =
+						document.getElementById("limit-price");
+					limitPriceInput.disabled = e.target.value === "market";
+				});
+
+			// Buy / Sell
+			function placeDemoOrder(side) {
+				const ltp = getCurrentLTP();
+				const quantity =
+					parseFloat(document.getElementById("quantity").value) || 1;
+				const stopLossVal = document.getElementById("stop-loss").value;
+				const takeProfitVal =
+					document.getElementById("take-profit").value;
+				const orderType =
+					document.getElementById("order-type").value;
+				const limitPrice =
+					document.getElementById("limit-price").value;
+				const pnlMultiplier =
+					parseFloat(
+						document.getElementById("pnl-multiplier").value
+					) || 1;
+
+				const orderData = {
+					order: {
+						productId: currentSymbol,
+						price:
+							orderType === "limit"
+								? parseFloat(limitPrice) || 0
+								: 0,
+						stopPrice: 0,
+						takeProfit: takeProfitVal
+							? parseFloat(takeProfitVal)
+							: undefined,
+						stopLoss: stopLossVal
+							? parseFloat(stopLossVal)
+							: undefined,
+						trailingSLSpread: 0,
+						size: quantity,
+						task: "placement",
+						side,
+						orderType,
+						pnlMultiplier,
+					},
+					security: createDemoSymbolInfo(
+						currentSymbol.split(":").pop(),
+						currentSymbol.split(":")[0],
+						currentSymbol.split(":")[1] || "SPOT"
+					),
+					ltp,
+				};
+
+				handleAppCallback({
+					eventType: "PLACE_ORDER",
+					message: orderData,
+				});
+			}
+
+			document
+				.getElementById("buy-btn")
+				.addEventListener("click", () => placeDemoOrder("buy"));
+			document
+				.getElementById("sell-btn")
+				.addEventListener("click", () => placeDemoOrder("sell"));
+			document
+				.getElementById("reset-broker-btn")
+				.addEventListener("click", () => {
+					orderBook = [];
+					tradeBook = [];
+					positions = [];
+					closedPositions = [];
+					updateChartBrokerData();
+					setStatus("🔄 Broker data reset");
+				});
+
+			// ============================================================
+			// Table rendering
+			// ============================================================
+			function renderTables() {
+				renderPositions();
+				renderOrders();
+				renderClosed();
+			}
+
+			function renderPositions() {
+				const tbody = document.getElementById("positions-body");
+				if (positions.length === 0) {
+					tbody.innerHTML =
+						'<tr><td colspan="9" class="empty-message">No open positions</td></tr>';
+					return;
+				}
+				tbody.innerHTML = positions
+					.map((pos) => {
+						const symbolParts = (pos.symbol || "").split(":");
+						const baseSymbol =
+							symbolParts[symbolParts.length - 1] || pos.symbol;
+						const currentPrice =
+							symbolPrices[baseSymbol] ||
+							symbolPrices[
+								baseSymbol.replace("/", "")
+							] ||
+							getCurrentLTP();
+						const size = Math.abs(pos.size || 0);
+						const avgPrice = pos.price || 0;
+						const isBuy = pos.size > 0;
+						const pnl = isBuy
+							? (currentPrice - avgPrice) * size
+							: (avgPrice - currentPrice) * size;
+						const side = isBuy ? "BUY" : "SELL";
+						const tp = pos.takeProfit;
+						const sl = pos.stopLoss;
+						return `<tr>
+							<td>${pos.symbol || "--"}</td>
+							<td>${side}</td>
+							<td>${size || "--"}</td>
+							<td>${avgPrice > 0 ? "$" + avgPrice.toFixed(2) : "--"}</td>
+							<td>${currentPrice > 0 ? "$" + currentPrice.toFixed(2) : "--"}</td>
+							<td class="${pnl >= 0 ? "positive" : "negative"}">${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}</td>
+							<td>${tp ? tp.toFixed(2) : "--"}</td>
+							<td>${sl ? sl.toFixed(2) : "--"}</td>
+							<td><button class="action-btn close-btn" onclick="closePosition('${pos.id}')">Close</button></td>
+						</tr>`;
+					})
+					.join("");
+			}
+
+			function renderOrders() {
+				const tbody = document.getElementById("orders-body");
+				if (orderBook.length === 0) {
+					tbody.innerHTML =
+						'<tr><td colspan="8" class="empty-message">No pending orders</td></tr>';
+					return;
+				}
+				tbody.innerHTML = orderBook
+					.map((order) => {
+						const sl = order.stopLoss;
+						const tp = order.takeProfit;
+						return `<tr style="opacity:${order.hidden ? 0.5 : 1}">
+							<td>${order.symbol}</td>
+							<td>${order.orderType.toUpperCase()}</td>
+							<td>${order.side.toUpperCase()}</td>
+							<td>${order.size}</td>
+							<td>$${order.price.toFixed(2)}</td>
+							<td>${sl ? sl.toFixed(2) : "--"}</td>
+							<td>${tp ? tp.toFixed(2) : "--"}</td>
+							<td>
+								${
+									order.orderType !== "market"
+										? `<button class="action-btn close-btn" onclick="cancelOrder('${order.orderId}')" style="margin-right:4px">Cancel</button>`
+										: ""
+								}
+								${
+									order.hidden
+										? `<button class="action-btn" onclick="unhideOrder('${order.orderId}')" style="background-color:#4a90e2">Show</button>`
+										: `<button class="action-btn" onclick="hideOrder('${order.orderId}')" style="background-color:#6c757d">Hide</button>`
+								}
+							</td>
+						</tr>`;
+					})
+					.join("");
+			}
+
+			function renderClosed() {
+				const tbody = document.getElementById("closed-body");
+				if (closedPositions.length === 0) {
+					tbody.innerHTML =
+						'<tr><td colspan="7" class="empty-message">No closed positions</td></tr>';
+					return;
+				}
+				tbody.innerHTML = closedPositions
+					.map((pos) => {
+						const side = pos.size > 0 ? "BUY" : "SELL";
+						return `<tr>
+							<td>${pos.symbol}</td>
+							<td>${side}</td>
+							<td>${Math.abs(pos.size)}</td>
+							<td>$${pos.price.toFixed(2)}</td>
+							<td>$${pos.exitPrice?.toFixed(2) || "--"}</td>
+							<td class="${pos.pnl >= 0 ? "positive" : "negative"}">$${pos.pnl.toFixed(2)}</td>
+							<td>${pos.closedAt}</td>
+						</tr>`;
+					})
+					.join("");
+			}
+
+			// ============================================================
+			// Boot
+			// ============================================================
+			fetchPrices();
+			setInterval(fetchPrices, 5000); // Refresh every 5s (Bybit)
+
+			initChart();
+		</script>
+	</body>
+</html>
