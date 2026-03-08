@@ -224,6 +224,17 @@ export const createTwelveDataChartDatafeed = (): Datafeed => {
 				clearInterval(interval as ReturnType<typeof setInterval>);
 			});
 			this.streamingIntervals = {};
+			// Close WebSocket connection
+			if (this.demoSocket) {
+				try {
+					this.demoSocket.close();
+				} catch (_) {}
+				this.demoSocket = null;
+			}
+			// Clear subscriptions
+			if (this.channelToSubscription) {
+				this.channelToSubscription.clear();
+			}
 			// Abort any pending search requests
 			if (this.searchSymbolController) {
 				this.searchSymbolController.abort();
