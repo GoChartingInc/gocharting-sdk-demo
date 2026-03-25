@@ -385,6 +385,12 @@
 		flex: 1 1 33%;
 	}
 
+	.advanced-trading-container-2 .account-tabs .toggle-chart-btn {
+		flex: 1 1 100%;
+		margin: 4px 8px 6px;
+		border-radius: 6px;
+	}
+
 	/* Add padding to prevent chart overlap with bottom bar */
 	.advanced-trading-container-2 {
 		padding-bottom: 70px;
