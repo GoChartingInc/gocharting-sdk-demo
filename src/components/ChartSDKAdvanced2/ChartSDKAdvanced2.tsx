@@ -443,6 +443,69 @@ export const ChartSDKAdvanced2 = () => {
 		[]
 	);
 
+	// Show confirmation modal for SL/TP modifications (like Leverate)
+	const showConfirmationModal = useCallback(
+		({
+			title,
+			details,
+			onConfirm,
+			onCancel,
+		}: {
+			title: string;
+			details: { label: string; value: string }[];
+			onConfirm: () => void;
+			onCancel: () => void;
+		}) => {
+			// Remove any existing modal
+			document.getElementById("sltp-confirm-modal")?.remove();
+
+			// Mount to fullscreen element if in fullscreen, otherwise body
+			const fullscreenElement = document.fullscreenElement;
+			const container = fullscreenElement || document.body;
+
+			const overlay = document.createElement("div");
+			overlay.id = "sltp-confirm-modal";
+			overlay.style.cssText =
+				"z-index: 2147483647; position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.6); font-family: Arial, sans-serif;";
+
+			const detailRows = details
+				.map(
+					(d) => `
+				<div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2e3e;">
+					<span style="color: #888; font-size: 13px;">${d.label}</span>
+					<span style="color: #e0e0e0; font-size: 13px; font-weight: 600;">${d.value}</span>
+				</div>`
+				)
+				.join("");
+
+			overlay.innerHTML = `
+				<div style="background: #1e2230; color: white; padding: 24px; border-radius: 12px; min-width: 340px; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+					<h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">${title}</h3>
+					<div style="margin-bottom: 20px;">
+						${detailRows}
+					</div>
+					<div style="display: flex; gap: 8px; justify-content: flex-end;">
+						<button id="sltp-modal-cancel" style="padding: 8px 24px; background: transparent; border: 1px solid #555; color: #ccc; border-radius: 6px; cursor: pointer; font-size: 13px;">Cancel</button>
+						<button id="sltp-modal-confirm" style="padding: 8px 24px; background: #4fc3f7; border: none; color: #1a1e2e; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">Confirm</button>
+					</div>
+				</div>
+			`;
+			container.appendChild(overlay);
+
+			const cleanup = () => overlay.remove();
+
+			overlay.querySelector("#sltp-modal-cancel")?.addEventListener("click", () => {
+				cleanup();
+				onCancel();
+			});
+			overlay.querySelector("#sltp-modal-confirm")?.addEventListener("click", () => {
+				cleanup();
+				onConfirm();
+			});
+		},
+		[]
+	);
+
 	// Modify position (for TP/SL line drag events)
 	const modifyPositionInPositions = useCallback(
 		(positionData: ModifyPositionMessage) => {
@@ -1042,15 +1105,52 @@ export const ChartSDKAdvanced2 = () => {
 
 				case "MODIFY_ORDER": {
 					console.log("✏️ Order modified from chart:", message);
-					modifyOrderInOrderBook(message);
-					setStatus(`✏️ Order modified: ${message.orderId}`);
+					const orderUpdate = message as Record<string, any>;
+					const orderUpdateType = String(orderUpdate.updateType || "MODIFY");
+					showConfirmationModal({
+						title: orderUpdateType.includes("STOP_LOSS") ? "Update Stop Loss" : orderUpdateType.includes("TAKE_PROFIT") ? "Update Take Profit" : "Modify Order",
+						details: [
+							{ label: "Order ID", value: String(orderUpdate.orderId || "N/A") },
+							{ label: "Update Type", value: orderUpdateType },
+							...(orderUpdate.stopLoss != null ? [{ label: "Stop Loss", value: String(orderUpdate.stopLoss) }] : []),
+							...(orderUpdate.takeProfit != null ? [{ label: "Take Profit", value: String(orderUpdate.takeProfit) }] : []),
+							...(orderUpdate.price != null ? [{ label: "Price", value: String(orderUpdate.price) }] : []),
+						],
+						onConfirm: () => {
+							modifyOrderInOrderBook(message);
+							setStatus(`✏️ Order modified: ${orderUpdate.orderId}`);
+						},
+						onCancel: () => {
+							setStatus(`❌ Order modification cancelled`);
+							updateChartBrokerData();
+						},
+					});
 					break;
 				}
 
 				case "MODIFY_POSITION": {
 					console.log("✏️ Position modified from chart:", message);
-					modifyPositionInPositions(message);
-					setStatus(`✏️ Position modified: ${message.position?.id}`);
+					const posUpdate = message as Record<string, any>;
+					const posPosition = (posUpdate.position || {}) as Record<string, any>;
+					const posUpdateType = String(posPosition.updateType || "MODIFY");
+					showConfirmationModal({
+						title: posUpdateType.includes("STOP_LOSS") ? "Update Stop Loss" : posUpdateType.includes("TAKE_PROFIT") ? "Update Take Profit" : posUpdateType.includes("DELETE") ? "Delete Level" : "Modify Position",
+						details: [
+							{ label: "Position", value: String(posPosition.productId || posPosition.id || "N/A") },
+							{ label: "Update Type", value: posUpdateType },
+							{ label: "Side", value: Number(posPosition.size) > 0 ? "Buy" : "Sell" },
+							...(posPosition.stopLoss != null ? [{ label: "Stop Loss", value: String(posPosition.stopLoss) }] : []),
+							...(posPosition.takeProfit != null ? [{ label: "Take Profit", value: String(posPosition.takeProfit) }] : []),
+						],
+						onConfirm: () => {
+							modifyPositionInPositions(message);
+							setStatus(`✏️ Position modified: ${posPosition.id}`);
+						},
+						onCancel: () => {
+							setStatus(`❌ Position modification cancelled`);
+							updateChartBrokerData();
+						},
+					});
 					break;
 				}
 
@@ -1081,6 +1181,8 @@ export const ChartSDKAdvanced2 = () => {
 			removeOrderFromOrderBook,
 			modifyOrderInOrderBook,
 			modifyPositionInPositions,
+			showConfirmationModal,
+			updateChartBrokerData,
 		]
 	);
 
@@ -1122,89 +1224,116 @@ export const ChartSDKAdvanced2 = () => {
 		return () => clearInterval(interval);
 	}, []);
 
-	// Chart initialization
-	useEffect(() => {
-		const initChart = async () => {
-			try {
-				setStatus("Creating chart...");
+	const initChart = useCallback(async () => {
+		try {
+			setStatus("Creating chart...");
 
-				// Create datafeed
-				const currentDatafeed =
-					datafeed === "bybit"
-						? createChartDatafeed()
-						: createTwelveDataChartDatafeed();
-				datafeedRef.current = currentDatafeed;
+			// Create datafeed
+			const currentDatafeed =
+				datafeed === "bybit"
+					? createChartDatafeed()
+					: createTwelveDataChartDatafeed();
+			datafeedRef.current = currentDatafeed;
 
-				const chartConfig = {
-					symbol:
-						datafeed === "bybit"
-							? "BYBIT:FUTURE:BTCUSDT"
-							: "Coinbase Pro:SPOT:BTC/USD",
-					interval: "1m",
-					datafeed: currentDatafeed,
-					debugLog: true,
-					licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
-					theme: "dark",
-					disableSearch: false,
-					disableCompare: true,
-					trading: {
-						enableTrading: true,
-						showReverseButton: false,
-					},
-					contextMenu: {
-						showTradingOptions: true,
-					},
+			console.log({
+				chartSymbol,
+				symbol:
+					chartSymbol ??
+					(datafeed === "bybit"
+						? "BYBIT:FUTURE:BTCUSDT"
+						: "Coinbase Pro:SPOT:BTC/USD"),
+			});
 
-					appCallback: (event) => {
-						console.log("*** APP CALLBACK TRIGGERED ***", event);
+			const chartConfig = {
+				symbol:
+					chartSymbol ??
+					(datafeed === "bybit"
+						? "BYBIT:FUTURE:BTCUSDT"
+						: "Coinbase Pro:SPOT:BTC/USD"),
+				interval: "1m",
+				datafeed: currentDatafeed,
+				debugLog: false,
+				licenseKey: "demo-550e8400-e29b-41d4-a716-446655440000",
+				theme: "dark",
+				disableSearch: false,
+				disableCompare: false,
+				autoSave: true,
+				trading: {
+					enableTrading: true,
+					showReverseButton: true,
+				},
+				contextMenu: {
+					showTradingOptions: true,
+				},
 
-						// Use a stable wrapper that calls through the ref to avoid stale closures
-						if (handleAppCallbackRef.current) {
-							// Convert to discriminated union event object for type narrowing
-							handleAppCallbackRef.current(event);
-						}
-					},
-					onReady: (chartInstance) => {
-						chartInstanceRef.current = chartInstance;
+				appCallback: (event) => {
+					console.log("*** APP CALLBACK TRIGGERED ***", event);
 
-						setStatus(
-							"Chart loaded with advanced trading features!"
-						);
-						setupDemoBrokerData(chartInstance);
-					},
-					onError: (error) => {
-						console.error("Chart creation error:", error);
-						setStatus(
-							`❌ Error creating chart: ${typeof error === "string" ? error : error.message}`
-						);
-					},
-				} satisfies ChartConfig;
+					// Use a stable wrapper that calls through the ref to avoid stale closures
+					if (handleAppCallbackRef.current) {
+						// Convert to discriminated union event object for type narrowing
+						handleAppCallbackRef.current(event);
+					}
+				},
+				onReady: (chartInstance) => {
+					chartInstanceRef.current = chartInstance;
 
-				chartWrapperRef.current = GoChartingSDK.createChart(
-					"#gocharting-chart-container-advanced2",
-					chartConfig
-				);
-			} catch (error) {
-				console.error("Error initializing chart:", error);
-				setStatus("Failed to initialize chart");
-			}
-		};
+					setStatus("Chart loaded with advanced trading features!");
+					setupDemoBrokerData(chartInstance);
+				},
+				onError: (error) => {
+					console.error("Chart creation error:", error);
+					setStatus(
+						`❌ Error creating chart: ${typeof error === "string" ? error : error.message}`
+					);
+				},
+			} satisfies ChartConfig;
 
-		initChart();
-
-		return () => {
-			if (
-				chartWrapperRef.current &&
-				!chartWrapperRef.current.isDestroyed()
-			) {
-				chartWrapperRef.current.destroy();
-			}
-			if (datafeedRef.current && datafeedRef.current.destroy) {
-				datafeedRef.current.destroy();
-			}
-		};
+			chartWrapperRef.current = GoChartingSDK.createChart(
+				"#gocharting-chart-container-advanced2",
+				chartConfig
+			);
+		} catch (error) {
+			console.error("Error initializing chart:", error);
+			setStatus("Failed to initialize chart");
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const destroyChart = useCallback(() => {
+		if (chartWrapperRef.current && !chartWrapperRef.current.isDestroyed()) {
+			chartWrapperRef.current.destroy();
+		}
+		if (datafeedRef.current && datafeedRef.current.destroy) {
+			datafeedRef.current.destroy();
+		}
+		chartWrapperRef.current = null;
+		chartInstanceRef.current = null;
+		datafeedRef.current = null;
+	}, []);
+
+	const toggleChart = useCallback(() => {
+		if (isChartMounted) {
+			destroyChart();
+			setIsChartMounted(false);
+			setStatus("Chart unmounted");
+		} else {
+			setIsChartMounted(true);
+			// initChart will run after re-render via the effect below
+		}
+	}, [isChartMounted, destroyChart]);
+
+	// Chart initialization
+	useEffect(() => {
+		if (isChartMounted) {
+			initChart();
+		}
+
+		return () => {
+			destroyChart();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isChartMounted]);
 
 	return (
 		<div className='advanced-trading-container-2'>
