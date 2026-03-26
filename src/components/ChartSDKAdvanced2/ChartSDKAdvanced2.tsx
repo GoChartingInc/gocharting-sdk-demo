@@ -162,14 +162,21 @@ export const ChartSDKAdvanced2 = () => {
 			return;
 		}
 
-		// Filter out hidden orders for chart display
-		const visibleOrders = currentOrderBook.current.filter(
-			(order) => !order.hidden
-		);
+		// Update positions with latest bid/ask for accurate P/L before first TradeMessage
+		currentPositions.current.forEach((pos) => {
+			const symbolParts = (pos.symbol || "").split(":");
+			const baseSymbol =
+				symbolParts[symbolParts.length - 1] || pos.symbol;
+			const currentPrice = symbolPrices[baseSymbol] || 0;
+			if (currentPrice > 0) {
+				(pos as any).bid = currentPrice;
+				(pos as any).ask = currentPrice;
+			}
+		});
 
 		const demoBrokerData: GoChartingSDK.BrokerAccountData = {
 			accountList: currentAccountList.current,
-			orderBook: visibleOrders,
+			orderBook: currentOrderBook.current,
 			tradeBook: currentTradeBook.current,
 			positions: currentPositions.current,
 		};
@@ -180,7 +187,8 @@ export const ChartSDKAdvanced2 = () => {
 		} catch (error) {
 			console.error("❌ Failed to update chart broker data:", error);
 		}
-	}, [triggerUpdate]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [triggerUpdate, symbolPrices]);
 
 	const setupDemoBrokerData = (chartInstance: ChartInstance) => {
 		const demoBrokerData: GoChartingSDK.BrokerAccountData = {
@@ -269,6 +277,38 @@ export const ChartSDKAdvanced2 = () => {
 				setStatus(`Order ${orderId} cancelled`);
 			} else {
 				console.warn("Order not found:", orderId);
+			}
+		},
+		[updateChartBrokerData]
+	);
+
+	// Hide position from chart display
+	const hidePosition = useCallback(
+		(positionId: string) => {
+			console.log("👁️ Hide position:", positionId);
+			const position = currentPositions.current.find(
+				(p) => p.id === positionId
+			);
+			if (position) {
+				(position as any).hidden = true;
+				updateChartBrokerData();
+				setStatus(`Position ${positionId} hidden from chart`);
+			}
+		},
+		[updateChartBrokerData]
+	);
+
+	// Unhide position
+	const unhidePosition = useCallback(
+		(positionId: string) => {
+			console.log("👁️ Unhide position:", positionId);
+			const position = currentPositions.current.find(
+				(p) => p.id === positionId
+			);
+			if (position) {
+				(position as any).hidden = false;
+				updateChartBrokerData();
+				setStatus(`Position ${positionId} shown on chart`);
 			}
 		},
 		[updateChartBrokerData]
@@ -840,7 +880,10 @@ export const ChartSDKAdvanced2 = () => {
 				showStopLossButton: true,
 				showTakeProfitButton: true,
 				pnlMultiplier: newOrder.pnlMultiplier || 1,
-			};
+			} as Position;
+			// Set bid/ask for immediate P/L calculation
+			(newPosition as any).bid = executionPrice;
+			(newPosition as any).ask = executionPrice;
 
 			console.log(
 				"📝 Created new position:",
@@ -1168,7 +1211,12 @@ export const ChartSDKAdvanced2 = () => {
 
 				case "CHART_SELECTED":
 					console.log("CHART_SELECTED", message);
-					setStatus("CHART_SELECTED");
+					if (message.symbol) {
+						const fullSymbol = `BYBIT:FUTURE:${message.symbol}`;
+						currentSymbol.current = fullSymbol;
+						setSelectedSymbol(fullSymbol);
+						setStatus(`Chart selected: ${message.symbol}`);
+					}
 					break;
 
 				case "CHART_MODE_CHANGED":
@@ -1317,6 +1365,11 @@ export const ChartSDKAdvanced2 = () => {
 		if (datafeedRef.current && datafeedRef.current.destroy) {
 			datafeedRef.current.destroy();
 		}
+		// Clear the container's innerHTML so React doesn't try to remove
+		// DOM nodes that destroy() already removed (causes removeChild error)
+		if (chartContainerRef.current) {
+			chartContainerRef.current.innerHTML = "";
+		}
 		chartWrapperRef.current = null;
 		chartInstanceRef.current = null;
 		datafeedRef.current = null;
@@ -1333,10 +1386,13 @@ export const ChartSDKAdvanced2 = () => {
 		}
 	}, [isChartMounted, destroyChart]);
 
-	// Chart initialization
+	// Chart initialization — delay by a frame so the container is visible
+	// before createChart measures its dimensions (prevents zoom glitch on remount)
 	useEffect(() => {
 		if (isChartMounted) {
-			initChart();
+			requestAnimationFrame(() => {
+				initChart();
+			});
 		}
 
 		return () => {
@@ -1517,24 +1573,24 @@ export const ChartSDKAdvanced2 = () => {
 
 					{/* Chart Area */}
 					<div className='chart-area'>
-						{isChartMounted ? (
-							<div
+						<div
 								ref={chartContainerRef}
 								id='gocharting-chart-container-advanced2'
-							>
-								<div className='loading'>
-									Loading advanced trading chart...
-								</div>
-							</div>
-						) : (
+								style={{
+									display: isChartMounted ? "block" : "none",
+								}}
+							/>
+						{!isChartMounted && (
 							<div
 								style={{
 									display: "flex",
 									alignItems: "center",
 									justifyContent: "center",
-									height: "100%",
+									height: "500px",
 									color: "#888",
 									fontSize: "16px",
+									background: "#1a1a1a",
+									borderRadius: "12px",
 								}}
 							>
 								Chart is unmounted. Click "Mount Chart" to
@@ -1668,6 +1724,12 @@ export const ChartSDKAdvanced2 = () => {
 															return (
 																<tr
 																	key={pos.id}
+																	style={{
+																		opacity:
+																			(pos as any).hidden
+																				? 0.5
+																				: 1,
+																	}}
 																>
 																	<td>
 																		{pos.symbol ||
@@ -1730,9 +1792,44 @@ export const ChartSDKAdvanced2 = () => {
 																					pos.id
 																				)
 																			}
+																			style={{
+																				marginRight:
+																					"4px",
+																			}}
 																		>
 																			Close
 																		</button>
+																		{(pos as any).hidden ? (
+																			<button
+																				className='action-btn'
+																				onClick={() =>
+																					unhidePosition(
+																						pos.id
+																					)
+																				}
+																				style={{
+																					backgroundColor:
+																						"#4a90e2",
+																				}}
+																			>
+																				Show
+																			</button>
+																		) : (
+																			<button
+																				className='action-btn'
+																				onClick={() =>
+																					hidePosition(
+																						pos.id
+																					)
+																				}
+																				style={{
+																					backgroundColor:
+																						"#6c757d",
+																				}}
+																			>
+																				Hide
+																			</button>
+																		)}
 																	</td>
 																</tr>
 															);
