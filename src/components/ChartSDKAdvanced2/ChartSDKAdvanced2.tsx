@@ -187,7 +187,7 @@ export const ChartSDKAdvanced2 = () => {
 		} catch (error) {
 			console.error("❌ Failed to update chart broker data:", error);
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [triggerUpdate, symbolPrices]);
 
 	const setupDemoBrokerData = (chartInstance: ChartInstance) => {
@@ -541,14 +541,18 @@ export const ChartSDKAdvanced2 = () => {
 
 			const cleanup = () => overlay.remove();
 
-			overlay.querySelector("#sltp-modal-cancel")?.addEventListener("click", () => {
-				cleanup();
-				onCancel();
-			});
-			overlay.querySelector("#sltp-modal-confirm")?.addEventListener("click", () => {
-				cleanup();
-				onConfirm();
-			});
+			overlay
+				.querySelector("#sltp-modal-cancel")
+				?.addEventListener("click", () => {
+					cleanup();
+					onCancel();
+				});
+			overlay
+				.querySelector("#sltp-modal-confirm")
+				?.addEventListener("click", () => {
+					cleanup();
+					onConfirm();
+				});
 		},
 		[]
 	);
@@ -882,8 +886,8 @@ export const ChartSDKAdvanced2 = () => {
 				pnlMultiplier: newOrder.pnlMultiplier || 1,
 			} as Position;
 			// Set bid/ask for immediate P/L calculation
-			(newPosition as any).bid = executionPrice;
-			(newPosition as any).ask = executionPrice;
+			newPosition.bid = executionPrice;
+			newPosition.ask = executionPrice;
 
 			console.log(
 				"📝 Created new position:",
@@ -1156,19 +1160,53 @@ export const ChartSDKAdvanced2 = () => {
 				case "MODIFY_ORDER": {
 					console.log("✏️ Order modified from chart:", message);
 					const orderUpdate = message as Record<string, any>;
-					const orderUpdateType = String(orderUpdate.updateType || "MODIFY");
+					const orderUpdateType = String(
+						orderUpdate.updateType || "MODIFY"
+					);
 					showConfirmationModal({
-						title: orderUpdateType.includes("STOP_LOSS") ? "Update Stop Loss" : orderUpdateType.includes("TAKE_PROFIT") ? "Update Take Profit" : "Modify Order",
+						title: orderUpdateType.includes("STOP_LOSS")
+							? "Update Stop Loss"
+							: orderUpdateType.includes("TAKE_PROFIT")
+								? "Update Take Profit"
+								: "Modify Order",
 						details: [
-							{ label: "Order ID", value: String(orderUpdate.orderId || "N/A") },
+							{
+								label: "Order ID",
+								value: String(orderUpdate.orderId || "N/A"),
+							},
 							{ label: "Update Type", value: orderUpdateType },
-							...(orderUpdate.stopLoss != null ? [{ label: "Stop Loss", value: String(orderUpdate.stopLoss) }] : []),
-							...(orderUpdate.takeProfit != null ? [{ label: "Take Profit", value: String(orderUpdate.takeProfit) }] : []),
-							...(orderUpdate.price != null ? [{ label: "Price", value: String(orderUpdate.price) }] : []),
+							...(orderUpdate.stopLoss != null
+								? [
+										{
+											label: "Stop Loss",
+											value: String(orderUpdate.stopLoss),
+										},
+									]
+								: []),
+							...(orderUpdate.takeProfit != null
+								? [
+										{
+											label: "Take Profit",
+											value: String(
+												orderUpdate.takeProfit
+											),
+										},
+									]
+								: []),
+							...(orderUpdate.price != null
+								? [
+										{
+											label: "Price",
+											value: String(orderUpdate.price),
+										},
+									]
+								: []),
 						],
 						onConfirm: () => {
 							modifyOrderInOrderBook(message);
-							setStatus(`✏️ Order modified: ${orderUpdate.orderId}`);
+							setStatus(
+								`✏️ Order modified: ${orderUpdate.orderId}`
+							);
 						},
 						onCancel: () => {
 							setStatus(`❌ Order modification cancelled`);
@@ -1181,20 +1219,62 @@ export const ChartSDKAdvanced2 = () => {
 				case "MODIFY_POSITION": {
 					console.log("✏️ Position modified from chart:", message);
 					const posUpdate = message as Record<string, any>;
-					const posPosition = (posUpdate.position || {}) as Record<string, any>;
-					const posUpdateType = String(posPosition.updateType || "MODIFY");
+					const posPosition = (posUpdate.position || {}) as Record<
+						string,
+						any
+					>;
+					const posUpdateType = String(
+						posPosition.updateType || "MODIFY"
+					);
 					showConfirmationModal({
-						title: posUpdateType.includes("STOP_LOSS") ? "Update Stop Loss" : posUpdateType.includes("TAKE_PROFIT") ? "Update Take Profit" : posUpdateType.includes("DELETE") ? "Delete Level" : "Modify Position",
+						title: posUpdateType.includes("STOP_LOSS")
+							? "Update Stop Loss"
+							: posUpdateType.includes("TAKE_PROFIT")
+								? "Update Take Profit"
+								: posUpdateType.includes("DELETE")
+									? "Delete Level"
+									: "Modify Position",
 						details: [
-							{ label: "Position", value: String(posPosition.productId || posPosition.id || "N/A") },
+							{
+								label: "Position",
+								value: String(
+									posPosition.productId ||
+										posPosition.id ||
+										"N/A"
+								),
+							},
 							{ label: "Update Type", value: posUpdateType },
-							{ label: "Side", value: Number(posPosition.size) > 0 ? "Buy" : "Sell" },
-							...(posPosition.stopLoss != null ? [{ label: "Stop Loss", value: String(posPosition.stopLoss) }] : []),
-							...(posPosition.takeProfit != null ? [{ label: "Take Profit", value: String(posPosition.takeProfit) }] : []),
+							{
+								label: "Side",
+								value:
+									Number(posPosition.size) > 0
+										? "Buy"
+										: "Sell",
+							},
+							...(posPosition.stopLoss != null
+								? [
+										{
+											label: "Stop Loss",
+											value: String(posPosition.stopLoss),
+										},
+									]
+								: []),
+							...(posPosition.takeProfit != null
+								? [
+										{
+											label: "Take Profit",
+											value: String(
+												posPosition.takeProfit
+											),
+										},
+									]
+								: []),
 						],
 						onConfirm: () => {
 							modifyPositionInPositions(message);
-							setStatus(`✏️ Position modified: ${posPosition.id}`);
+							setStatus(
+								`✏️ Position modified: ${posPosition.id}`
+							);
 						},
 						onCancel: () => {
 							setStatus(`❌ Position modification cancelled`);
@@ -1574,12 +1654,12 @@ export const ChartSDKAdvanced2 = () => {
 					{/* Chart Area */}
 					<div className='chart-area'>
 						<div
-								ref={chartContainerRef}
-								id='gocharting-chart-container-advanced2'
-								style={{
-									display: isChartMounted ? "block" : "none",
-								}}
-							/>
+							ref={chartContainerRef}
+							id='gocharting-chart-container-advanced2'
+							style={{
+								display: isChartMounted ? "block" : "none",
+							}}
+						/>
 						{!isChartMounted && (
 							<div
 								style={{
@@ -1726,7 +1806,10 @@ export const ChartSDKAdvanced2 = () => {
 																	key={pos.id}
 																	style={{
 																		opacity:
-																			(pos as any).hidden
+																			(
+																				pos as any
+																			)
+																				.hidden
 																				? 0.5
 																				: 1,
 																	}}
@@ -1799,7 +1882,10 @@ export const ChartSDKAdvanced2 = () => {
 																		>
 																			Close
 																		</button>
-																		{(pos as any).hidden ? (
+																		{(
+																			pos as any
+																		)
+																			.hidden ? (
 																			<button
 																				className='action-btn'
 																				onClick={() =>
