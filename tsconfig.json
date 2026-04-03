@@ -18,7 +18,9 @@
 		"downlevelIteration": true,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["src/*"]
+			"@/*": ["src/*"],
+			"@gocharting/chart-sdk": ["../gocharting-web-sdk/GoCharting-SDK/dist"],
+			"@gocharting/chart-sdk/*": ["../gocharting-web-sdk/GoCharting-SDK/dist/*"]
 		}
 	},
 	"include": ["src"],

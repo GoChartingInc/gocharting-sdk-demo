@@ -11,8 +11,9 @@
 		"build": "craco build",
 		"test": "craco test",
 		"eject": "react-scripts eject",
-		"build:sdk": "(cd ../gocharting-web-sdk/GoCharting-SDK && pnpm run build:webpack)",
-		"build:start": "npm run build:sdk && pnpm install --force && pnpm start"
+		"build:sdk": "cd $(node sdk.config.js) && pnpm run build:webpack",
+		"build:start": "npm run build:sdk && pnpm install --force && pnpm start",
+		"start:all": "concurrently -n demo,sdk -c blue,green \"pnpm start\" \"cd $(node sdk.config.js) && pnpm run build:watch:all:typed\""
 	},
 	"dependencies": {
 		"@emotion/react": "^11.14.0",
@@ -37,6 +38,7 @@
 		"@types/react": "^19.0.0",
 		"@types/react-dom": "^19.0.0",
 		"@types/react-router-dom": "^5.3.3",
+		"concurrently": "^9.2.1",
 		"react-scripts": "5.0.1",
 		"sass": "^1.97.3",
 		"typescript": "^5.2.2"
