@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
-import { createChartDatafeed } from "@/utils/chart-datafeed";
+import { createDatafeed } from "@/utils/datafeed/createDatafeed";
+import { getProvider } from "@/utils/datafeed/providers";
 import type {
 	ChartWrapper,
 	ChartInstance,
@@ -18,7 +19,6 @@ import type {
 	ModifyPositionMessage,
 } from "@gocharting/chart-sdk";
 import "./ChartSDKAdvanced2.scss";
-import { createTwelveDataChartDatafeed } from "@/utils/twelve-chart-datafeed";
 
 // Extended Order type with additional trading properties (hidden is not in SDK)
 interface ExtendedOrder extends Order {
@@ -77,38 +77,20 @@ interface DemoAccount {
 	freeMargin?: number;
 }
 
-// Watchlist symbols (always Bybit format — prices fetched from Bybit API)
-const WATCHLIST_SYMBOLS = [
-	{ symbol: "BYBIT:FUTURE:BTCUSDT", name: "BTCUSDT" },
-	{ symbol: "BYBIT:FUTURE:ETHUSDT", name: "ETHUSDT" },
-	{ symbol: "BYBIT:FUTURE:SOLUSDT", name: "SOLUSDT" },
-	{ symbol: "BYBIT:FUTURE:XRPUSDT", name: "XRPUSDT" },
-];
-
-// Map Bybit watchlist symbols → Twelve Data chart symbols
-const BYBIT_TO_TWELVEDATA_SYMBOL: Record<string, string> = {
-	"BYBIT:FUTURE:BTCUSDT": "Coinbase Pro:SPOT:BTC/USD",
-	"BYBIT:FUTURE:ETHUSDT": "Coinbase Pro:SPOT:ETH/USD",
-	"BYBIT:FUTURE:SOLUSDT": "Coinbase Pro:SPOT:SOL/USD",
-	"BYBIT:FUTURE:XRPUSDT": "Coinbase Pro:SPOT:XRP/USD",
-};
+// Canonical watchlist bases — each provider resolves these to its own symbol.
+const WATCHLIST_BASES = ["BTC", "ETH", "SOL", "XRP"];
 
 export const ChartSDKAdvanced2 = () => {
 	const [searchParams] = useSearchParams();
-	const datafeed = (searchParams.get("datafeed") ?? "bybit") as
-		| "bybit"
-		| "twelvedata";
+	const datafeed = searchParams.get("datafeed") ?? "bybit";
+	const provider = getProvider(datafeed);
 	const chartSymbol = searchParams.get("symbol");
 	const chartContainerRef = useRef<HTMLDivElement>(null);
 	const chartInstanceRef = useRef<ChartInstance | null>(null);
 	const chartWrapperRef = useRef<ChartWrapper | null>(null);
 	const datafeedRef = useRef<Datafeed | null>(null);
-	const currentSymbol = useRef<string>(
-		chartSymbol ??
-			(datafeed === "bybit"
-				? "BYBIT:FUTURE:BTCUSDT"
-				: "Coinbase Pro:SPOT:BTC/USD")
-	);
+	const defaultFullName = provider.resolveSymbol("BTC").fullName;
+	const currentSymbol = useRef<string>(chartSymbol ?? defaultFullName);
 
 	// Trading data refs
 	const currentAccountList = useRef<DemoAccount[]>([
@@ -132,9 +114,7 @@ export const ChartSDKAdvanced2 = () => {
 
 	// UI State
 	const [status, setStatus] = useState<string>("Initializing chart...");
-	const [selectedSymbol, setSelectedSymbol] = useState<string>(
-		"BYBIT:FUTURE:BTCUSDT"
-	);
+	const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
 	const [activeTab, setActiveTab] = useState<
 		"positions" | "orders" | "closed"
 	>("positions");
@@ -668,19 +648,14 @@ export const ChartSDKAdvanced2 = () => {
 		[updateChartBrokerData, updateOrderTPSL]
 	);
 
-	// Symbol switching
-	const handleSymbolChange = (symbol: string) => {
-		setSelectedSymbol(symbol);
-		currentSymbol.current = symbol; // Always Bybit format for internal trading logic
-
+	// Symbol switching — `base` is a canonical base like "BTC".
+	const handleSymbolChange = (base: string) => {
+		setSelectedSymbol(base);
+		const fullName = provider.resolveSymbol(base).fullName;
+		currentSymbol.current = fullName;
 		if (chartInstanceRef.current) {
 			try {
-				// When using Twelve Data datafeed, map Bybit symbol to Twelve Data equivalent
-				const chartSymbol =
-					datafeed === "twelvedata"
-						? (BYBIT_TO_TWELVEDATA_SYMBOL[symbol] ?? symbol)
-						: symbol;
-				chartInstanceRef.current.setSymbol(chartSymbol);
+				chartInstanceRef.current.setSymbol(fullName);
 			} catch (error) {
 				console.error("Failed to change symbol:", error);
 			}
@@ -1366,28 +1341,12 @@ export const ChartSDKAdvanced2 = () => {
 		try {
 			setStatus("Creating chart...");
 
-			// Create datafeed
-			const currentDatafeed =
-				datafeed === "bybit"
-					? createChartDatafeed()
-					: createTwelveDataChartDatafeed();
+			// Create datafeed from the active provider adapter
+			const currentDatafeed = createDatafeed(provider);
 			datafeedRef.current = currentDatafeed;
 
-			console.log({
-				chartSymbol,
-				symbol:
-					chartSymbol ??
-					(datafeed === "bybit"
-						? "BYBIT:FUTURE:BTCUSDT"
-						: "Coinbase Pro:SPOT:BTC/USD"),
-			});
-
 			const chartConfig = {
-				symbol:
-					chartSymbol ??
-					(datafeed === "bybit"
-						? "BYBIT:FUTURE:BTCUSDT"
-						: "Coinbase Pro:SPOT:BTC/USD"),
+				symbol: chartSymbol ?? defaultFullName,
 				interval: "1m",
 				datafeed: currentDatafeed,
 				debugLog: false,
@@ -1630,24 +1589,23 @@ export const ChartSDKAdvanced2 = () => {
 					<div className='sidebar'>
 						<h3>📊 Watchlist</h3>
 						<div className='symbol-list'>
-							{WATCHLIST_SYMBOLS.map((item) => (
-								<button
-									key={item.symbol}
-									className={`symbol-btn ${selectedSymbol === item.symbol ? "active" : ""}`}
-									onClick={() =>
-										handleSymbolChange(item.symbol)
-									}
-								>
-									<span className='symbol-name'>
-										{item.name}
-									</span>
-									<span className='symbol-price'>
-										{symbolPrices[item.name]
-											? `$${symbolPrices[item.name].toFixed(2)}`
-											: "--"}
-									</span>
-								</button>
-							))}
+							{WATCHLIST_BASES.map((base) => {
+								const priceKey = `${base}USDT`; // Bybit ticker key
+								return (
+									<button
+										key={base}
+										className={`symbol-btn ${selectedSymbol === base ? "active" : ""}`}
+										onClick={() => handleSymbolChange(base)}
+									>
+										<span className='symbol-name'>{base}</span>
+										<span className='symbol-price'>
+											{symbolPrices[priceKey]
+												? `$${symbolPrices[priceKey].toFixed(2)}`
+												: "--"}
+										</span>
+									</button>
+								);
+							})}
 						</div>
 					</div>
 
