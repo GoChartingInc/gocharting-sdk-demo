@@ -11,6 +11,9 @@ import {
 	PeriodParams,
 	Mark,
 	TimescaleMark,
+	RealtimeCallback,
+	TradeMessage,
+	Tick,
 } from "@gocharting/chart-sdk";
 
 type IResponse<T = any> = {
@@ -185,17 +188,11 @@ type ExchangeInfoLookup = {
 };
 
 /**
- * Union type for all real-time data callbacks
- * Matches the SDK's subscribeTicks callback signature: (data: Bar | Tick | any) => void
- */
-type RealtimeDataCallback = (data: Bar | TickData | TradeMessage | any) => void;
-
-/**
  * Streaming subscription handler
  */
 type StreamingHandler = {
 	id: string;
-	callback: RealtimeDataCallback;
+	callback: RealtimeCallback;
 	resolution: string | Resolution;
 	lastDailyBar: Bar | null | undefined;
 	onResetCacheNeededCallback?: (() => void) | null;
@@ -211,23 +208,6 @@ type SubscriptionItem = {
 	handlers: StreamingHandler[];
 	symbolInfo: SymbolInfo;
 	channelString: string;
-};
-
-/**
- * Trade message for real-time updates
- */
-type TradeMessage = {
-	type: string;
-	productId: string;
-	symbol: string;
-	exchange: string;
-	segment: string;
-	timeStamp: Date;
-	tradeID: string;
-	price: number;
-	quantity: number;
-	amount: number;
-	side: string;
 };
 
 /**
@@ -1352,7 +1332,7 @@ export const createChartDatafeed = (): Datafeed => {
 		subscribeBars(
 			symbolInfo: SymbolInfo,
 			resolution: string | Resolution,
-			onRealtimeCallback: RealtimeDataCallback,
+			onRealtimeCallback: RealtimeCallback,
 			subscriberUID: string,
 			_onResetCacheNeededCallback?: () => void
 		): void {
@@ -1381,7 +1361,7 @@ export const createChartDatafeed = (): Datafeed => {
 		subscribeTicks(
 			symbolInfo: SymbolInfo,
 			resolution: string | Resolution,
-			onRealtimeCallback: (bar: Bar) => void,
+			onRealtimeCallback: RealtimeCallback,
 			subscriberUID: string,
 			onResetCacheNeededCallback?: () => void
 		): void {
@@ -1406,7 +1386,7 @@ export const createChartDatafeed = (): Datafeed => {
 		startDemoStreaming(
 			_symbolInfo: SymbolInfo,
 			_resolution: string | Resolution,
-			onRealtimeCallback: RealtimeDataCallback,
+			onRealtimeCallback: RealtimeCallback,
 			subscriberUID: string
 		): void {
 			// Initialize streaming intervals map if not exists
@@ -1428,9 +1408,12 @@ export const createChartDatafeed = (): Datafeed => {
 				lastPrice = Math.max(1000, lastPrice + change); // Ensure price doesn't go below $1000
 
 				const now = Date.now();
-				const tick: TickData = {
+				const tick: Tick = {
 					time: Math.floor(now / 1000), // Unix timestamp in seconds
-					price: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
+					open: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
+					close: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
+					low: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
+					high: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
 					volume: Math.floor(Math.random() * 1000) + 100, // Random volume
 				};
 
@@ -1442,7 +1425,7 @@ export const createChartDatafeed = (): Datafeed => {
 		subscribeOnStream(
 			symbolInfo: SymbolInfo,
 			resolution: string | Resolution,
-			onRealtimeCallback: RealtimeDataCallback,
+			onRealtimeCallback: RealtimeCallback,
 			subscriberUID: string,
 			onResetCacheNeededCallback?: (() => void) | null,
 			lastDailyBar?: Bar | null
@@ -1688,7 +1671,8 @@ export const createChartDatafeed = (): Datafeed => {
 					price: Number(price),
 					quantity: Number(size),
 					amount: Number(price) * Number(size),
-					side: side.toUpperCase(),
+					side: side.toUpperCase() === "BUY" ? "BUY" : "SELL",
+					pnlMultiplier: 2.22,
 				};
 
 				// Call all handlers for this channel (matching streaming.js exactly)
@@ -1855,7 +1839,7 @@ export const createChartDatafeed = (): Datafeed => {
 				const { T: timestamp, S: side, p: price, v: size } = each;
 
 				const symbol = subscriptionItem.symbolInfo?.symbol || "DEMO";
-				const tradeMessage = {
+				const tradeMessage: TradeMessage = {
 					type: "trade",
 					productId: `DEMO:FUTURE:${symbol}`,
 					symbol: symbol,
@@ -1866,7 +1850,8 @@ export const createChartDatafeed = (): Datafeed => {
 					price: Number(price),
 					quantity: Number(size),
 					amount: Number(price) * Number(size),
-					side: side.toUpperCase(),
+					side: side.toUpperCase() === "BUY" ? "BUY" : "SELL",
+					pnlMultiplier: 2.22,
 				};
 
 				// Call all handlers for this channel (matching streaming.js exactly)
