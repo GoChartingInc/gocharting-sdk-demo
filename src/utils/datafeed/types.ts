@@ -17,6 +17,11 @@ export type RawBar = {
 
 /** Normalized realtime trade tick produced by an adapter's parseTrade(). */
 export type TradeTick = {
+	/**
+	 * Provider-native symbol. MUST equal the providerSymbol passed to buildSubscribe()
+	 * / buildKlineUrl() — the factory uses it as the channel key to route ticks to the
+	 * right subscription. If it differs, live ticks are silently dropped.
+	 */
 	symbol: string;
 	price: number;
 	size: number;

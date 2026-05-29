@@ -34,14 +34,6 @@ type SubscriptionItem = {
 	channelString: string; // the provider symbol
 };
 
-type DemoSocket = {
-	readyState: number;
-	url: string;
-	send: (message: string) => void;
-	close: () => void;
-	addEventListener: (event: string, cb: (event?: unknown) => void) => void;
-};
-
 /**
  * Create a GoCharting SDK datafeed backed by the given provider adapter.
  * If the provider supplies makeDatafeed(), that is returned directly (legacy escape hatch).
@@ -55,15 +47,10 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 		provider,
 		symbolCache: new Map<string, SymbolInfo>(),
 		searchSymbolController: null as AbortController | null,
-		streamingIntervals: {} as Record<string, ReturnType<typeof setInterval>>,
 		channelToSubscription: null as Map<string, SubscriptionItem> | null,
-		socket: null as WebSocket | DemoSocket | null,
+		socket: null as WebSocket | null,
 
 		destroy(): void {
-			Object.values(this.streamingIntervals).forEach((i) =>
-				clearInterval(i as ReturnType<typeof setInterval>)
-			);
-			this.streamingIntervals = {};
 			if (this.searchSymbolController) this.searchSymbolController.abort();
 			if (this.socket) {
 				try {
@@ -90,8 +77,8 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 							"1W",
 							"1M",
 						],
-						supports_marks: false,
-						supports_timescale_marks: false,
+						supports_marks: true,
+						supports_timescale_marks: true,
 						supports_time: true,
 					}),
 				0
@@ -114,6 +101,7 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 					periodParams
 				);
 				const res = await fetch(url);
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const json = await res.json();
 				const rawBars = provider.parseKlines(json);
 				if (!rawBars || rawBars.length === 0) {
@@ -413,6 +401,12 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 				this.socket.readyState === WebSocket.CONNECTING
 			)
 				return;
+			if (this.socket) {
+				try {
+					this.socket.close();
+				} catch (e) {}
+				this.socket = null;
+			}
 			const ws = new WebSocket(provider.wsUrl);
 			this.socket = ws;
 			ws.addEventListener("message", (event: MessageEvent) =>
