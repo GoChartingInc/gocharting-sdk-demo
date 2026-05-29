@@ -1,11 +1,23 @@
 import { DatafeedProvider } from "../types";
 import { bybit } from "./bybit";
+import { binance } from "./binance";
+import { okx } from "./okx";
+import { coinbase } from "./coinbase";
+import { kraken } from "./kraken";
+import { twelvedata } from "./twelvedata";
 
+/**
+ * Provider registry. To add a new provider: create its adapter file and add one line here —
+ * it appears in the DataProviderSwitch automatically.
+ */
 export const PROVIDERS: Record<string, DatafeedProvider> = {
 	bybit,
+	binance,
+	okx,
+	coinbase,
+	kraken,
+	twelvedata,
 };
-
-export type ProviderId = string;
 
 export const getProvider = (id: string | null | undefined): DatafeedProvider =>
 	(id && PROVIDERS[id]) || PROVIDERS.bybit;
