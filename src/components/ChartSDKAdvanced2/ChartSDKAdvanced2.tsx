@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import { createDatafeed } from "@/utils/datafeed/createDatafeed";
 import { getProvider } from "@/utils/datafeed/providers";
+import type { DatafeedProvider } from "@/utils/datafeed/types";
 import type {
 	ChartWrapper,
 	ChartInstance,
@@ -33,7 +34,8 @@ type OrderType = "market" | "limit";
 const createDemoSymbolInfo = (
 	symbol: string,
 	exchange: string = "BYBIT",
-	segment: string = "FUTURE"
+	segment: string = "FUTURE",
+	quoteCurrency: string = "USDT"
 ): SymbolInfo => {
 	const cleanSymbol = symbol.replace(/^.*:/, ""); // Remove exchange prefix if present
 	const fullName = `${exchange}:${segment}:${cleanSymbol}`;
@@ -42,14 +44,16 @@ const createDemoSymbolInfo = (
 		// Required fields
 		symbol: cleanSymbol,
 		full_name: fullName,
-		description: `${cleanSymbol} Perpetual Futures`,
+		description: `${cleanSymbol} ${
+			segment === "FUTURE" ? "Perpetual Futures" : segment
+		}`,
 		exchange: exchange,
 		type: "crypto",
 		session: "24x7",
 		timezone: "Etc/UTC",
 		ticker: cleanSymbol,
 		has_intraday: true,
-		quote_currency: "USDT",
+		quote_currency: quoteCurrency,
 		supported_resolutions: ["1", "5", "15", "30", "60", "240", "1D", "1W"],
 
 		// Optional fields
@@ -79,6 +83,19 @@ interface DemoAccount {
 
 // Canonical watchlist bases — each provider resolves these to its own symbol.
 const WATCHLIST_BASES = ["BTC", "ETH", "SOL", "XRP"];
+
+// Bare ticker from a chart full_name, e.g. "OKX:SPOT:BTC-USDT" -> "BTC-USDT".
+const toBareSymbol = (fullName: string): string => fullName.replace(/^.*:/, "");
+
+// Canonical watchlist base for a provider-native symbol, if it maps to one
+// (e.g. Bybit "BTCUSDT", OKX "BTC-USDT", Kraken "XBTUSD" all -> "BTC").
+const baseForProviderSymbol = (
+	provider: DatafeedProvider,
+	providerSymbol: string
+): string | undefined =>
+	WATCHLIST_BASES.find(
+		(b) => provider.resolveSymbol(b).providerSymbol === providerSymbol
+	);
 
 export const ChartSDKAdvanced2 = () => {
 	const [searchParams] = useSearchParams();
@@ -189,11 +206,14 @@ export const ChartSDKAdvanced2 = () => {
 
 	const getCurrentLTP = useCallback(
 		(symbol?: string) => {
-			// Get current price from symbol prices or use default
-			const symbolName = symbol || currentSymbol.current.split(":")[2];
-			return symbolPrices[symbolName] || 50000;
+			// Resolve the canonical base so we can read the (Bybit-sourced) reference
+			// price regardless of the active provider's symbol format.
+			const bare = symbol ?? toBareSymbol(currentSymbol.current);
+			const base = baseForProviderSymbol(provider, bare);
+			const priceKey = base ? `${base}USDT` : bare;
+			return symbolPrices[priceKey] || 50000;
 		},
-		[symbolPrices]
+		[symbolPrices, provider]
 	);
 
 	// Close position with P&L calculation
@@ -709,9 +729,10 @@ export const ChartSDKAdvanced2 = () => {
 				pnlMultiplier: pnlMultiplier || 1,
 			},
 			security: createDemoSymbolInfo(
-				currentSymbol.current.replace("BYBIT:FUTURE:", ""),
-				"BYBIT",
-				"FUTURE"
+				currentSymbol.current,
+				provider.exchange,
+				provider.segment,
+				provider.quoteCurrency
 			),
 			ltp: ltp,
 		};
@@ -754,7 +775,7 @@ export const ChartSDKAdvanced2 = () => {
 			status: "filled",
 			cost: executionPrice * newOrder.size,
 			fee: {
-				currency: "USDT",
+				currency: provider.quoteCurrency,
 				cost: executionPrice * newOrder.size * 0.001, // 0.1% fee
 				rate: 0.001,
 			},
@@ -762,7 +783,7 @@ export const ChartSDKAdvanced2 = () => {
 			symbol: newOrder.symbol,
 			key: `demo-${newOrder.productId}-${tradeId}`,
 			broker: "demo",
-			productType: "FUTURE",
+			productType: provider.segment,
 			security: newOrder.security,
 		};
 
@@ -938,12 +959,10 @@ export const ChartSDKAdvanced2 = () => {
 				avgFillPrice: null,
 				filledSize: 0,
 				modifiedAt: null,
-				exchange: security?.exchange || "BYBIT",
-				symbol: (
-					security?.symbol ||
-					order.symbol ||
-					currentSymbol.current
-				).replace("BYBIT:FUTURE:", ""),
+				exchange: security?.exchange || provider.exchange,
+				symbol: toBareSymbol(
+					security?.symbol || order.symbol || currentSymbol.current
+				),
 				takeProfit: order.takeProfit || null,
 				stopLoss: order.stopLoss || null,
 				isGC: true,
@@ -953,19 +972,17 @@ export const ChartSDKAdvanced2 = () => {
 				commissions: 0,
 				broker: "demo",
 				stopPrice: order.stopPrice || null,
-				productType: "FUTURE",
+				productType: provider.segment,
 				rejReason: null,
 				security: createDemoSymbolInfo(
-					(order.symbol || currentSymbol.current).replace(
-						"BYBIT:FUTURE:",
-						""
-					),
-					"BYBIT",
-					"FUTURE"
+					order.symbol || currentSymbol.current,
+					provider.exchange,
+					provider.segment,
+					provider.quoteCurrency
 				),
 				userTag: null,
-				segment: "FUTURE",
-				currency: "USDT",
+				segment: provider.segment,
+				currency: provider.quoteCurrency,
 				// Additional properties for feature parity with HTML reference
 				showStopLossButton: true,
 				showTakeProfitButton: true,
@@ -1267,9 +1284,13 @@ export const ChartSDKAdvanced2 = () => {
 				case "CHART_SELECTED":
 					console.log("CHART_SELECTED", message);
 					if (message.symbol) {
-						const fullSymbol = `BYBIT:FUTURE:${message.symbol}`;
+						const fullSymbol = `${provider.exchange}:${provider.segment}:${message.symbol}`;
 						currentSymbol.current = fullSymbol;
-						setSelectedSymbol(fullSymbol);
+						// Highlight the matching watchlist base, else fall back to the raw symbol.
+						setSelectedSymbol(
+							baseForProviderSymbol(provider, message.symbol) ??
+								message.symbol
+						);
 						setStatus(`Chart selected: ${message.symbol}`);
 					}
 					break;
@@ -1289,6 +1310,7 @@ export const ChartSDKAdvanced2 = () => {
 			}
 		},
 		[
+			provider,
 			addOrderToOrderBook,
 			closePosition,
 			removeOrderFromOrderBook,
