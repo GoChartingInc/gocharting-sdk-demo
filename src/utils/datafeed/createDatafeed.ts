@@ -391,6 +391,8 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 		},
 
 		initSocket(): void {
+			// Providers with no realtime stream (e.g. Alpha Vantage) leave wsUrl empty.
+			if (!provider.wsUrl) return;
 			if (
 				this.socket &&
 				this.socket.readyState === WebSocket.OPEN
@@ -408,6 +410,9 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 				this.socket = null;
 			}
 			const ws = new WebSocket(provider.wsUrl);
+			// Some providers (e.g. Upbit) deliver JSON-encoded frames as binary.
+			// Receiving them as ArrayBuffer lets handleMessage decode synchronously.
+			ws.binaryType = "arraybuffer";
 			this.socket = ws;
 			ws.addEventListener("message", (event: MessageEvent) =>
 				this.handleMessage(event)
@@ -434,7 +439,13 @@ export const createDatafeed = (provider: DatafeedProvider): Datafeed => {
 
 		handleMessage(event: MessageEvent): void {
 			try {
-				const raw = JSON.parse(event.data);
+				// Decode binary frames (ArrayBuffer) to text; pass strings through.
+				// gzip/protobuf payloads will fail JSON.parse below and be ignored.
+				const data =
+					event.data instanceof ArrayBuffer
+						? new TextDecoder("utf-8").decode(event.data)
+						: event.data;
+				const raw = JSON.parse(data);
 				const tick = provider.parseTrade(raw);
 				if (!tick) return;
 				const item = this.channelToSubscription?.get(tick.symbol);

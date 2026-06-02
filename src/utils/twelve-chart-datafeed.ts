@@ -205,8 +205,9 @@ type MockSearchResult = {
  * ```
  */
 export const createTwelveDataChartDatafeed = (): Datafeed => {
-	// const API_KEY = "c4d9f4bbeff145d299d9b2ac67795522";
-	const API_KEY = "0c8d6ab2284847b58505e2159b6f2d0c";
+	// Prefer an env-provided key; fall back to the bundled demo key.
+	const API_KEY =
+		process.env.REACT_APP_TWELVEDATA_API_KEY || "0c8d6ab2284847b58505e2159b6f2d0c";
 	const datafeed = {
 		symbolCache: new Map<string, SymbolInfo>(),
 		searchSymbolController: null as AbortController | null,

@@ -1,18 +1,12 @@
 import type { Resolution, PeriodParams } from "@gocharting/chart-sdk";
 import { DatafeedProvider, RawBar, TradeTick } from "../types";
+import { relay as withProxy } from "../proxy";
 
 const QUOTE = "USDT";
 
 // OKX's REST host (www.okx.com) is geo/firewall-blocked on some networks, so a
-// direct browser fetch times out. Route history requests through a third-party
-// relay proxy that CAN reach OKX (a local dev proxy would not help — it runs on
-// the same blocked host). Override or disable (set to "") via REACT_APP_OKX_PROXY.
-// The proxy must accept a URL-encoded target and stream the raw upstream body.
-const HISTORY_PROXY =
-	process.env.REACT_APP_OKX_PROXY ?? "https://api.allorigins.win/raw?url=";
-
-const withProxy = (url: string) =>
-	HISTORY_PROXY ? `${HISTORY_PROXY}${encodeURIComponent(url)}` : url;
+// direct browser fetch times out. Route history through the shared relay proxy
+// (see ../proxy) that CAN reach OKX. Live WS (ws.okx.com) is unaffected.
 
 const INTERVAL: Record<string, string> = {
 	"1": "1m",
