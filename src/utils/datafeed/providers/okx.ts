@@ -3,6 +3,17 @@ import { DatafeedProvider, RawBar, TradeTick } from "../types";
 
 const QUOTE = "USDT";
 
+// OKX's REST host (www.okx.com) is geo/firewall-blocked on some networks, so a
+// direct browser fetch times out. Route history requests through a third-party
+// relay proxy that CAN reach OKX (a local dev proxy would not help — it runs on
+// the same blocked host). Override or disable (set to "") via REACT_APP_OKX_PROXY.
+// The proxy must accept a URL-encoded target and stream the raw upstream body.
+const HISTORY_PROXY =
+	process.env.REACT_APP_OKX_PROXY ?? "https://api.allorigins.win/raw?url=";
+
+const withProxy = (url: string) =>
+	HISTORY_PROXY ? `${HISTORY_PROXY}${encodeURIComponent(url)}` : url;
+
 const INTERVAL: Record<string, string> = {
 	"1": "1m",
 	"5": "5m",
@@ -36,13 +47,17 @@ export const okx: DatafeedProvider = {
 		const limit = Math.min(params.rows || 200, 300);
 		// history-candles supports paging via `after` (ms, exclusive upper bound).
 		if (params.firstDataRequest) {
-			return `https://www.okx.com/api/v5/market/candles?instId=${symbol}&bar=${interval}&limit=${limit}`;
+			return withProxy(
+				`https://www.okx.com/api/v5/market/candles?instId=${symbol}&bar=${interval}&limit=${limit}`
+			);
 		}
 		const end =
 			typeof params.to === "number"
 				? params.to * 1000
 				: (params.to as Date).getTime();
-		return `https://www.okx.com/api/v5/market/history-candles?instId=${symbol}&bar=${interval}&after=${end}&limit=${limit}`;
+		return withProxy(
+			`https://www.okx.com/api/v5/market/history-candles?instId=${symbol}&bar=${interval}&after=${end}&limit=${limit}`
+		);
 	},
 
 	parseKlines(json: any): RawBar[] {
