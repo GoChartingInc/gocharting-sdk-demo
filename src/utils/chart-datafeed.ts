@@ -511,6 +511,10 @@ export const createChartDatafeed = (): Datafeed => {
 				(await res.json()) as IResponse<GoChartingExactSearchResponse>;
 			if (data.status === 200 && data.payload?.results?.length > 0) {
 				const result = data.payload.results[0];
+				// Hide the 10-minute interval from the chart's interval dropdown
+				const validIntervals = result.exchange_info?.valid_intervals?.filter(
+					(i) => i !== "10m" && i !== "10"
+				);
 				const symbolInfo: SymbolInfo = {
 					symbol: result.symbol,
 					full_name: `${result.exchange}:${result.segment}:${result.symbol}`,
@@ -531,8 +535,7 @@ export const createChartDatafeed = (): Datafeed => {
 						"240",
 						"1D",
 					],
-					supported_resolutions: result.exchange_info
-						?.valid_intervals || [
+					supported_resolutions: validIntervals || [
 						"1",
 						"5",
 						"15",
@@ -577,12 +580,10 @@ export const createChartDatafeed = (): Datafeed => {
 						contains_ambiguous_symbols:
 							result.exchange_info?.contains_ambiguous_symbols ??
 							false,
-						valid_intervals: result.exchange_info
-							?.valid_intervals || [
+						valid_intervals: validIntervals || [
 							"1m",
 							"3m",
 							"5m",
-							"10m",
 							"15m",
 							"30m",
 							"1h",
