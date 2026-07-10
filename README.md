@@ -1,46 +1,109 @@
-# Getting Started with Create React App
+# GoCharting SDK Demo
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React (Create React App + CRACO) demo application showcasing the
+[`@gocharting/chart-sdk`](https://www.npmjs.com/package/@gocharting/chart-sdk).
+It includes a multi-page navigation system with several chart examples — see
+[`NAVIGATION.md`](./NAVIGATION.md) and
+[`ADVANCED_TRADING_EXAMPLE.md`](./ADVANCED_TRADING_EXAMPLE.md).
+
+## Branch Strategy
+
+This repository uses two branches with **different SDK wiring**. Pick the branch
+that matches what you're doing:
+
+| Branch | Purpose | SDK source |
+| --- | --- | --- |
+| **`main`** | Test the demo against the **published SDK from npm** | `@gocharting/chart-sdk` (pinned npm version) |
+| **`develop`** | **Local development** against a checkout of the SDK | `@gocharting/chart-sdk` resolved from a local folder |
+
+> Keep changes to SDK-source wiring (`package.json` dependency,
+> `craco.config.js` alias, `sdk.config.js`) on the branch they belong to — do not
+> merge local-dev wiring from `develop` into `main`.
+
+## Prerequisites
+
+- Node.js 18+
+- [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
+
+---
+
+## `main` — Test using the SDK from npm
+
+On `main`, the SDK is consumed as a normal published dependency
+(`"@gocharting/chart-sdk": "<version>"` in `package.json`). No local SDK checkout
+is required.
+
+```bash
+git checkout main
+pnpm install
+pnpm start          # runs on http://localhost:3000
+```
+
+To test a different published SDK version, bump the version in `package.json` and
+reinstall:
+
+```bash
+pnpm add @gocharting/chart-sdk@<version>
+pnpm start
+```
+
+---
+
+## `develop` — Local development for gocharting-sdk
+
+On `develop`, the SDK is resolved from a **local checkout** so you can develop the
+demo and the SDK side by side. The demo expects the SDK repository to sit next to
+this one:
+
+```
+parent/
+├── gocharting-sdk-demo/            # this repo (on `develop`)
+└── gocharting-web-sdk/GoCharting-SDK/
+```
+
+The wiring lives in:
+
+- `package.json` → `"@gocharting/chart-sdk": "file:../gocharting-web-sdk/GoCharting-SDK/dist"`
+- `craco.config.js` → webpack alias pointing `@gocharting/chart-sdk` at the local
+  SDK `dist/`
+
+### Setup
+
+```bash
+git checkout develop
+pnpm install
+```
+
+### Build the SDK and run the demo
+
+```bash
+pnpm run build:sdk      # builds the local SDK (build:webpack)
+pnpm start              # runs the demo on http://localhost:3000
+```
+
+Or do both in one step (build SDK, reinstall, start):
+
+```bash
+pnpm run build:start
+```
+
+> If you change the local SDK path, update it in **both** `package.json` and
+> `craco.config.js`.
+
+---
 
 ## Available Scripts
 
-In the project directory, you can run:
-
-### `yarn start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `yarn test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+| Script | Description |
+| --- | --- |
+| `pnpm start` | Run the demo in development mode (http://localhost:3000). |
+| `pnpm run build` | Production build into `build/`. |
+| `pnpm test` | Run the test runner in watch mode. |
+| `pnpm run build:sdk` | Build the local SDK (`develop` workflow). |
+| `pnpm run build:start` | Build the local SDK, reinstall, then start (`develop` workflow). |
 
 ## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started)
+- [CRACO documentation](https://craco.js.org/)
+- [React documentation](https://reactjs.org/)
