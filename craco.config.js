@@ -1,12 +1,12 @@
 const path = require('path');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
-const SDK_DIR = require('./sdk.config');
 
 module.exports = {
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@gocharting/chart-sdk': path.resolve(__dirname, SDK_DIR, 'dist'),
+      // '@gocharting/chart-sdk' is resolved from node_modules (npm package).
+      // For local SDK development, use the `develop` / `develop-sdk` branch.
     },
     configure: (webpackConfig) => {
       // Allow imports from outside src/ (needed for local SDK alias)
