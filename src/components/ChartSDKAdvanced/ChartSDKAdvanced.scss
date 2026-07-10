@@ -70,11 +70,26 @@
 	transition: all 0.3s ease;
 }
 
+/* Safari renders native select chrome unless appearance is reset */
+.trading-group select {
+	-webkit-appearance: none;
+	appearance: none;
+	padding-right: 30px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b0b0b0'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+}
+
+.trading-group select option {
+	background-color: #1e3c72;
+	color: white;
+}
+
 .trading-group input:focus,
 .trading-group select:focus {
 	outline: none;
 	border-color: #4a90e2;
-	background: rgba(255, 255, 255, 0.15);
+	background-color: rgba(255, 255, 255, 0.15);
 }
 
 .trading-group input:disabled {

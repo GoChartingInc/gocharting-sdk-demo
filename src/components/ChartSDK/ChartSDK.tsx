@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ThemedSelect } from "@/components/shared/ThemedSelect";
 import { Box } from "@/components/Box";
 import { Text } from "@/components/Text";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -491,25 +492,16 @@ export const ChartSDK = () => {
 						>
 							Order Type
 						</Text>
-						<select
+						<ThemedSelect
 							value={orderType}
-							onChange={(e) =>
-								setOrderType(
-									e.target.value as "market" | "limit"
-								)
+							onChange={(value) =>
+								setOrderType(value as "market" | "limit")
 							}
-							style={{
-								padding: "10px",
-								borderRadius: "6px",
-								border: "1px solid rgba(255, 255, 255, 0.3)",
-								background: "rgba(255, 255, 255, 0.1)",
-								color: "white",
-								fontSize: "14px",
-							}}
-						>
-							<option value='market'>Market</option>
-							<option value='limit'>Limit</option>
-						</select>
+							options={[
+								{ value: "market", label: "Market" },
+								{ value: "limit", label: "Limit" },
+							]}
+						/>
 					</Box>
 
 					{/* Limit Price */}
