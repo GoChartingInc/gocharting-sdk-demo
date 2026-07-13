@@ -64,11 +64,26 @@
 	transition: all 0.3s ease;
 }
 
+/* Safari renders native select chrome unless appearance is reset */
+.advanced-trading-container-2 .trading-group select {
+	-webkit-appearance: none;
+	appearance: none;
+	padding-right: 30px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b0b0b0'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+}
+
+.advanced-trading-container-2 .trading-group select option {
+	background-color: #1e3c72;
+	color: white;
+}
+
 .advanced-trading-container-2 .trading-group input:focus,
 .advanced-trading-container-2 .trading-group select:focus {
 	outline: none;
 	border-color: #4a90e2;
-	background: rgba(255, 255, 255, 0.15);
+	background-color: rgba(255, 255, 255, 0.15);
 }
 
 .advanced-trading-container-2 .trading-group input:disabled {
@@ -208,6 +223,10 @@
 	width: 100%;
 	height: 500px;
 	border-radius: 12px;
+	/* The rounded corner carries its own grey border (same as the other
+	   panels) so the SDK's square internal frame lines don't look cut off
+	   where the corner arc clips them. */
+	border: 1px solid rgba(255, 255, 255, 0.1);
 	overflow: hidden;
 	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 	background: #1a1a1a;

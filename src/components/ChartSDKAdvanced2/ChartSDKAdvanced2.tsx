@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { ThemedSelect } from "@/components/shared/ThemedSelect";
 import { Link, useSearchParams } from "react-router-dom";
 import * as GoChartingSDK from "@gocharting/chart-sdk";
 import { createChartDatafeed } from "@/utils/chart-datafeed";
@@ -1426,16 +1427,17 @@ export const ChartSDKAdvanced2 = () => {
 
 					<div className='trading-group'>
 						<label htmlFor='order-type'>Order Type</label>
-						<select
+						<ThemedSelect
 							id='order-type'
 							value={orderType}
-							onChange={(e) =>
-								setOrderType(e.target.value as OrderType)
+							onChange={(value) =>
+								setOrderType(value as OrderType)
 							}
-						>
-							<option value='market'>Market</option>
-							<option value='limit'>Limit</option>
-						</select>
+							options={[
+								{ value: "market", label: "Market" },
+								{ value: "limit", label: "Limit" },
+							]}
+						/>
 					</div>
 
 					<div className='trading-group'>
@@ -1518,14 +1520,13 @@ export const ChartSDKAdvanced2 = () => {
 					{/* Chart Area */}
 					<div className='chart-area'>
 						{isChartMounted ? (
+							// Must stay a leaf: the SDK's ReactDOM.render replaces all
+							// children, so React-owned children here would crash on unmount
+							// (removeChild on a node the SDK already removed).
 							<div
 								ref={chartContainerRef}
 								id='gocharting-chart-container-advanced2'
-							>
-								<div className='loading'>
-									Loading advanced trading chart...
-								</div>
-							</div>
+							/>
 						) : (
 							<div
 								style={{

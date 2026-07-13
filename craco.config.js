@@ -5,7 +5,7 @@ module.exports = {
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@gocharting/chart-sdk': path.resolve(__dirname, '../gocharting-web-sdk/GoCharting-SDK/dist'),
+      '@gocharting/chart-sdk': path.resolve(__dirname, '../gocharting-web/GoCharting-SDK/dist'),
     },
     configure: (webpackConfig) => {
       // Allow imports from outside src/ (needed for local SDK alias)

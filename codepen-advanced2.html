@@ -79,12 +79,90 @@
 				border: 1px solid rgba(255, 255, 255, 0.3);
 			}
 
+			/* Safari renders native select chrome unless appearance is reset */
+			.trading-group select {
+				-webkit-appearance: none;
+				appearance: none;
+				padding-right: 30px;
+				background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b0b0b0'/%3E%3C/svg%3E");
+				background-repeat: no-repeat;
+				background-position: right 10px center;
+			}
+
+			.trading-group select option {
+				background-color: #1e3c72;
+				color: white;
+			}
+
 			.trading-group input:focus,
 			.trading-group select:focus {
 				outline: none;
-				background: rgba(255, 255, 255, 0.3);
+				background-color: rgba(255, 255, 255, 0.3);
 				border-color: #4a90e2;
 				box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+			}
+
+			/* Custom dropdown — Safari can't style native option menus */
+			.themed-select {
+				position: relative;
+			}
+
+			.themed-select-btn {
+				width: 100%;
+				padding: 8px 30px 8px 10px;
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				border-radius: 6px;
+				background: rgba(255, 255, 255, 0.2);
+				color: white;
+				font-size: 14px;
+				text-align: left;
+				cursor: pointer;
+			}
+
+			.themed-select-btn::after {
+				content: "▼";
+				position: absolute;
+				right: 10px;
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 10px;
+				color: #b0b0b0;
+				pointer-events: none;
+			}
+
+			.themed-select-menu {
+				position: absolute;
+				top: calc(100% + 4px);
+				left: 0;
+				right: 0;
+				margin: 0;
+				padding: 4px;
+				list-style: none;
+				background: #23273a;
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				border-radius: 6px;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+				z-index: 1000;
+			}
+
+			.themed-select-menu li {
+				padding: 8px 10px;
+				border-radius: 4px;
+				font-size: 14px;
+				color: white;
+				cursor: pointer;
+			}
+
+			.themed-select-menu li:hover {
+				background: #4a90e2;
+			}
+
+			.themed-select-menu li[aria-selected="true"] {
+				background: rgba(255, 255, 255, 0.1);
+			}
+
+			.themed-select-menu li[aria-selected="true"]:hover {
+				background: #4a90e2;
 			}
 
 			.trading-group input::placeholder {
@@ -443,11 +521,26 @@
 				transition: all 0.3s ease;
 			}
 
+			/* Safari renders native select chrome unless appearance is reset */
+			.trading-group select {
+				-webkit-appearance: none;
+				appearance: none;
+				padding-right: 30px;
+				background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b0b0b0'/%3E%3C/svg%3E");
+				background-repeat: no-repeat;
+				background-position: right 10px center;
+			}
+
+			.trading-group select option {
+				background-color: #1e3c72;
+				color: white;
+			}
+
 			.trading-group input:focus,
 			.trading-group select:focus {
 				outline: none;
 				border-color: #4a90e2;
-				background: rgba(255, 255, 255, 0.15);
+				background-color: rgba(255, 255, 255, 0.15);
 			}
 
 			.trading-group input:disabled {
@@ -609,10 +702,21 @@
 
 				<div class="trading-group">
 					<label for="order-type">Order Type</label>
-					<select id="order-type">
+					<!-- ponytail: hidden native select keeps existing JS (.value reads, change listeners) working;
+					     the custom dropdown exists only because Safari can't style native option menus -->
+					<select id="order-type" hidden>
 						<option value="market">Market</option>
 						<option value="limit">Limit</option>
 					</select>
+					<div class="themed-select" id="order-type-dropdown">
+						<button type="button" class="themed-select-btn" aria-haspopup="listbox" aria-expanded="false">
+							<span class="themed-select-label">Market</span>
+						</button>
+						<ul class="themed-select-menu" role="listbox" hidden>
+							<li role="option" data-value="market" aria-selected="true">Market</li>
+							<li role="option" data-value="limit">Limit</li>
+						</ul>
+					</div>
 				</div>
 
 				<div class="trading-group">
@@ -2713,11 +2817,52 @@
 							this.handleOrderTypeChange(e.target.value);
 						});
 
+					// Custom dropdown drives the hidden select so existing
+					// .value reads and the change listener keep working
+					this.setupOrderTypeDropdown();
+
 					// Symbol Button Listeners
 					this.setupSymbolButtons();
 
 					// Account Manager Tab Listeners
 					this.setupAccountManagerTabs();
+				}
+
+				setupOrderTypeDropdown() {
+					const select = document.getElementById("order-type");
+					const dropdown = document.getElementById("order-type-dropdown");
+					const btn = dropdown.querySelector(".themed-select-btn");
+					const label = dropdown.querySelector(".themed-select-label");
+					const menu = dropdown.querySelector(".themed-select-menu");
+
+					btn.addEventListener("click", () => {
+						const open = menu.hidden;
+						menu.hidden = !open;
+						btn.setAttribute("aria-expanded", String(open));
+					});
+
+					menu.querySelectorAll("li").forEach((li) => {
+						li.addEventListener("click", () => {
+							select.value = li.dataset.value;
+							label.textContent = li.textContent;
+							menu.querySelectorAll("li").forEach((o) =>
+								o.setAttribute(
+									"aria-selected",
+									String(o === li),
+								),
+							);
+							menu.hidden = true;
+							btn.setAttribute("aria-expanded", "false");
+							select.dispatchEvent(new Event("change"));
+						});
+					});
+
+					document.addEventListener("mousedown", (e) => {
+						if (!dropdown.contains(e.target)) {
+							menu.hidden = true;
+							btn.setAttribute("aria-expanded", "false");
+						}
+					});
 				}
 
 				// Setup symbol button click handlers
