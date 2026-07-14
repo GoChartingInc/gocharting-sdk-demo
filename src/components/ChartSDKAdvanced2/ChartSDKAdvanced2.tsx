@@ -1505,7 +1505,7 @@ export const ChartSDKAdvanced2 = () => {
 						<Link
 							to='/examples'
 							style={{
-								color: "#4a90e2",
+								color: "#ffaa01",
 								textDecoration: "none",
 								fontSize: "14px",
 								fontWeight: "600",
@@ -2042,7 +2042,7 @@ export const ChartSDKAdvanced2 = () => {
 																				}
 																				style={{
 																					backgroundColor:
-																						"#4a90e2",
+																						"#ffaa01",
 																				}}
 																			>
 																				Show

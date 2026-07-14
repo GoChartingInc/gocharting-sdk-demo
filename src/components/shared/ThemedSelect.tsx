@@ -109,7 +109,7 @@ export function ThemedSelect({ id, value, options, onChange }: ThemedSelectProps
 								cursor: "pointer",
 								background:
 									hovered === o.value
-										? "#4a90e2"
+										? "#ffaa01"
 										: o.value === value
 										? "rgba(255, 255, 255, 0.1)"
 										: "transparent",
