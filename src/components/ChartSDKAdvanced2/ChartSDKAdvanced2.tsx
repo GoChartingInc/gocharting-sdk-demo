@@ -1162,6 +1162,56 @@ export const ChartSDKAdvanced2 = () => {
 					break;
 				}
 
+				case "CLOSE_POSITION": {
+					// Emitted by the position line's X button (SDK forwards
+					// CLOSE_POSITION_WITH_CONFIRMATION as CLOSE_POSITION).
+					console.log("🔴 Close position from chart X button:", message);
+					const closeMsg = message as Record<string, any>;
+					const position = (closeMsg.position ?? closeMsg) as Record<
+						string,
+						any
+					>;
+					// The chart round-trips the position we set via
+					// setBrokerAccounts — resolve it back to our open position.
+					const match = currentPositions.current.find(
+						(p) =>
+							p.id === position?.id ||
+							(p as Record<string, any>).productId ===
+								position?.productId ||
+							p.id === position?.productId
+					);
+					const positionId =
+						match?.id ?? position?.id ?? position?.productId;
+					if (positionId) {
+						closePosition(positionId);
+					} else {
+						console.warn(
+							"CLOSE_POSITION: could not resolve position",
+							message
+						);
+						setStatus("❌ Could not close position (not found)");
+					}
+					break;
+				}
+
+				case "EXIT_ALL_POSITIONS": {
+					console.log("🔴 Exit all positions from chart:", message);
+					const ids = currentPositions.current.map((p) => p.id);
+					ids.forEach((id) => closePosition(id));
+					setStatus(`🔴 Closed ${ids.length} position(s)`);
+					break;
+				}
+
+				case "CANCEL_ALL_ORDERS": {
+					console.log("🗑️ Cancel all orders from chart:", message);
+					const orderIds = currentOrderBook.current.map(
+						(o) => o.orderId
+					);
+					orderIds.forEach((id) => removeOrderFromOrderBook(id));
+					setStatus(`🗑️ Cancelled ${orderIds.length} order(s)`);
+					break;
+				}
+
 				case "OPEN_TRADING_WIDGET":
 					console.log("🎛️ Trading widget opened from chart");
 					setStatus("🎛️ Trading widget opened");
