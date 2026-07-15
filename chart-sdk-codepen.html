@@ -1,1629 +1,2117 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GoCharting SDK - Basic Example</title>
-    <!-- CSS is now automatically injected by the JavaScript bundle -->
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-        }
-
-        .controls select,
-        .controls button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .controls select:hover,
-        .controls button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-
-        /* Button Styles */
-        .btn {
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn.primary {
-            background: #4a90e2;
-        }
-
-        .btn.primary:hover {
-            background: #357abd;
-        }
-
-        .btn.secondary {
-            background: #6c757d;
-        }
-
-        .btn.secondary:hover {
-            background: #545b62;
-        }
-
-        .btn.danger {
-            background: #dc3545;
-        }
-
-        .btn.danger:hover {
-            background: #c82333;
-        }
-
-        .btn.info {
-            background: #17a2b8;
-        }
-
-        .btn.info:hover {
-            background: #138496;
-        }
-
-        .btn.success {
-            background: #28a745;
-        }
-
-        .btn.success:hover {
-            background: #218838;
-        }
-
-        #chart-container {
-            width: 800px;
-            /* Fixed width for proper DrawingsMenu positioning */
-            height: 500px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            background: #1a1a1a;
-            /* AutoFit will handle the internal sizing automatically */
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            font-size: 18px;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            #chart-container {
-                height: 400px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📈 GoCharting SDK Demo</h1>
-            <p>Professional Financial Charts with Built-in AutoFit ✨</p>
-        </div>
-
-        <div class="controls">
-            <button id="symbol-btc-btn" class="btn primary">
-                ₿ BTC/USDT
-            </button>
-            <button id="symbol-eth-btn" class="btn primary">
-                Ξ ETH/USDT
-            </button>
-            <button id="symbol-ogn-btn" class="btn primary">
-                🌐 OGN/USDT
-            </button>
-        </div>
-
-        <div id="chart-container">
-            <div class="loading">Loading chart...</div>
-        </div>
-
-        <div id="status" class="status">Ready to load chart...</div>
-    </div>
-
-    <!-- GoCharting SDK - Local Build with AutoFit -->
-    <!--<script src="https://gocharting.com/sdk/library/demo-550e8400-e29b-41d4-a716-446655440000/index.umd.js"></script>-->
-    <script src="https://gocharting.com/sdk/library/demo-550e8400-e29b-41d4-a716-446655440000/index.umd.js"></script>
-
-    <script>
-        // Simple datafeed object that implements datafeed interface
-        // This follows the new composition-based approach
-        const demoDatafeed = {
-            symbolCache: new Map(),
-            searchSymbolController: null,
-            streamingIntervals: {},
-
-            // Cleanup method to prevent memory leaks
-            destroy () {
-                // Clear all streaming intervals
-                Object.values(this.streamingIntervals).forEach(
-                    (interval) => {
-                        clearInterval(interval);
-                    }
-                );
-                this.streamingIntervals = {};
-
-                // Abort any pending search requests
-                if (this.searchSymbolController) {
-                    this.searchSymbolController.abort();
-                }
-
-                // Clear symbol cache
-                this.symbolCache.clear();
-            },
-
-            // Cleanup method to prevent memory leaks
-            destroy () {
-                // Clear all streaming intervals
-                Object.values(this.streamingIntervals).forEach(
-                    (interval) => {
-                        clearInterval(interval);
-                    }
-                );
-                this.streamingIntervals = {};
-
-                // Abort any pending search requests
-                if (this.searchSymbolController) {
-                    this.searchSymbolController.abort();
-                }
-
-                // Clear symbol cache
-                this.symbolCache.clear();
-            },
-
-            async getBars (symbolInfo, resolution, periodParams) {
-                const { from, to, firstDataRequest, rows } = periodParams;
-
-                try {
-                    let rawBars = [];
-
-                    // Use real Bybit API for BYBIT symbols
-                    if (symbolInfo.exchange === "BYBIT") {
-                        rawBars = await this.getBybitBars(
-                            symbolInfo,
-                            resolution,
-                            periodParams
-                        );
-                    } else {
-                        // For non-BYBIT symbols, return error
-                        return {
-                            s: "error",
-                            errmsg: `Only BYBIT symbols are supported. Symbol ${symbolInfo.exchange}:${symbolInfo.symbol} is not available.`,
-                        };
-                    }
-
-                    // Convert to UDF format
-                    const udfData = this.convertToUDFFormat(rawBars);
-                    return udfData;
-                } catch (error) {
-                    return {
-                        s: "error",
-                        errmsg: `Failed to fetch data: ${error.message}`,
-                    };
-                }
-            },
-
-            // Convert raw bars to UDF format
-            convertToUDFFormat (rawBars) {
-                if (!rawBars || rawBars.length === 0) {
-                    return {
-                        s: "no_data",
-                        nextTime: null,
-                    };
-                }
-
-                const t = []; // time
-                const o = []; // open
-                const h = []; // high
-                const l = []; // low
-                const c = []; // close
-                const v = []; // volume
-
-                rawBars.forEach((bar) => {
-                    // Handle different time formats
-                    let timestamp;
-                    if (bar.time) {
-                        timestamp =
-                            typeof bar.time === "number"
-                                ? bar.time
-                                : Math.floor(
-                                    new Date(bar.time).getTime() / 1000
-                                );
-                    } else if (bar.date) {
-                        timestamp = Math.floor(
-                            new Date(bar.date).getTime() / 1000
-                        );
-                    } else {
-                        return;
-                    }
-
-                    t.push(timestamp);
-                    o.push(Number(bar.open));
-                    h.push(Number(bar.high));
-                    l.push(Number(bar.low));
-                    c.push(Number(bar.close));
-                    v.push(Number(bar.volume || 0));
-                });
-
-                return {
-                    s: "ok",
-                    t,
-                    o,
-                    h,
-                    l,
-                    c,
-                    v,
-                };
-            },
-
-            async resolveSymbol (symbolName, onResolve, onError) {
-                try {
-                    // Check cache first
-                    if (this.symbolCache.has(symbolName)) {
-                        const cachedSymbolInfo =
-                            this.symbolCache.get(symbolName);
-                        onResolve(cachedSymbolInfo);
-                        return;
-                    }
-
-                    // Try to use real GoCharting API for symbol resolution
-                    try {
-                        const symbolInfo = await this.resolveSymbolFromAPI(
-                            symbolName
-                        );
-                        this.symbolCache.set(symbolName, symbolInfo);
-                        onResolve(symbolInfo);
-                        return;
-                    } catch (apiError) {
-                        throw new Error(
-                            `Symbol not found: ${symbolName}. This symbol is not available in our data provider.`
-                        );
-                    }
-                } catch (error) {
-                    onError("Failed to resolve symbol");
-                }
-            },
-
-            async resolveSymbolFromAPI (symbolName) {
-                const url =
-                    "https://gocharting.com/sdk/instruments/exactSearch";
-                const params = { q: symbolName };
-
-                const urlWithParams = new URL(url);
-                Object.keys(params).forEach((key) =>
-                    urlWithParams.searchParams.append(key, params[key])
-                );
-
-                const res = await fetch(urlWithParams);
-                if (!res.ok) {
-                    throw new Error(
-                        `HTTP ${res.status}: ${res.statusText}`
-                    );
-                }
-
-                const data = await res.json();
-                if (
-                    data.status === 200 &&
-                    data.payload?.results?.length > 0
-                ) {
-                    const result = data.payload.results[0];
-
-                    const symbolInfo = {
-                        symbol: result.symbol,
-                        full_name: `${result.exchange}:${result.segment}:${result.symbol}`,
-                        description: result.name,
-                        exchange: result.exchange,
-                        type: result.asset_type.toLowerCase(),
-                        session: "24x7",
-                        session_label: "24x7",
-                        timezone: result.exchange_info?.zone || "UTC",
-                        ticker: result.symbol,
-                        has_intraday: true,
-                        intraday_multipliers: [
-                            "1",
-                            "5",
-                            "15",
-                            "30",
-                            "60",
-                            "240",
-                            "1D",
-                        ],
-                        supported_resolutions: result.exchange_info
-                            ?.valid_intervals || [
-                                "1",
-                                "5",
-                                "15",
-                                "30",
-                                "60",
-                                "240",
-                                "1D",
-                                "1W",
-                                "1M",
-                            ],
-                        volume_precision: result.max_volume_precision || 8,
-                        data_status: result.data_status || "streaming",
-                        // Additional fields from API
-                        contract_size: result.contract_size,
-                        tick_size: result.tick_size,
-                        display_tick_size: result.display_tick_size,
-                        max_tick_precision: result.max_tick_precision || 2,
-                        max_volume_precision:
-                            result.max_volume_precision || 8,
-                        quote_currency: result.quote_currency,
-                        future_type: result.future_type,
-                        tradeable: result.tradeable,
-                        // New fields from resolveSymbol API
-                        delay_seconds: result.delay_seconds,
-                        symbol_logo_urls: result.symbol_logo_urls,
-                        segment: result.segment,
-                        asset_type: result.asset_type,
-                        // Exchange info for timezone handling - CRITICAL for fixing the zone error
-                        exchange_info: {
-                            name:
-                                result.exchange_info?.name ||
-                                result.exchange.toLowerCase(),
-                            code:
-                                result.exchange_info?.code ||
-                                result.exchange,
-                            country_cd:
-                                result.exchange_info?.country_cd || "US",
-                            zone: result.exchange_info?.zone || "UTC",
-                            has_unique_trade_id:
-                                result.exchange_info?.has_unique_trade_id ||
-                                true,
-                            holidays:
-                                result.exchange_info?.holidays || null,
-                            hours: result.exchange_info?.hours || [
-                                { open: true },
-                                { open: true },
-                                { open: true },
-                                { open: true },
-                                { open: true },
-                                { open: true },
-                                { open: true },
-                            ],
-                            contains_ambiguous_symbols:
-                                result.exchange_info
-                                    ?.contains_ambiguous_symbols || false,
-                            valid_intervals: result.exchange_info
-                                ?.valid_intervals || [
-                                    "1m",
-                                    "3m",
-                                    "5m",
-                                    "10m",
-                                    "15m",
-                                    "30m",
-                                    "1h",
-                                    "2h",
-                                    "4h",
-                                    "12h",
-                                    "1D",
-                                    "1W",
-                                    "1M",
-                                ],
-                        },
-                    };
-
-
-                    return symbolInfo;
-                }
-                throw new Error(`No symbol found for: ${symbolName}`);
-            },
-
-            searchSymbols (
-                userInput,
-                exchange,
-                symbolType,
-                onResultReadyCallback
-            ) {
-                // Handle different calling patterns - sometimes callback is 2nd param, sometimes 4th
-                const callback =
-                    typeof exchange === "function"
-                        ? exchange
-                        : onResultReadyCallback;
-
-                // Use async IIFE to handle the fetch, but don't make the function itself async
-                (async () => {
-                    // Use real GoCharting API for search
-                    try {
-                        await this.searchSymbolsFromAPI(
-                            userInput,
-                            callback
-                        );
-                    } catch (error) {
-                        // Return empty results if API fails
-                        callback({
-                            searchInProgress: false,
-                            items: [],
-                        });
-                    }
-                })();
-            },
-
-            async searchSymbolsFromAPI (userInput, callback) {
-                const url = "https://gocharting.com/sdk/instruments/search";
-                const params = { q: userInput };
-
-                if (this.searchSymbolController) {
-                    this.searchSymbolController.abort();
-                }
-                this.searchSymbolController = new AbortController();
-
-                const urlWithParams = new URL(url);
-                Object.keys(params).forEach((key) =>
-                    urlWithParams.searchParams.append(key, params[key])
-                );
-
-                const res = await fetch(urlWithParams, {
-                    signal: this.searchSymbolController.signal,
-                });
-
-                if (!res.ok) {
-                    throw new Error(
-                        `HTTP ${res.status}: ${res.statusText}`
-                    );
-                }
-
-                const data = await res.json();
-                if (data.status === 200 && data.payload?.results) {
-                    const transformedResults = [];
-
-                    data.payload.results.forEach((result) => {
-                        const item = result.item;
-                        if (item.is_group && item.members) {
-                            item.members.forEach((member) => {
-                                const memberItem = member.item;
-                                const segment =
-                                    memberItem.segment || "FUTURE";
-                                const key = `${memberItem.exchange}:${segment}:${memberItem.symbol}`;
-                                transformedResults.push({
-                                    symbol: memberItem.symbol,
-                                    key: key,
-                                    full_name: key,
-                                    description: memberItem.name,
-                                    exchange: memberItem.exchange,
-                                    segment: segment,
-                                    type: memberItem.asset_type.toLowerCase(),
-                                    ticker: memberItem.symbol,
-                                });
-                            });
-                        } else {
-                            const segment = item.segment || "FUTURE";
-                            const key = `${item.exchange}:${segment}:${item.symbol}`;
-                            transformedResults.push({
-                                symbol: item.symbol,
-                                key: key,
-                                full_name: key,
-                                description: item.name,
-                                exchange: item.exchange,
-                                segment: segment,
-                                type: item.asset_type.toLowerCase(),
-                                ticker: item.symbol,
-                            });
-                        }
-                    });
-
-                    callback({
-                        searchInProgress: false,
-                        items: transformedResults,
-                    });
-                } else {
-                    callback({
-                        searchInProgress: false,
-                        items: [],
-                    });
-                }
-            },
-
-            async getBybitBars (symbolInfo, resolution, periodParams) {
-                const { from, to, firstDataRequest, rows } = periodParams;
-                // Use the same logic as real datafeed.js
-                // Handle both string and object resolution formats
-                let scale, units, interval;
-                if (typeof resolution === "string") {
-                    // Convert string resolution to object format
-                    const resolutionObj =
-                        this.convertIntervalToResolution(resolution);
-                    scale = resolutionObj.scale;
-                    units = resolutionObj.units;
-                    interval = resolutionObj.label;
-                } else if (resolution && typeof resolution === "object") {
-                    scale = resolution.units;
-                    units = resolution.scale;
-                    // Derive label from scale and units
-                    interval = this.deriveIntervalLabel(scale, units);
-                } else {
-                    throw new Error("Invalid resolution format");
-                }
-
-                // Extract the correct symbol for Bybit API
-                const bybitSymbol =
-                    symbolInfo.symbol ||
-                    symbolInfo.ticker ||
-                    symbolInfo.name;
-
-                let url;
-                if (firstDataRequest) {
-                    // Use current time to get recent data up to today
-                    const currentTime = Date.now();
-                    url = `https://api.bybit.com/v5/market/kline?symbol=${bybitSymbol}&interval=${interval}&end=${currentTime}&limit=${rows || 200
-                        }`;
-                } else {
-                    const startDate = from.getTime();
-                    const endDate = to.getTime();
-                    url = `https://api.bybit.com/v5/market/kline?symbol=${bybitSymbol}&interval=${interval}&start=${startDate}&end=${endDate}&limit=${rows || 200
-                        }`;
-                }
-
-                const response = await fetch(url);
-                const data = await response.json();
-
-                if (data.result?.list) {
-                    const bars = [];
-                    const list = data.result.list;
-                    for (let k = 0; k < list.length; k++) {
-                        const [
-                            timestamp,
-                            open,
-                            high,
-                            low,
-                            close,
-                            volume,
-                            turnOver,
-                        ] = list[k];
-                        const prev = list[k - 1];
-
-                        const bar = {
-                            time: Math.floor(Number(timestamp) / 1000), // Convert to seconds
-                            open: Number(open),
-                            high: Number(high),
-                            low: Number(low),
-                            close: Number(close),
-                            volume: Number(volume),
-                        };
-
-                        // Log first bar to check decimal precision
-                        if (k === 0) {
-
-                        }
-
-                        bars.push(bar);
-                    }
-
-                    // Bybit returns newest first, we need oldest first
-                    const reversedBars = bars.reverse();
-                    return reversedBars;
-                }
-
-                throw new Error("No data from Bybit API");
-            },
-
-            // Convert string interval to resolution object format
-            convertIntervalToResolution (intervalString) {
-                const intervalMap = {
-                    // New format with units
-                    "1m": { scale: 1, units: "minutes", label: "1" },
-                    "5m": { scale: 5, units: "minutes", label: "5" },
-                    "15m": { scale: 15, units: "minutes", label: "15" },
-                    "30m": { scale: 30, units: "minutes", label: "30" },
-                    "1h": { scale: 1, units: "hours", label: "60" },
-                    "4h": { scale: 4, units: "hours", label: "240" },
-                    "1D": { scale: 1, units: "days", label: "D" },
-                    "1W": { scale: 1, units: "weeks", label: "W" },
-                    "1M": { scale: 1, units: "months", label: "M" },
-                };
-
-                const resolution = intervalMap[intervalString];
-                if (!resolution) {
-                    return { scale: 1, units: "days", label: "D" };
-                }
-
-                return resolution;
-            },
-
-            // Derive interval label from scale and units
-            deriveIntervalLabel (scale, units) {
-                switch (units) {
-                    case "minutes":
-                        return scale.toString();
-                    case "hours":
-                        return (scale * 60).toString();
-                    case "days":
-                        return scale === 1 ? "D" : `${scale}D`;
-                    case "weeks":
-                        return scale === 1 ? "W" : `${scale}W`;
-                    case "months":
-                        return scale === 1 ? "M" : `${scale * 1}M`;
-                    default:
-                        return "D";
-                }
-            },
-
-            // Convert resolution to Bybit interval format (mirroring helpers.js getExchangeInterval)
-            getExchangeInterval (scale, units) {
-                switch (units) {
-                    case "minutes":
-                        return scale;
-                    case "hours":
-                        return 60 * scale;
-                    case "days":
-                        return "D";
-                    case "weeks":
-                        return "W";
-                    case "months":
-                        return "M";
-                    default:
-                        return 60;
-                }
-            },
-
-            // Legacy method for backward compatibility
-            getBybitInterval (resolution) {
-                const intervalMap = {
-                    1: "1",
-                    5: "5",
-                    15: "15",
-                    30: "30",
-                    60: "60",
-                    240: "240",
-                    "1D": "D",
-                    "1W": "W",
-                    "1M": "M",
-                };
-                return intervalMap[resolution] || "D";
-            },
-
-            // Required streaming methods for chart functionality
-            subscribeBars (
-                symbolInfo,
-                resolution,
-                onRealtimeCallback,
-                subscriberUID,
-                onResetCacheNeededCallback
-            ) {
-                // For demo purposes, we'll simulate real-time updates
-                // In production, this would connect to real WebSocket streams
-                this.startDemoStreaming(
-                    symbolInfo,
-                    resolution,
-                    onRealtimeCallback,
-                    subscriberUID
-                );
-            },
-
-            unsubscribeBars (subscriberUID) {
-                // Stop the demo streaming for this subscriber
-                if (
-                    this.streamingIntervals &&
-                    this.streamingIntervals[subscriberUID]
-                ) {
-                    clearInterval(this.streamingIntervals[subscriberUID]);
-                    delete this.streamingIntervals[subscriberUID];
-                }
-            },
-
-            // Optional datafeed interface methods for real-time data
-            subscribeTicks: function (
-                symbolInfo,
-                resolution,
-                onRealtimeCallback,
-                subscriberUID,
-                onResetCacheNeededCallback
-            ) {
-                // Use the same pattern as the real datafeed.js
-                this.subscribeOnStream(
-                    symbolInfo,
-                    resolution,
-                    onRealtimeCallback,
-                    subscriberUID,
-                    onResetCacheNeededCallback,
-                    null // lastDailyBar - not used in demo
-                );
-            },
-
-            unsubscribeTicks: function (subscriberUID) {
-                // Use the same pattern as the real datafeed.js
-                this.unsubscribeFromStream(subscriberUID);
-            },
-
-            // Enhanced streaming implementation mirroring streaming.js capabilities
-            subscribeOnStream (
-                symbolInfo,
-                resolution,
-                onRealtimeCallback,
-                subscriberUID,
-                onResetCacheNeededCallback,
-                lastDailyBar
-            ) {
-                // Initialize streaming infrastructure like streaming.js
-                if (!this.channelToSubscription) {
-                    this.channelToSubscription = new Map();
-                }
-                if (!this.demoSocket) {
-                    this.initializeDemoSocket(symbolInfo);
-                }
-
-                // Create channel string similar to streaming.js format
-                let channelString;
-                if (symbolInfo.exchange === "BYBIT") {
-                    // Use real Bybit channel format
-                    const symbol =
-                        symbolInfo.symbol ||
-                        symbolInfo.ticker ||
-                        symbolInfo.name;
-                    channelString = `publicTrade.${symbol}`;
-                } else {
-                    // Use demo format for other exchanges
-                    channelString = `demoTrade.${symbolInfo.symbol ||
-                        symbolInfo.ticker ||
-                        symbolInfo.name
-                        }`;
-                }
-
-                const handler = {
-                    id: subscriberUID,
-                    callback: onRealtimeCallback,
-                    resolution: resolution,
-                    lastDailyBar: lastDailyBar,
-                    onResetCacheNeededCallback: onResetCacheNeededCallback,
-                };
-
-                let subscriptionItem =
-                    this.channelToSubscription.get(channelString);
-                if (subscriptionItem) {
-                    // Already subscribed to the channel, use the existing subscription
-                    subscriptionItem.handlers.push(handler);
-                    return;
-                }
-
-                // Create new subscription item like streaming.js
-                subscriptionItem = {
-                    subscriberUID,
-                    resolution,
-                    lastDailyBar,
-                    handlers: [handler],
-                    symbolInfo: symbolInfo,
-                    channelString: channelString,
-                };
-                this.channelToSubscription.set(
-                    channelString,
-                    subscriptionItem
-                );
-
-                // Send subscription request (real Bybit format for BYBIT, demo for others)
-                let subRequest;
-                if (symbolInfo.exchange === "BYBIT") {
-                    // Real Bybit subscription format
-                    subRequest = {
-                        op: "subscribe",
-                        args: [channelString],
-                    };
-                } else {
-                    // Demo subscription format
-                    subRequest = {
-                        op: "subscribe",
-                        args: [channelString],
-                        symbol:
-                            symbolInfo.symbol ||
-                            symbolInfo.ticker ||
-                            symbolInfo.name,
-                    };
-                }
-
-                this.sendDemoSubscription(subRequest, subscriptionItem);
-            },
-
-            unsubscribeFromStream (subscriberUID) {
-                if (!this.channelToSubscription) {
-                    return;
-                }
-
-                // Find a subscription with id === subscriberUID (mirroring streaming.js logic)
-                for (const channelString of this.channelToSubscription.keys()) {
-                    const subscriptionItem =
-                        this.channelToSubscription.get(channelString);
-                    const handlerIndex =
-                        subscriptionItem.handlers.findIndex(
-                            (handler) => handler.id === subscriberUID
-                        );
-
-                    if (handlerIndex !== -1) {
-                        // Remove from handlers
-                        subscriptionItem.handlers.splice(handlerIndex, 1);
-                        if (subscriptionItem.handlers.length === 0) {
-                            // Unsubscribe from the channel if it was the last handler
-                            const unsubRequest = {
-                                op: "unsubscribe",
-                                args: [channelString],
-                            };
-                            this.sendDemoUnsubscription(
-                                unsubRequest,
-                                channelString
-                            );
-                            this.channelToSubscription.delete(
-                                channelString
-                            );
-
-                            // Stop streaming intervals for this channel
-                            if (
-                                this.streamingIntervals &&
-                                this.streamingIntervals[channelString]
-                            ) {
-                                clearInterval(
-                                    this.streamingIntervals[channelString]
-                                );
-                                delete this.streamingIntervals[
-                                    channelString
-                                ];
-                            }
-                        }
-                        break;
-                    }
-                }
-            },
-
-            // Initialize socket (mirroring streaming.js socket initialization)
-            initializeDemoSocket (symbolInfo) {
-                if (
-                    this.demoSocket &&
-                    this.demoSocket.readyState === WebSocket.OPEN
-                ) {
-                    return this.demoSocket;
-                }
-
-                // Create real Bybit WebSocket for BYBIT symbols, mock for others
-                if (symbolInfo.exchange === "BYBIT") {
-                    const uri = this.getBybitWebSocketUrl(symbolInfo);
-                    this.demoSocket = new WebSocket(uri);
-
-                    this.demoSocket.addEventListener("open", () => {
-                    });
-
-                    this.demoSocket.addEventListener("close", (reason) => {
-                    });
-
-                    this.demoSocket.addEventListener("error", (error) => {
-
-                    });
-
-                    this.demoSocket.addEventListener("message", (event) => {
-                        this.handleBybitMessage(event);
-                    });
-                } else {
-                    // Create mock socket for non-Bybit symbols
-                    this.demoSocket = {
-                        readyState: 1, // WebSocket.OPEN
-                        url: `wss://demo.gocharting.com/ws/${symbolInfo.exchange || "DEMO"
-                            }`,
-                        send: (message) => {
-                        },
-                        close: () => {
-                            this.demoSocket.readyState = 3; // WebSocket.CLOSED
-                        },
-                        addEventListener: (event, callback) => {
-                        },
-                    };
-                }
-                return this.demoSocket;
-            },
-
-            // Get Bybit WebSocket URL (mirroring streaming.js getWebSocketUrl)
-            getBybitWebSocketUrl (symbolInfo) {
-                // Use Bybit's public WebSocket endpoint
-                return "wss://stream.bybit.com/v5/public/linear";
-            },
-
-            // Handle Bybit WebSocket messages (mirroring streaming.js message handling)
-            handleBybitMessage (event) {
-                try {
-                    const feedMessage = JSON.parse(event.data);
-                    const { topic, type, data } = feedMessage;
-
-                    if (!topic || !topic.startsWith("publicTrade")) {
-                        // Skip all non-trading events
-                        return;
-                    }
-
-                    // Find the subscription for this topic
-                    const subscriptionItem =
-                        this.channelToSubscription.get(topic);
-                    if (!subscriptionItem) {
-                        return;
-                    }
-
-                    // Process real Bybit trade data
-                    this.processRealBybitData(topic, feedMessage);
-                } catch (error) {
-                }
-            },
-
-            // Process real Bybit trade data (mirroring streaming.js processing)
-            processRealBybitData (topic, feedMessage) {
-                const subscriptionItem =
-                    this.channelToSubscription.get(topic);
-                if (!subscriptionItem) {
-                    return;
-                }
-
-                const { data } = feedMessage;
-                if (!data || data.length === 0) return;
-
-                // Process each trade in the data array (matching streaming.js format exactly)
-                data.forEach((each) => {
-                    const {
-                        T: timestamp,
-                        s,
-                        S: side,
-                        p: price,
-                        i,
-                        v: size,
-                    } = each;
-                    const tradeMessage = {
-                        type: "trade",
-                        productId: `BYBIT:FUTURE:${s}`,
-                        symbol: s,
-                        exchange: "BYBIT",
-                        segment: "FUTURE",
-                        timeStamp: new Date(timestamp),
-                        tradeID: i,
-                        price: Number(price),
-                        quantity: Number(size),
-                        amount: Number(price) * Number(size),
-                        side: side.toUpperCase(),
-                    };
-
-                    // Call all handlers for this channel (matching streaming.js exactly)
-                    subscriptionItem.handlers.forEach((handler) => {
-                        try {
-                            handler.callback(tradeMessage);
-                        } catch (error) {
-                        }
-                    });
-                });
-            },
-
-            // Send subscription (real Bybit or demo, mirroring streaming.js subscription logic)
-            sendDemoSubscription (subRequest, subscriptionItem) {
-                const isRealBybit =
-                    subscriptionItem.symbolInfo.exchange === "BYBIT";
-
-                if (
-                    this.demoSocket &&
-                    this.demoSocket.readyState === WebSocket.OPEN
-                ) {
-                    // Send real subscription request
-                    this.demoSocket.send(JSON.stringify(subRequest));
-
-                    // For non-Bybit symbols, start demo streaming
-                    // For Bybit symbols, real data will come through WebSocket messages
-                    if (!isRealBybit) {
-                        this.startChannelStreaming(subscriptionItem);
-                    }
-                } else if (
-                    this.demoSocket &&
-                    this.demoSocket.readyState === WebSocket.CONNECTING
-                ) {
-                    // Socket is connecting, wait for it to open
-                    if (
-                        isRealBybit &&
-                        this.demoSocket instanceof WebSocket
-                    ) {
-                        this.demoSocket.addEventListener(
-                            "open",
-                            () => {
-                                this.demoSocket.send(
-                                    JSON.stringify(subRequest)
-                                );
-                            },
-                            { once: true }
-                        );
-                    } else {
-                        // For demo sockets, simulate connection
-                        setTimeout(() => {
-                            this.demoSocket.readyState = WebSocket.OPEN;
-                            this.demoSocket.send(
-                                JSON.stringify(subRequest)
-                            );
-                            this.startChannelStreaming(subscriptionItem);
-                        }, 100);
-                    }
-                } else {
-                    // Socket is closed or failed, need to reconnect
-                    if (isRealBybit) {
-                        this.initializeDemoSocket(
-                            subscriptionItem.symbolInfo
-                        );
-
-                        // Wait for the new socket to connect
-                        if (this.demoSocket instanceof WebSocket) {
-                            this.demoSocket.addEventListener(
-                                "open",
-                                () => {
-                                    this.demoSocket.send(
-                                        JSON.stringify(subRequest)
-                                    );
-                                },
-                                { once: true }
-                            );
-                        }
-                    } else {
-                        // For demo sockets, simulate connection
-                        setTimeout(() => {
-                            this.demoSocket.readyState = WebSocket.OPEN;
-                            this.demoSocket.send(
-                                JSON.stringify(subRequest)
-                            );
-                            this.startChannelStreaming(subscriptionItem);
-                        }, 100);
-                    }
-                }
-            },
-
-            // Send demo unsubscription (mirroring streaming.js unsubscription logic)
-            sendDemoUnsubscription (unsubRequest, channelString) {
-                if (this.demoSocket && this.demoSocket.readyState === 1) {
-                    this.demoSocket.send(JSON.stringify(unsubRequest));
-                }
-            },
-
-            // Start streaming for a specific channel (mirroring streaming.js message handling)
-            startChannelStreaming (subscriptionItem) {
-                const { channelString, symbolInfo, handlers } =
-                    subscriptionItem;
-
-                if (!this.streamingIntervals) {
-                    this.streamingIntervals = {};
-                }
-
-                // Clear any existing interval for this channel
-                if (this.streamingIntervals[channelString]) {
-                    clearInterval(this.streamingIntervals[channelString]);
-                }
-
-                // Simulate real-time trade data similar to streaming.js message processing
-                let lastPrice = 50000 + Math.random() * 10000;
-
-                this.streamingIntervals[channelString] = setInterval(() => {
-                    // Simulate realistic price movement
-                    const change = (Math.random() - 0.5) * 100;
-                    lastPrice = Math.max(1000, lastPrice + change);
-
-                    // Create trade data similar to streaming.js format
-                    const tradeData = {
-                        topic: channelString,
-                        type: "snapshot",
-                        data: [
-                            {
-                                T: Date.now(),
-                                s:
-                                    subscriptionItem.symbolInfo?.symbol ||
-                                    "DEMO",
-                                S: Math.random() > 0.5 ? "Buy" : "Sell",
-                                p: Math.round(lastPrice * 100) / 100,
-                                i: Math.random().toString(36).substr(2, 9),
-                                v: (Math.random() * 10 + 0.1).toFixed(3),
-                            },
-                        ],
-                    };
-
-                    // Process the trade data for all handlers (mirroring streaming.js message handling)
-                    this.processDemoTradeData(channelString, tradeData);
-                }, 2000);
-            },
-
-            // Process demo trade data (mirroring streaming.js message processing)
-            processDemoTradeData (channelString, feedMessage) {
-                const subscriptionItem =
-                    this.channelToSubscription.get(channelString);
-                if (!subscriptionItem) {
-                    return;
-                }
-
-                const { data } = feedMessage;
-                if (!data || data.length === 0) return;
-
-                // Process each trade in the data array (matching streaming.js format exactly)
-                data.forEach((each) => {
-                    const {
-                        T: timestamp,
-                        S: side,
-                        p: price,
-                        v: size,
-                    } = each;
-                    const symbol =
-                        subscriptionItem.symbolInfo?.symbol || "DEMO";
-
-                    const tradeMessage = {
-                        type: "trade",
-                        productId: `DEMO:FUTURE:${symbol}`,
-                        symbol: symbol,
-                        exchange:
-                            subscriptionItem.symbolInfo?.exchange || "DEMO",
-                        segment: "FUTURE",
-                        timeStamp: new Date(timestamp),
-                        tradeID: Math.random().toString(36).substr(2, 9),
-                        price: Number(price),
-                        quantity: Number(size),
-                        amount: Number(price) * Number(size),
-                        side: side.toUpperCase(),
-                    };
-
-                    // Call all handlers for this channel (matching streaming.js exactly)
-                    subscriptionItem.handlers.forEach((handler) => {
-                        try {
-                            handler.callback(tradeMessage);
-                        } catch (error) {
-                        }
-                    });
-                });
-            },
-
-            startDemoStreaming (
-                symbolInfo,
-                resolution,
-                onRealtimeCallback,
-                subscriberUID
-            ) {
-                // Initialize streaming intervals map if not exists
-                if (!this.streamingIntervals) {
-                    this.streamingIntervals = {};
-                }
-
-                // Clear any existing interval for this subscriber
-                if (this.streamingIntervals[subscriberUID]) {
-                    clearInterval(this.streamingIntervals[subscriberUID]);
-                }
-
-                // For demo purposes, simulate price updates every 2 seconds
-                let lastPrice = 50000 + Math.random() * 10000; // Start with a random price around 50k-60k
-
-                this.streamingIntervals[subscriberUID] = setInterval(() => {
-                    // Simulate realistic price movement
-                    const change = (Math.random() - 0.5) * 100; // +/- $50 change
-                    lastPrice = Math.max(1000, lastPrice + change); // Ensure price doesn't go below $1000
-
-                    const now = Date.now();
-                    const tick = {
-                        time: Math.floor(now / 1000), // Unix timestamp in seconds
-                        price: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
-                        volume: Math.floor(Math.random() * 1000) + 100, // Random volume
-                    };
-                    onRealtimeCallback(tick);
-                }, 2000); // Update every 2 seconds
-            },
-
-            // Chart marks/events - shows important events on the chart
-            getMarks: async function (
-                symbolInfo,
-                startDate,
-                endDate,
-                onDataCallback,
-                resolution
-            ) {
-                // Use current time for more visible marks
-                const now = Math.floor(Date.now() / 1000);
-                const marks = [
-                    {
-                        id: 1,
-                        time: now - 86400 * 7, // 1 week ago
-                        color: "red",
-                        text: [
-                            "Earnings Report",
-                            "Q3 2025 Results",
-                            "Beat expectations by 15%",
-                        ],
-                        label: "E",
-                        labelFontColor: "white",
-                        minSize: 25,
-                    },
-                    {
-                        id: 2,
-                        time: now - 86400 * 3, // 3 days ago
-                        color: "green",
-                        text: ["Product Launch", "New AI feature released"],
-                        label: "P",
-                        labelFontColor: "white",
-                        minSize: 25,
-                    },
-                    {
-                        id: 3,
-                        time: now - 86400, // Yesterday
-                        color: "blue",
-                        text: ["Market News", "Analyst upgrade to BUY"],
-                        label: "N",
-                        labelFontColor: "white",
-                        minSize: 25,
-                    },
-                ];
-
-                onDataCallback(marks);
-            },
-
-            // Timescale marks - shows events on the time axis
-            getTimescaleMarks: async function (
-                symbolInfo,
-                startDate,
-                endDate,
-                onDataCallback,
-                resolution
-            ) {
-                // Use current time for more visible marks
-                const now = Math.floor(Date.now() / 1000);
-                const marks = [
-                    {
-                        id: 1,
-                        time: now - 86400 * 5, // 5 days ago
-                        color: "red",
-                        label: "T1",
-                        minSize: 30,
-                        tooltip: [
-                            "Market Event",
-                            "5 days ago",
-                            "Important trading session",
-                        ],
-                    },
-                    {
-                        id: 2,
-                        time: now - 86400 * 2, // 2 days ago
-                        color: "blue",
-                        label: "T2",
-                        minSize: 30,
-                        tooltip: [
-                            "Economic Data",
-                            "2 days ago",
-                            "GDP release",
-                        ],
-                    },
-                    {
-                        id: 3,
-                        time: now + 86400, // Tomorrow
-                        color: "orange",
-                        label: "T3",
-                        minSize: 30,
-                        tooltip: [
-                            "Scheduled Event",
-                            "Tomorrow",
-                            "Fed meeting",
-                        ],
-                    },
-                ];
-
-                onDataCallback(marks);
-            },
-        };
-
-        // Chart Application
-        class ChartApp {
-            constructor() {
-                this.chartInstance = null;
-                this.currentDatafeed = null; // Will be created after SDK loads
-                this.currentSymbol = "BYBIT:FUTURE:BTCUSDT";
-                this.currentInterval = "1m";
-                this.currentTheme = "dark";
-                this.isUsingRealData = true; // Start with real data (BYBIT symbol)
-                this.init();
-            }
-
-            async init () {
-                try {
-                    this.updateStatus("Waiting for SDK to load...");
-                    await this.waitForSDK();
-                    this.updateStatus("Initializing chart...");
-                    await this.createChart();
-                    this.setupEventListeners();
-                    this.updateStatus("Chart ready!");
-                } catch (error) {
-                    this.updateStatus("Failed to initialize chart");
-                }
-            }
-
-            waitForSDK () {
-                return new Promise((resolve) => {
-                    const checkSDK = () => {
-                        if (
-                            window.GoChartingSDK &&
-                            window.GoChartingSDK.ProfessionalChart &&
-                            window.GoChartingSDK.React
-                        ) {
-                            resolve();
-                        } else {
-                            setTimeout(checkSDK, 100);
-                        }
-                    };
-                    checkSDK();
-                });
-            }
-
-            async createChart () {
-                try {
-                    // 🚀 NEW: Use the simplified API!
-                    this.currentChart = window.GoChartingSDK.createChart(
-                        "#chart-container",
-                        {
-                            symbol: this.currentSymbol,
-                            interval: this.currentInterval,
-                            datafeed: demoDatafeed,
-                            debugLog: true,
-                            licenseKey:
-                                "demo-550e8400-e29b-41d4-a716-446655440000",
-                            exclude: {
-                                indicators: [
-                                    "ACC",
-                                    "CHAIKINMFI",
-                                    "CHAIKINVOLATILITY",
-                                    "COPPOCK",
-                                    "EOM",
-                                    "FORCEINDEX",
-                                    "KLINGER",
-                                    "KST",
-                                    "MFI",
-                                    "ONBALANCEVOLUME",
-                                    "ROC",
-                                    "SMA",
-                                    "TWIGGSMONEYFLOW",
-                                    "VOLUMEUNDERLAY",
-                                    "VWAP",
-                                    "VWMA",
-                                    "WMFI",
-                                    "OI",
-                                    "SANBAND",
-                                    "TRADEVOLUMEINDEX",
-                                    "VOLUMEOSCILLATOR",
-                                    "VOLUMEROC",
-                                ],
-                            },
-                            theme: this.currentTheme,
-                            appCallback: (eventType, message) => {
-                                if (eventType === "CHART_SELECTED") {
-                                    console.log(
-                                        "📊 CHART_SELECTED event:",
-                                        message
-                                    );
-                                }
-                            },
-                            onReady: (chartInstance) => {
-                                this.chartInstance = chartInstance;
-                                this.updateStatus(
-                                    "Chart loaded with simplified API!"
-                                );
-
-                                // Debug: Check if chart has proper dimensions
-                                setTimeout(() => {
-                                    const container =
-                                        document.getElementById(
-                                            "chart-container"
-                                        );
-                                    const chartElement =
-                                        container.querySelector(
-                                            ".gocharting-autofit-container"
-                                        );
-                                    if (chartElement) {
-                                        const chartRect =
-                                            chartElement.getBoundingClientRect();
-                                    }
-                                }, 1000);
-                            },
-                            onError: (error) => {
-                                this.updateStatus(
-                                    `❌ Error creating chart: ${error.message}`
-                                );
-                            },
-                        }
-                    );
-                } catch (error) {
-                    this.updateStatus(
-                        `❌ Error creating chart: ${error.message}`
-                    );
-                    throw error; // Re-throw so recreateChart can handle it
-                }
-            }
-
-            // Change symbol using setSymbol API (preserves layout)
-            async changeSymbol (newSymbol) {
-                if (!this.currentChart) {
-                    this.updateStatus(`❌ Chart not ready`);
-                    return;
-                }
-
-                if (this.currentSymbol === newSymbol) {
-                    this.updateStatus(`ℹ️ Already showing ${newSymbol}`);
-                    return;
-                }
-
-                try {
-                    this.updateStatus(`🔄 Switching to ${newSymbol}...`);
-
-                    // Use setSymbol to change the symbol on the currently selected chart
-                    // This preserves the layout (1x1, 2x2, etc.)
-                    await this.currentChart.setSymbol(newSymbol);
-
-                    this.currentSymbol = newSymbol;
-                    this.isUsingRealData = newSymbol.includes("BYBIT");
-
-                    this.updateStatus(`✅ Switched to ${newSymbol}`);
-                } catch (error) {
-                    this.updateStatus(
-                        `❌ Error changing symbol: ${error.message}`
-                    );
-                }
-            }
-
-            setupEventListeners () {
-                // Symbol selection buttons
-                document
-                    .getElementById("symbol-btc-btn")
-                    .addEventListener("click", () => {
-                        this.changeSymbol("BYBIT:FUTURE:BTCUSDT");
-                    });
-
-                document
-                    .getElementById("symbol-eth-btn")
-                    .addEventListener("click", () => {
-                        this.changeSymbol("BYBIT:FUTURE:ETHUSDT");
-                    });
-
-                document
-                    .getElementById("symbol-ogn-btn")
-                    .addEventListener("click", () => {
-                        this.changeSymbol("BYBIT:FUTURE:OGNUSDT");
-                    });
-
-                // Settings Panel Event Listeners (if they exist)
-                const applyBtn =
-                    document.getElementById("apply-settings-btn");
-                if (applyBtn) {
-                    applyBtn.addEventListener("click", () => {
-                        this.applySettings();
-                    });
-                }
-
-                const cancelBtn = document.getElementById(
-                    "cancel-settings-btn"
-                );
-                if (cancelBtn) {
-                    cancelBtn.addEventListener("click", () => {
-                        this.hideSettingsPanel();
-                    });
-                }
-            }
-
-            async recreateChart () {
-                try {
-                    // Clean up existing chart and its subscriptions
-                    if (
-                        this.currentChart &&
-                        typeof this.currentChart.destroy === "function"
-                    ) {
-                        this.currentChart.destroy();
-                    }
-
-                    // Clear the container and recreate the chart with new settings
-                    const container =
-                        document.getElementById("chart-container");
-                    if (container) {
-                        // Properly unmount any existing React component
-                        if (
-                            window.GoChartingSDK &&
-                            window.GoChartingSDK.ReactDOM
-                        ) {
-                            try {
-                                window.GoChartingSDK.ReactDOM.unmountComponentAtNode(
-                                    container
-                                );
-                            } catch (error) {
-                            }
-                        }
-
-                        // Clear and set loading message
-                        container.innerHTML =
-                            '<div class="loading">Loading chart...</div>';
-
-                        // Force a small delay to ensure proper cleanup
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, 100)
-                        );
-
-                        // Always use the same datafeed object (it handles both real and demo data)
-                        this.currentDatafeed = demoDatafeed;
-                        await this.createChart();
-
-                        // After chart creation, try to reset chart layout for proper axis positioning
-                        if (this.chartInstance) {
-                            setTimeout(() => {
-                                try {
-                                    // Try to access chart context and reset if available
-
-                                    // Force a chart refresh by triggering a resize event
-                                    window.dispatchEvent(
-                                        new Event("resize")
-                                    );
-                                } catch (error) {
-
-                                }
-                            }, 500);
-                        }
-                    }
-                } catch (error) {
-                    this.updateStatus(
-                        `❌ Error loading chart: ${error.message}`
-                    );
-
-                    // Show error in container
-                    const container =
-                        document.getElementById("chart-container");
-                    if (container) {
-                        container.innerHTML = `
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>GoCharting SDK - Basic Example</title>
+		<!-- CSS is now automatically injected by the JavaScript bundle -->
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				min-height: 100vh;
+				padding: 20px;
+			}
+
+			.container {
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			.header {
+				text-align: center;
+				margin-bottom: 30px;
+			}
+
+			.header h1 {
+				font-size: 2.5rem;
+				margin-bottom: 10px;
+				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+			}
+
+			.controls {
+				display: flex;
+				gap: 15px;
+				justify-content: center;
+				margin-bottom: 20px;
+				flex-wrap: wrap;
+				background: rgba(255, 255, 255, 0.1);
+				padding: 20px;
+				border-radius: 12px;
+				backdrop-filter: blur(10px);
+			}
+
+			.controls select,
+			.controls button {
+				padding: 10px 15px;
+				border: none;
+				border-radius: 8px;
+				background: rgba(255, 255, 255, 0.2);
+				color: white;
+				font-size: 14px;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.controls select:hover,
+			.controls button:hover {
+				background: rgba(255, 255, 255, 0.3);
+				transform: translateY(-2px);
+			}
+
+			/* Button Styles */
+			.btn {
+				border: none;
+				padding: 12px 24px;
+				border-radius: 8px;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: 600;
+				transition: all 0.3s ease;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				color: white;
+			}
+
+			.btn:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+			}
+
+			.btn.primary {
+				background: #4a90e2;
+			}
+
+			.btn.primary:hover {
+				background: #357abd;
+			}
+
+			.btn.secondary {
+				background: #6c757d;
+			}
+
+			.btn.secondary:hover {
+				background: #545b62;
+			}
+
+			.btn.danger {
+				background: #dc3545;
+			}
+
+			.btn.danger:hover {
+				background: #c82333;
+			}
+
+			.btn.info {
+				background: #17a2b8;
+			}
+
+			.btn.info:hover {
+				background: #138496;
+			}
+
+			.btn.success {
+				background: #28a745;
+			}
+
+			.btn.success:hover {
+				background: #218838;
+			}
+
+			/* Settings Panel Styles */
+			.settings-panel {
+				background: rgba(255, 255, 255, 0.1);
+				padding: 20px;
+				border-radius: 12px;
+				backdrop-filter: blur(10px);
+				margin-bottom: 20px;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+			}
+
+			.settings-panel h3 {
+				margin-bottom: 20px;
+				text-align: center;
+				color: white;
+			}
+
+			.settings-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+				gap: 20px;
+				align-items: start;
+			}
+
+			.setting-group {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.setting-group label {
+				color: white;
+				font-weight: 600;
+				font-size: 14px;
+			}
+
+			.setting-actions {
+				grid-column: 1 / -1;
+				display: flex;
+				gap: 15px;
+				justify-content: center;
+				margin-top: 20px;
+			}
+
+			#chart-container {
+				width: 800px;
+				/* Fixed width for proper DrawingsMenu positioning */
+				height: 500px;
+				border-radius: 12px;
+				overflow: hidden;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+				background: #1a1a1a;
+				/* AutoFit will handle the internal sizing automatically */
+			}
+
+			.loading {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 100%;
+				font-size: 18px;
+			}
+
+			.status {
+				margin-top: 20px;
+				padding: 15px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				text-align: center;
+			}
+
+			@media (max-width: 768px) {
+				.controls {
+					flex-direction: column;
+					align-items: center;
+				}
+
+				#chart-container {
+					height: 400px;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>📈 GoCharting SDK Demo</h1>
+				<p>Professional Financial Charts with Built-in AutoFit ✨</p>
+			</div>
+
+			<div class="controls">
+				<button id="autofit-test-btn" class="btn secondary">
+					📐 AutoFit Testing
+				</button>
+				<button id="add-indicator-btn" class="btn success">
+					📊 Add RSI Indicator
+				</button>
+				<button id="add-drawing-btn" class="btn success">
+					✏️ Add Trendline
+				</button>
+				<button id="delete-object-btn" class="btn danger">
+					🗑️ Delete Last Object
+				</button>
+				<button id="destroy-chart-btn" class="btn danger">
+					💥 Destroy Chart
+				</button>
+				<button id="change-defaults-btn" class="btn info">
+					⚙️ Change Defaults
+				</button>
+			</div>
+
+			<!-- Settings Panel (initially hidden) -->
+			<div
+				id="settings-panel"
+				class="settings-panel"
+				style="display: none"
+			>
+				<h3>📊 Chart Settings</h3>
+				<div class="settings-grid">
+					<div class="setting-group">
+						<label for="symbol-selector">Symbol:</label>
+						<select id="symbol-selector">
+							<option value="BYBIT:FUTURE:BTCUSDT" selected>
+								Bitcoin Future (BTCUSDT)
+							</option>
+							<option value="BYBIT:FUTURE:ETHUSDT">
+								Ethereum Future (ETHUSDT)
+							</option>
+							<option value="BYBIT:FUTURE:10000COQUSDT">
+								10000COQUSDT
+							</option>
+							<option value="BYBIT:FUTURE:OGNUSDT">
+								OGN/USDT
+							</option>
+						</select>
+					</div>
+
+					<div class="setting-group">
+						<label for="interval-selector">Interval:</label>
+						<select id="interval-selector">
+							<option value="1m">1 Minute</option>
+							<option value="5m">5 Minutes</option>
+							<option value="15m">15 Minutes</option>
+							<option value="1h">1 Hour</option>
+							<option value="1D" selected>1 Day</option>
+						</select>
+					</div>
+
+					<div class="setting-group">
+						<label for="theme-selector">Theme:</label>
+						<select id="theme-selector">
+							<option value="dark" selected>Dark Theme</option>
+							<option value="light">Light Theme</option>
+						</select>
+					</div>
+
+					<div class="setting-actions">
+						<button id="apply-settings-btn" class="btn success">
+							✅ Apply & Recreate Chart
+						</button>
+						<button id="cancel-settings-btn" class="btn secondary">
+							❌ Cancel
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div id="chart-container">
+				<div class="loading">Loading chart...</div>
+			</div>
+
+			<div id="status" class="status">Ready to load chart...</div>
+		</div>
+
+		<!-- GoCharting SDK - Local Build with AutoFit -->
+		<!--<script src="https://gocharting.com/sdk/library/demo-550e8400-e29b-41d4-a716-446655440000/index.umd.js"></script>-->
+		<script src="../dist/index.umd.js"></script>
+
+		<script>
+			// Simple datafeed object that implements datafeed interface
+			// This follows the new composition-based approach
+			const demoDatafeed = {
+				symbolCache: new Map(),
+				searchSymbolController: null,
+				streamingIntervals: {},
+
+				// Cleanup method to prevent memory leaks
+				destroy() {
+					// Clear all streaming intervals
+					Object.values(this.streamingIntervals).forEach(
+						(interval) => {
+							clearInterval(interval);
+						},
+					);
+					this.streamingIntervals = {};
+
+					// Abort any pending search requests
+					if (this.searchSymbolController) {
+						this.searchSymbolController.abort();
+					}
+
+					// Clear symbol cache
+					this.symbolCache.clear();
+				},
+
+				// Cleanup method to prevent memory leaks
+				destroy() {
+					// Clear all streaming intervals
+					Object.values(this.streamingIntervals).forEach(
+						(interval) => {
+							clearInterval(interval);
+						},
+					);
+					this.streamingIntervals = {};
+
+					// Abort any pending search requests
+					if (this.searchSymbolController) {
+						this.searchSymbolController.abort();
+					}
+
+					// Clear symbol cache
+					this.symbolCache.clear();
+				},
+
+				async getBars(symbolInfo, resolution, periodParams) {
+					const { from, to, firstDataRequest, rows } = periodParams;
+
+					console.log("🔍 [DemoDatafeed] getBars called with:", {
+						symbolInfo,
+						resolution,
+						periodParams,
+						exchange: symbolInfo.exchange,
+						symbol: symbolInfo.symbol,
+						isBybit: symbolInfo.exchange === "BYBIT",
+					});
+
+					try {
+						let rawBars = [];
+
+						// Use real Bybit API for BYBIT symbols
+						if (symbolInfo.exchange === "BYBIT") {
+							console.log(
+								"🚀 [DemoDatafeed] Using real Bybit API for:",
+								symbolInfo.symbol,
+							);
+							rawBars = await this.getBybitBars(
+								symbolInfo,
+								resolution,
+								periodParams,
+							);
+						} else {
+							// For non-BYBIT symbols, return error
+							console.error(
+								"❌ [DemoDatafeed] Only BYBIT symbols are supported in this demo:",
+								{
+									exchange: symbolInfo.exchange,
+									symbol: symbolInfo.symbol,
+								},
+							);
+							return {
+								s: "error",
+								errmsg: `Only BYBIT symbols are supported. Symbol ${symbolInfo.exchange}:${symbolInfo.symbol} is not available.`,
+							};
+						}
+
+						// Convert to UDF format
+						const udfData = this.convertToUDFFormat(rawBars);
+						return udfData;
+					} catch (error) {
+						console.error(
+							"❌ [DemoDatafeed] getBars failed:",
+							error,
+						);
+						return {
+							s: "error",
+							errmsg: `Failed to fetch data: ${error.message}`,
+						};
+					}
+				},
+
+				// Convert raw bars to UDF format
+				convertToUDFFormat(rawBars) {
+					if (!rawBars || rawBars.length === 0) {
+						return {
+							s: "no_data",
+							nextTime: null,
+						};
+					}
+
+					const t = []; // time
+					const o = []; // open
+					const h = []; // high
+					const l = []; // low
+					const c = []; // close
+					const v = []; // volume
+
+					rawBars.forEach((bar) => {
+						// Handle different time formats
+						let timestamp;
+						if (bar.time) {
+							timestamp =
+								typeof bar.time === "number"
+									? bar.time
+									: Math.floor(
+											new Date(bar.time).getTime() / 1000,
+									  );
+						} else if (bar.date) {
+							timestamp = Math.floor(
+								new Date(bar.date).getTime() / 1000,
+							);
+						} else {
+							console.warn("Bar missing time/date:", bar);
+							return;
+						}
+
+						t.push(timestamp);
+						o.push(Number(bar.open));
+						h.push(Number(bar.high));
+						l.push(Number(bar.low));
+						c.push(Number(bar.close));
+						v.push(Number(bar.volume || 0));
+					});
+
+					return {
+						s: "ok",
+						t,
+						o,
+						h,
+						l,
+						c,
+						v,
+					};
+				},
+
+				async resolveSymbol(symbolName, onResolve, onError) {
+					try {
+						console.log(
+							"🔍 [DemoDatafeed] resolveSymbol called for:",
+							symbolName,
+						);
+
+						// Check cache first
+						if (this.symbolCache.has(symbolName)) {
+							const cachedSymbolInfo =
+								this.symbolCache.get(symbolName);
+							console.log(
+								"✅ [DemoDatafeed] Using cached symbol info for:",
+								symbolName,
+							);
+							onResolve(cachedSymbolInfo);
+							return;
+						}
+
+						// Try to use real GoCharting API for symbol resolution
+						try {
+							console.log(
+								"🌐 [DemoDatafeed] Attempting to resolve via GoCharting API:",
+								symbolName,
+							);
+							const symbolInfo = await this.resolveSymbolFromAPI(
+								symbolName,
+							);
+							console.log(
+								"✅ [DemoDatafeed] Successfully resolved via API:",
+								symbolName,
+								symbolInfo,
+							);
+							this.symbolCache.set(symbolName, symbolInfo);
+							onResolve(symbolInfo);
+							return;
+						} catch (apiError) {
+							console.error(
+								"❌ [DemoDatafeed] GoCharting API failed:",
+								apiError,
+							);
+							throw new Error(
+								`Symbol not found: ${symbolName}. This symbol is not available in our data provider.`,
+							);
+						}
+					} catch (error) {
+						console.error(
+							"❌ [DemoDatafeed] Error resolving symbol:",
+							error,
+						);
+						console.error(
+							"🔍 [DemoDatafeed] Calling onError callback with message:",
+							"Failed to resolve symbol",
+						);
+						onError("Failed to resolve symbol");
+					}
+				},
+
+				async resolveSymbolFromAPI(symbolName) {
+					const url =
+						"https://gocharting.com/sdk/instruments/exactSearch";
+					const params = { q: symbolName };
+
+					const urlWithParams = new URL(url);
+					Object.keys(params).forEach((key) =>
+						urlWithParams.searchParams.append(key, params[key]),
+					);
+
+					const res = await fetch(urlWithParams);
+					if (!res.ok) {
+						throw new Error(
+							`HTTP ${res.status}: ${res.statusText}`,
+						);
+					}
+
+					const data = await res.json();
+					if (
+						data.status === 200 &&
+						data.payload?.results?.length > 0
+					) {
+						const result = data.payload.results[0];
+
+						const symbolInfo = {
+							symbol: result.symbol,
+							full_name: `${result.exchange}:${result.segment}:${result.symbol}`,
+							description: result.name,
+							exchange: result.exchange,
+							type: result.asset_type.toLowerCase(),
+							session: "24x7",
+							session_label: "24x7",
+							timezone: result.exchange_info?.zone || "UTC",
+							ticker: result.symbol,
+							has_intraday: true,
+							intraday_multipliers: [
+								"1",
+								"5",
+								"15",
+								"30",
+								"60",
+								"240",
+								"1D",
+							],
+							supported_resolutions: result.exchange_info
+								?.valid_intervals || [
+								"1",
+								"5",
+								"15",
+								"30",
+								"60",
+								"240",
+								"1D",
+								"1W",
+								"1M",
+							],
+							volume_precision: result.max_volume_precision || 8,
+							data_status: result.data_status || "streaming",
+							// Additional fields from API
+							contract_size: result.contract_size,
+							tick_size: result.tick_size,
+							display_tick_size: result.display_tick_size,
+							max_tick_precision: result.max_tick_precision || 2,
+							max_volume_precision:
+								result.max_volume_precision || 8,
+							quote_currency: result.quote_currency,
+							future_type: result.future_type,
+							tradeable: result.tradeable,
+							// New fields from resolveSymbol API
+							delay_seconds: result.delay_seconds,
+							symbol_logo_urls: result.symbol_logo_urls,
+							segment: result.segment,
+							asset_type: result.asset_type,
+							// Exchange info for timezone handling - CRITICAL for fixing the zone error
+							exchange_info: {
+								name:
+									result.exchange_info?.name ||
+									result.exchange.toLowerCase(),
+								code:
+									result.exchange_info?.code ||
+									result.exchange,
+								country_cd:
+									result.exchange_info?.country_cd || "US",
+								zone: result.exchange_info?.zone || "UTC",
+								has_unique_trade_id:
+									result.exchange_info?.has_unique_trade_id ||
+									true,
+								holidays:
+									result.exchange_info?.holidays || null,
+								hours: result.exchange_info?.hours || [
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+									{ open: true },
+								],
+								contains_ambiguous_symbols:
+									result.exchange_info
+										?.contains_ambiguous_symbols || false,
+								valid_intervals: result.exchange_info
+									?.valid_intervals || [
+									"1m",
+									"3m",
+									"5m",
+									"10m",
+									"15m",
+									"30m",
+									"1h",
+									"2h",
+									"4h",
+									"12h",
+									"1D",
+									"1W",
+									"1M",
+								],
+							},
+						};
+
+						console.log(
+							"✅ [DemoDatafeed] Resolved symbol info from API:",
+							{
+								symbol: symbolInfo.symbol,
+								tick_size: symbolInfo.tick_size,
+								display_tick_size: symbolInfo.display_tick_size,
+								max_tick_precision:
+									symbolInfo.max_tick_precision,
+								pricescale: symbolInfo.pricescale,
+								rendering_precision:
+									symbolInfo.max_tick_precision + 2,
+							},
+						);
+
+						return symbolInfo;
+					}
+					throw new Error(`No symbol found for: ${symbolName}`);
+				},
+
+				searchSymbols(
+					userInput,
+					exchange,
+					symbolType,
+					onResultReadyCallback,
+				) {
+					// Handle different calling patterns - sometimes callback is 2nd param, sometimes 4th
+					const callback =
+						typeof exchange === "function"
+							? exchange
+							: onResultReadyCallback;
+
+					console.log("🔍 [DemoDatafeed] searchSymbols called:", {
+						userInput,
+						exchange:
+							typeof exchange === "function"
+								? "callback"
+								: exchange,
+						symbolType,
+						hasCallback: typeof callback === "function",
+					});
+
+					// Use async IIFE to handle the fetch, but don't make the function itself async
+					(async () => {
+						// Use real GoCharting API for search
+						try {
+							await this.searchSymbolsFromAPI(
+								userInput,
+								callback,
+							);
+						} catch (error) {
+							console.error(
+								"❌ [DemoDatafeed] GoCharting search API failed:",
+								error,
+							);
+							// Return empty results if API fails
+							callback({
+								searchInProgress: false,
+								items: [],
+							});
+						}
+					})();
+				},
+
+				async searchSymbolsFromAPI(userInput, callback) {
+					const url = "https://gocharting.com/sdk/instruments/search";
+					const params = { q: userInput };
+
+					if (this.searchSymbolController) {
+						this.searchSymbolController.abort();
+					}
+					this.searchSymbolController = new AbortController();
+
+					const urlWithParams = new URL(url);
+					Object.keys(params).forEach((key) =>
+						urlWithParams.searchParams.append(key, params[key]),
+					);
+
+					const res = await fetch(urlWithParams, {
+						signal: this.searchSymbolController.signal,
+					});
+
+					if (!res.ok) {
+						throw new Error(
+							`HTTP ${res.status}: ${res.statusText}`,
+						);
+					}
+
+					const data = await res.json();
+					if (data.status === 200 && data.payload?.results) {
+						const transformedResults = [];
+
+						data.payload.results.forEach((result) => {
+							const item = result.item;
+							if (item.is_group && item.members) {
+								item.members.forEach((member) => {
+									const memberItem = member.item;
+									const segment =
+										memberItem.segment || "FUTURE";
+									const key = `${memberItem.exchange}:${segment}:${memberItem.symbol}`;
+									transformedResults.push({
+										symbol: memberItem.symbol,
+										key: key,
+										full_name: key,
+										description: memberItem.name,
+										exchange: memberItem.exchange,
+										type: memberItem.asset_type.toLowerCase(),
+										ticker: memberItem.symbol,
+									});
+								});
+							} else {
+								const segment = item.segment || "FUTURE";
+								const key = `${item.exchange}:${segment}:${item.symbol}`;
+								transformedResults.push({
+									symbol: item.symbol,
+									key: key,
+									full_name: key,
+									description: item.name,
+									exchange: item.exchange,
+									type: item.asset_type.toLowerCase(),
+									ticker: item.symbol,
+								});
+							}
+						});
+
+						callback({
+							searchInProgress: false,
+							items: transformedResults,
+						});
+					} else {
+						callback({
+							searchInProgress: false,
+							items: [],
+						});
+					}
+				},
+
+				async getBybitBars(symbolInfo, resolution, periodParams) {
+					const { from, to, firstDataRequest, rows, duration } =
+						periodParams;
+					// Use the same logic as real datafeed.js
+					// Handle both string and object resolution formats
+					let scale, units, interval;
+					if (typeof resolution === "string") {
+						// Convert string resolution to object format
+						const resolutionObj =
+							this.convertIntervalToResolution(resolution);
+						scale = resolutionObj.scale;
+						units = resolutionObj.units;
+						interval = resolutionObj.label;
+					} else if (resolution && typeof resolution === "object") {
+						scale = resolution.units;
+						units = resolution.scale;
+						// Derive label from scale and units
+						interval = this.deriveIntervalLabel(scale, units);
+					} else {
+						console.error(
+							"❌ Invalid resolution format:",
+							resolution,
+						);
+						throw new Error("Invalid resolution format");
+					}
+
+					console.log("📈 [DemoDatafeed] getBybitBars:", {
+						symbolInfo,
+						resolution,
+						periodParams,
+						scale,
+						units,
+						interval,
+						duration,
+					});
+
+					// Extract the correct symbol for Bybit API
+					const bybitSymbol =
+						symbolInfo.symbol ||
+						symbolInfo.ticker ||
+						symbolInfo.name;
+
+					let url;
+					if (firstDataRequest) {
+						// Use current time to get recent data up to today
+						const currentTime = Date.now();
+						url = `https://api.bybit.com/v5/market/kline?symbol=${bybitSymbol}&interval=${interval}&end=${currentTime}&limit=${
+							rows || 200
+						}`;
+					} else if (duration || (from && to)) {
+						// Use date range - this is the preferred method for duration-based requests
+						const endDate = to.getTime();
+						// When rows is provided, use end + limit (no start needed)
+						// Otherwise use start + end for date range
+						if (rows) {
+							url = `https://api.bybit.com/v5/market/kline?symbol=${bybitSymbol}&interval=${interval}&end=${endDate}&limit=${rows}`;
+						} else {
+							const startDate = from.getTime();
+							url = `https://api.bybit.com/v5/market/kline?symbol=${bybitSymbol}&interval=${interval}&start=${startDate}&end=${endDate}`;
+						}
+						console.log("📅 [DemoDatafeed] Using date range:", {
+							endDate,
+							duration,
+							rows,
+						});
+					} else {
+						// Fallback: Use limit-based fetching
+						const startDate = from.getTime();
+						const endDate = to.getTime();
+						url = `https://api.bybit.com/v5/market/kline?symbol=${bybitSymbol}&interval=${interval}&start=${startDate}&end=${endDate}&limit=${
+							rows || 200
+						}`;
+					}
+
+					const response = await fetch(url);
+					const data = await response.json();
+
+					if (data.result?.list) {
+						const bars = [];
+						const list = data.result.list;
+						for (let k = 0; k < list.length; k++) {
+							const [
+								timestamp,
+								open,
+								high,
+								low,
+								close,
+								volume,
+								turnOver,
+							] = list[k];
+							const prev = list[k - 1];
+
+							const bar = {
+								time: Math.floor(Number(timestamp) / 1000), // Convert to seconds
+								open: Number(open),
+								high: Number(high),
+								low: Number(low),
+								close: Number(close),
+								volume: Number(volume),
+							};
+
+							// Log first bar to check decimal precision
+							if (k === 0) {
+								console.log(
+									"📊 [DemoDatafeed] First bar from Bybit:",
+									{
+										symbol: bybitSymbol,
+										bar,
+										rawData: list[k],
+									},
+								);
+							}
+
+							bars.push(bar);
+						}
+
+						// Bybit returns newest first, we need oldest first
+						const reversedBars = bars.reverse();
+						return reversedBars;
+					}
+
+					throw new Error("No data from Bybit API");
+				},
+
+				// Convert string interval to resolution object format
+				convertIntervalToResolution(intervalString) {
+					const intervalMap = {
+						// New format with units
+						"1m": { scale: 1, units: "minutes", label: "1" },
+						"5m": { scale: 5, units: "minutes", label: "5" },
+						"15m": { scale: 15, units: "minutes", label: "15" },
+						"30m": { scale: 30, units: "minutes", label: "30" },
+						"1h": { scale: 1, units: "hours", label: "60" },
+						"4h": { scale: 4, units: "hours", label: "240" },
+						"1D": { scale: 1, units: "days", label: "D" },
+						"1W": { scale: 1, units: "weeks", label: "W" },
+						"1M": { scale: 1, units: "months", label: "M" },
+					};
+
+					const resolution = intervalMap[intervalString];
+					if (!resolution) {
+						console.warn(
+							`Unknown interval: ${intervalString}, defaulting to 1D`,
+						);
+						return { scale: 1, units: "days", label: "D" };
+					}
+
+					return resolution;
+				},
+
+				// Derive interval label from scale and units
+				deriveIntervalLabel(scale, units) {
+					switch (units) {
+						case "minutes":
+							return scale.toString();
+						case "hours":
+							return (scale * 60).toString();
+						case "days":
+							return scale === 1 ? "D" : `${scale}D`;
+						case "weeks":
+							return scale === 1 ? "W" : `${scale}W`;
+						case "months":
+							return scale === 1 ? "M" : `${scale * 1}M`;
+						default:
+							console.warn(
+								`Unknown units: ${units}, defaulting to D`,
+							);
+							return "D";
+					}
+				},
+
+				// Convert resolution to Bybit interval format (mirroring helpers.js getExchangeInterval)
+				getExchangeInterval(scale, units) {
+					switch (units) {
+						case "minutes":
+							return scale;
+						case "hours":
+							return 60 * scale;
+						case "days":
+							return "D";
+						case "weeks":
+							return "W";
+						case "months":
+							return "M";
+						default:
+							return 60;
+					}
+				},
+
+				// Legacy method for backward compatibility
+				getBybitInterval(resolution) {
+					const intervalMap = {
+						1: "1",
+						5: "5",
+						15: "15",
+						30: "30",
+						60: "60",
+						240: "240",
+						"1D": "D",
+						"1W": "W",
+						"1M": "M",
+					};
+					return intervalMap[resolution] || "D";
+				},
+
+				// Optional datafeed interface methods for real-time data
+				subscribeTicks: function (
+					symbolInfo,
+					resolution,
+					onRealtimeCallback,
+					subscriberUID,
+					onResetCacheNeededCallback,
+				) {
+					// Use the same pattern as the real datafeed.js
+					this.subscribeOnStream(
+						symbolInfo,
+						resolution,
+						onRealtimeCallback,
+						subscriberUID,
+						onResetCacheNeededCallback,
+						null, // lastDailyBar - not used in demo
+					);
+				},
+
+				unsubscribeTicks: function (subscriberUID) {
+					// Use the same pattern as the real datafeed.js
+					this.unsubscribeFromStream(subscriberUID);
+				},
+
+				// Enhanced streaming implementation mirroring streaming.js capabilities
+				subscribeOnStream(
+					symbolInfo,
+					resolution,
+					onRealtimeCallback,
+					subscriberUID,
+					onResetCacheNeededCallback,
+					lastDailyBar,
+				) {
+					// Initialize streaming infrastructure like streaming.js
+					if (!this.channelToSubscription) {
+						this.channelToSubscription = new Map();
+					}
+					if (!this.demoSocket) {
+						this.initializeDemoSocket(symbolInfo);
+					}
+
+					// Create channel string similar to streaming.js format
+					let channelString;
+					if (symbolInfo.exchange === "BYBIT") {
+						// Use real Bybit channel format
+						const symbol =
+							symbolInfo.symbol ||
+							symbolInfo.ticker ||
+							symbolInfo.name;
+						channelString = `publicTrade.${symbol}`;
+					} else {
+						// Use demo format for other exchanges
+						channelString = `demoTrade.${
+							symbolInfo.symbol ||
+							symbolInfo.ticker ||
+							symbolInfo.name
+						}`;
+					}
+
+					const handler = {
+						id: subscriberUID,
+						callback: onRealtimeCallback,
+						resolution: resolution,
+						lastDailyBar: lastDailyBar,
+						onResetCacheNeededCallback: onResetCacheNeededCallback,
+					};
+
+					let subscriptionItem =
+						this.channelToSubscription.get(channelString);
+					if (subscriptionItem) {
+						// Already subscribed to the channel, use the existing subscription
+						subscriptionItem.handlers.push(handler);
+						return;
+					}
+
+					// Create new subscription item like streaming.js
+					subscriptionItem = {
+						subscriberUID,
+						resolution,
+						lastDailyBar,
+						handlers: [handler],
+						symbolInfo: symbolInfo,
+						channelString: channelString,
+					};
+					this.channelToSubscription.set(
+						channelString,
+						subscriptionItem,
+					);
+
+					// Send subscription request (real Bybit format for BYBIT, demo for others)
+					let subRequest;
+					if (symbolInfo.exchange === "BYBIT") {
+						// Real Bybit subscription format
+						subRequest = {
+							op: "subscribe",
+							args: [channelString],
+						};
+					} else {
+						// Demo subscription format
+						subRequest = {
+							op: "subscribe",
+							args: [channelString],
+							symbol:
+								symbolInfo.symbol ||
+								symbolInfo.ticker ||
+								symbolInfo.name,
+						};
+					}
+
+					this.sendDemoSubscription(subRequest, subscriptionItem);
+				},
+
+				unsubscribeFromStream(subscriberUID) {
+					if (!this.channelToSubscription) {
+						return;
+					}
+
+					// Find a subscription with id === subscriberUID (mirroring streaming.js logic)
+					for (const channelString of this.channelToSubscription.keys()) {
+						const subscriptionItem =
+							this.channelToSubscription.get(channelString);
+						const handlerIndex =
+							subscriptionItem.handlers.findIndex(
+								(handler) => handler.id === subscriberUID,
+							);
+
+						if (handlerIndex !== -1) {
+							// Remove from handlers
+							subscriptionItem.handlers.splice(handlerIndex, 1);
+							if (subscriptionItem.handlers.length === 0) {
+								// Unsubscribe from the channel if it was the last handler
+								const unsubRequest = {
+									op: "unsubscribe",
+									args: [channelString],
+								};
+								this.sendDemoUnsubscription(
+									unsubRequest,
+									channelString,
+								);
+								this.channelToSubscription.delete(
+									channelString,
+								);
+
+								// Stop streaming intervals for this channel
+								if (
+									this.streamingIntervals &&
+									this.streamingIntervals[channelString]
+								) {
+									clearInterval(
+										this.streamingIntervals[channelString],
+									);
+									delete this.streamingIntervals[
+										channelString
+									];
+								}
+							}
+							break;
+						}
+					}
+				},
+
+				// Initialize socket (mirroring streaming.js socket initialization)
+				initializeDemoSocket(symbolInfo) {
+					if (
+						this.demoSocket &&
+						this.demoSocket.readyState === WebSocket.OPEN
+					) {
+						return this.demoSocket;
+					}
+
+					// Create real Bybit WebSocket for BYBIT symbols, mock for others
+					if (symbolInfo.exchange === "BYBIT") {
+						const uri = this.getBybitWebSocketUrl(symbolInfo);
+						this.demoSocket = new WebSocket(uri);
+
+						this.demoSocket.addEventListener("open", () => {
+							console.log(
+								"🔌 [DemoDatafeed] Connected to Bybit WebSocket",
+							);
+						});
+
+						this.demoSocket.addEventListener("close", (reason) => {
+							console.log(
+								"🔌 [DemoDatafeed] Bybit WebSocket disconnected:",
+								reason,
+							);
+						});
+
+						this.demoSocket.addEventListener("error", (error) => {
+							console.log(
+								"🔌 [DemoDatafeed] Bybit WebSocket error:",
+								error,
+							);
+							console.error(
+								"WebSocket connection failed. Please check network connectivity and URL.",
+							);
+						});
+
+						this.demoSocket.addEventListener("message", (event) => {
+							this.handleBybitMessage(event);
+						});
+					} else {
+						// Create mock socket for non-Bybit symbols
+						this.demoSocket = {
+							readyState: 1, // WebSocket.OPEN
+							url: `wss://demo.gocharting.com/ws/${
+								symbolInfo.exchange || "DEMO"
+							}`,
+							send: (message) => {
+								console.log(
+									"📤 [DemoSocket] Mock sending:",
+									JSON.parse(message),
+								);
+							},
+							close: () => {
+								console.log(
+									"🔌 [DemoSocket] Mock connection closed",
+								);
+								this.demoSocket.readyState = 3; // WebSocket.CLOSED
+							},
+							addEventListener: (event, callback) => {
+								console.log(
+									`🔌 [DemoSocket] Mock event listener added for: ${event}`,
+								);
+							},
+						};
+					}
+					return this.demoSocket;
+				},
+
+				// Get Bybit WebSocket URL (mirroring streaming.js getWebSocketUrl)
+				getBybitWebSocketUrl(symbolInfo) {
+					// Use Bybit's public WebSocket endpoint
+					return "wss://stream.bybit.com/v5/public/linear";
+				},
+
+				// Handle Bybit WebSocket messages (mirroring streaming.js message handling)
+				handleBybitMessage(event) {
+					try {
+						const feedMessage = JSON.parse(event.data);
+						const { topic, type, data } = feedMessage;
+
+						if (!topic || !topic.startsWith("publicTrade")) {
+							// Skip all non-trading events
+							return;
+						}
+
+						// Find the subscription for this topic
+						const subscriptionItem =
+							this.channelToSubscription.get(topic);
+						if (!subscriptionItem) {
+							console.log(
+								"❌ [DemoDatafeed] No subscription found for topic:",
+								topic,
+							);
+							return;
+						}
+
+						// Process real Bybit trade data
+						this.processRealBybitData(topic, feedMessage);
+					} catch (error) {
+						console.error(
+							"❌ [DemoDatafeed] Error parsing Bybit message:",
+							error,
+						);
+					}
+				},
+
+				// Process real Bybit trade data (mirroring streaming.js processing)
+				processRealBybitData(topic, feedMessage) {
+					const subscriptionItem =
+						this.channelToSubscription.get(topic);
+					if (!subscriptionItem) {
+						return;
+					}
+
+					const { data } = feedMessage;
+					if (!data || data.length === 0) return;
+
+					// Process each trade in the data array (matching streaming.js format exactly)
+					data.forEach((each) => {
+						const {
+							T: timestamp,
+							s,
+							S: side,
+							p: price,
+							i,
+							v: size,
+						} = each;
+						const tradeMessage = {
+							type: "trade",
+							productId: `BYBIT:FUTURE:${s}`,
+							symbol: s,
+							exchange: "BYBIT",
+							segment: "FUTURE",
+							timeStamp: new Date(timestamp),
+							tradeID: i,
+							price: Number(price),
+							quantity: Number(size),
+							amount: Number(price) * Number(size),
+							side: side.toUpperCase(),
+						};
+
+						// Call all handlers for this channel (matching streaming.js exactly)
+						subscriptionItem.handlers.forEach((handler) => {
+							try {
+								handler.callback(tradeMessage);
+							} catch (error) {
+								console.error(
+									`❌ [DemoDatafeed] Error in handler ${handler.id}:`,
+									error,
+								);
+							}
+						});
+					});
+				},
+
+				// Send subscription (real Bybit or demo, mirroring streaming.js subscription logic)
+				sendDemoSubscription(subRequest, subscriptionItem) {
+					const isRealBybit =
+						subscriptionItem.symbolInfo.exchange === "BYBIT";
+
+					if (
+						this.demoSocket &&
+						this.demoSocket.readyState === WebSocket.OPEN
+					) {
+						// Send real subscription request
+						this.demoSocket.send(JSON.stringify(subRequest));
+
+						// For non-Bybit symbols, start demo streaming
+						// For Bybit symbols, real data will come through WebSocket messages
+						if (!isRealBybit) {
+							this.startChannelStreaming(subscriptionItem);
+						}
+					} else if (
+						this.demoSocket &&
+						this.demoSocket.readyState === WebSocket.CONNECTING
+					) {
+						// Socket is connecting, wait for it to open
+						if (
+							isRealBybit &&
+							this.demoSocket instanceof WebSocket
+						) {
+							this.demoSocket.addEventListener(
+								"open",
+								() => {
+									console.log(
+										"🔌 [DemoDatafeed] Bybit socket opened, sending subscription",
+									);
+									this.demoSocket.send(
+										JSON.stringify(subRequest),
+									);
+								},
+								{ once: true },
+							);
+						} else {
+							// For demo sockets, simulate connection
+							setTimeout(() => {
+								console.log(
+									"🔌 [DemoDatafeed] Demo socket connected, sending subscription",
+								);
+								this.demoSocket.readyState = WebSocket.OPEN;
+								this.demoSocket.send(
+									JSON.stringify(subRequest),
+								);
+								this.startChannelStreaming(subscriptionItem);
+							}, 100);
+						}
+					} else {
+						// Socket is closed or failed, need to reconnect
+						console.error(
+							"❌ [DemoDatafeed] Socket not connected. ReadyState:",
+							this.demoSocket?.readyState,
+						);
+
+						if (isRealBybit) {
+							this.initializeDemoSocket(
+								subscriptionItem.symbolInfo,
+							);
+
+							// Wait for the new socket to connect
+							if (this.demoSocket instanceof WebSocket) {
+								this.demoSocket.addEventListener(
+									"open",
+									() => {
+										console.log(
+											"🔌 [DemoDatafeed] Bybit socket reconnected, sending subscription",
+										);
+										this.demoSocket.send(
+											JSON.stringify(subRequest),
+										);
+									},
+									{ once: true },
+								);
+							}
+						} else {
+							// For demo sockets, simulate connection
+							setTimeout(() => {
+								this.demoSocket.readyState = WebSocket.OPEN;
+								this.demoSocket.send(
+									JSON.stringify(subRequest),
+								);
+								this.startChannelStreaming(subscriptionItem);
+							}, 100);
+						}
+					}
+				},
+
+				// Send demo unsubscription (mirroring streaming.js unsubscription logic)
+				sendDemoUnsubscription(unsubRequest, channelString) {
+					if (this.demoSocket && this.demoSocket.readyState === 1) {
+						this.demoSocket.send(JSON.stringify(unsubRequest));
+					}
+				},
+
+				// Start streaming for a specific channel (mirroring streaming.js message handling)
+				startChannelStreaming(subscriptionItem) {
+					const { channelString, symbolInfo, handlers } =
+						subscriptionItem;
+
+					if (!this.streamingIntervals) {
+						this.streamingIntervals = {};
+					}
+
+					// Clear any existing interval for this channel
+					if (this.streamingIntervals[channelString]) {
+						clearInterval(this.streamingIntervals[channelString]);
+					}
+
+					// Simulate real-time trade data similar to streaming.js message processing
+					let lastPrice = 50000 + Math.random() * 10000;
+
+					this.streamingIntervals[channelString] = setInterval(() => {
+						// Simulate realistic price movement
+						const change = (Math.random() - 0.5) * 100;
+						lastPrice = Math.max(1000, lastPrice + change);
+
+						// Create trade data similar to streaming.js format
+						const tradeData = {
+							topic: channelString,
+							type: "snapshot",
+							data: [
+								{
+									T: Date.now(),
+									s:
+										subscriptionItem.symbolInfo?.symbol ||
+										"DEMO",
+									S: Math.random() > 0.5 ? "Buy" : "Sell",
+									p: Math.round(lastPrice * 100) / 100,
+									i: Math.random().toString(36).substr(2, 9),
+									v: (Math.random() * 10 + 0.1).toFixed(3),
+								},
+							],
+						};
+
+						// Process the trade data for all handlers (mirroring streaming.js message handling)
+						this.processDemoTradeData(channelString, tradeData);
+					}, 2000);
+				},
+
+				// Process demo trade data (mirroring streaming.js message processing)
+				processDemoTradeData(channelString, feedMessage) {
+					const subscriptionItem =
+						this.channelToSubscription.get(channelString);
+					if (!subscriptionItem) {
+						console.log(
+							"❌ [DemoDatafeed] No subscription found for channel:",
+							channelString,
+						);
+						return;
+					}
+
+					const { data } = feedMessage;
+					if (!data || data.length === 0) return;
+
+					// Process each trade in the data array (matching streaming.js format exactly)
+					data.forEach((each) => {
+						const {
+							T: timestamp,
+							S: side,
+							p: price,
+							v: size,
+						} = each;
+						const symbol =
+							subscriptionItem.symbolInfo?.symbol || "DEMO";
+
+						const tradeMessage = {
+							type: "trade",
+							productId: `DEMO:FUTURE:${symbol}`,
+							symbol: symbol,
+							exchange:
+								subscriptionItem.symbolInfo?.exchange || "DEMO",
+							segment: "FUTURE",
+							timeStamp: new Date(timestamp),
+							tradeID: Math.random().toString(36).substr(2, 9),
+							price: Number(price),
+							quantity: Number(size),
+							amount: Number(price) * Number(size),
+							side: side.toUpperCase(),
+						};
+
+						// Call all handlers for this channel (matching streaming.js exactly)
+						subscriptionItem.handlers.forEach((handler) => {
+							try {
+								handler.callback(tradeMessage);
+							} catch (error) {
+								console.error(
+									`❌ [DemoDatafeed] Error in handler ${handler.id}:`,
+									error,
+								);
+							}
+						});
+					});
+				},
+
+				startDemoStreaming(
+					symbolInfo,
+					resolution,
+					onRealtimeCallback,
+					subscriberUID,
+				) {
+					// Initialize streaming intervals map if not exists
+					if (!this.streamingIntervals) {
+						this.streamingIntervals = {};
+					}
+
+					// Clear any existing interval for this subscriber
+					if (this.streamingIntervals[subscriberUID]) {
+						clearInterval(this.streamingIntervals[subscriberUID]);
+					}
+
+					// For demo purposes, simulate price updates every 2 seconds
+					let lastPrice = 50000 + Math.random() * 10000; // Start with a random price around 50k-60k
+
+					this.streamingIntervals[subscriberUID] = setInterval(() => {
+						// Simulate realistic price movement
+						const change = (Math.random() - 0.5) * 100; // +/- $50 change
+						lastPrice = Math.max(1000, lastPrice + change); // Ensure price doesn't go below $1000
+
+						const now = Date.now();
+						const tick = {
+							time: Math.floor(now / 1000), // Unix timestamp in seconds
+							price: Math.round(lastPrice * 100) / 100, // Round to 2 decimal places
+							volume: Math.floor(Math.random() * 1000) + 100, // Random volume
+						};
+						onRealtimeCallback(tick);
+					}, 2000); // Update every 2 seconds
+				},
+
+				// Chart marks/events - shows important events on the chart
+				getMarks: async function (
+					symbolInfo,
+					startDate,
+					endDate,
+					onDataCallback,
+					resolution,
+				) {
+					console.log("[DemoDatafeed] getMarks called:", {
+						symbolInfo,
+						startDate,
+						endDate,
+						resolution,
+					});
+
+					// Use current time for more visible marks
+					const now = Math.floor(Date.now() / 1000);
+					const marks = [
+						{
+							id: 1,
+							time: now - 86400 * 7, // 1 week ago
+							color: "red",
+							text: [
+								"Earnings Report",
+								"Q3 2025 Results",
+								"Beat expectations by 15%",
+							],
+							label: "E",
+							labelFontColor: "white",
+							minSize: 25,
+						},
+						{
+							id: 2,
+							time: now - 86400 * 3, // 3 days ago
+							color: "green",
+							text: ["Product Launch", "New AI feature released"],
+							label: "P",
+							labelFontColor: "white",
+							minSize: 25,
+						},
+						{
+							id: 3,
+							time: now - 86400, // Yesterday
+							color: "blue",
+							text: ["Market News", "Analyst upgrade to BUY"],
+							label: "N",
+							labelFontColor: "white",
+							minSize: 25,
+						},
+					];
+
+					console.log(
+						"[DemoDatafeed] getMarks returning marks:",
+						marks,
+					);
+					onDataCallback(marks);
+				},
+
+				// Timescale marks - shows events on the time axis
+				getTimescaleMarks: async function (
+					symbolInfo,
+					startDate,
+					endDate,
+					onDataCallback,
+					resolution,
+				) {
+					console.log("[DemoDatafeed] getTimescaleMarks called:", {
+						symbolInfo,
+						startDate,
+						endDate,
+						resolution,
+					});
+
+					// Use current time for more visible marks
+					const now = Math.floor(Date.now() / 1000);
+					const marks = [
+						{
+							id: 1,
+							time: now - 86400 * 5, // 5 days ago
+							color: "red",
+							label: "T1",
+							minSize: 30,
+							tooltip: [
+								"Market Event",
+								"5 days ago",
+								"Important trading session",
+							],
+						},
+						{
+							id: 2,
+							time: now - 86400 * 2, // 2 days ago
+							color: "blue",
+							label: "T2",
+							minSize: 30,
+							tooltip: [
+								"Economic Data",
+								"2 days ago",
+								"GDP release",
+							],
+						},
+						{
+							id: 3,
+							time: now + 86400, // Tomorrow
+							color: "orange",
+							label: "T3",
+							minSize: 30,
+							tooltip: [
+								"Scheduled Event",
+								"Tomorrow",
+								"Fed meeting",
+							],
+						},
+					];
+
+					console.log(
+						"[DemoDatafeed] getTimescaleMarks returning marks:",
+						marks,
+					);
+					onDataCallback(marks);
+				},
+			};
+
+			// Chart Application
+			class ChartApp {
+				constructor() {
+					this.chartInstance = null;
+					this.currentDatafeed = null; // Will be created after SDK loads
+					this.currentSymbol = "BYBIT:FUTURE:BTCUSDT";
+					this.currentInterval = "1m";
+					this.currentTheme = "dark";
+					this.isUsingRealData = true; // Start with real data (BYBIT symbol)
+					this.init();
+				}
+
+				async init() {
+					try {
+						this.updateStatus("Waiting for SDK to load...");
+						await this.waitForSDK();
+						this.updateStatus("Initializing chart...");
+						await this.createChart();
+						this.setupEventListeners();
+						this.updateStatus("Chart ready!");
+					} catch (error) {
+						this.updateStatus("Failed to initialize chart");
+						console.error(error);
+					}
+				}
+
+				waitForSDK() {
+					return new Promise((resolve) => {
+						const checkSDK = () => {
+							if (
+								window.GoChartingSDK &&
+								window.GoChartingSDK.ProfessionalChart &&
+								window.GoChartingSDK.React
+							) {
+								resolve();
+							} else {
+								setTimeout(checkSDK, 100);
+							}
+						};
+						checkSDK();
+					});
+				}
+
+				async createChart() {
+					try {
+						// 🚀 NEW: Use the simplified API!
+						this.currentChart = window.GoChartingSDK.createChart(
+							"#chart-container",
+							{
+								symbol: this.currentSymbol,
+								interval: this.currentInterval,
+								datafeed: demoDatafeed,
+								debugLog: true,
+								licenseKey:
+									"demo-550e8400-e29b-41d4-a716-446655440000",
+								exclude: {
+									indicators: [
+										"ACC",
+										"CHAIKINMFI",
+										"CHAIKINVOLATILITY",
+										"COPPOCK",
+										"EOM",
+										"FORCEINDEX",
+										"KLINGER",
+										"KST",
+										"MFI",
+										"ONBALANCEVOLUME",
+										"ROC",
+										"SMA",
+										"TWIGGSMONEYFLOW",
+										"VOLUMEUNDERLAY",
+										"VWAP",
+										"VWMA",
+										"WMFI",
+										"OI",
+										"SANBAND",
+										"TRADEVOLUMEINDEX",
+										"VOLUMEOSCILLATOR",
+										"VOLUMEROC",
+									],
+								},
+								theme: this.currentTheme,
+								onReady: (chartInstance) => {
+									this.chartInstance = chartInstance;
+									console.log(
+										"✅ Chart created with simplified API:",
+										chartInstance,
+									);
+									this.updateStatus(
+										"Chart loaded with simplified API!",
+									);
+
+									// Debug: Check if chart has proper dimensions
+									setTimeout(() => {
+										const container =
+											document.getElementById(
+												"chart-container",
+											);
+										const chartElement =
+											container.querySelector(
+												".gocharting-autofit-container",
+											);
+										if (chartElement) {
+											const chartRect =
+												chartElement.getBoundingClientRect();
+											console.log(
+												"📊 Chart element dimensions:",
+												{
+													width: chartRect.width,
+													height: chartRect.height,
+												},
+											);
+										}
+									}, 1000);
+								},
+								onError: (error) => {
+									console.error(
+										"Chart creation error:",
+										error,
+									);
+									console.error(
+										"🔍 [CodePen] Error type:",
+										typeof error,
+									);
+									console.error(
+										"🔍 [CodePen] Error details:",
+										error,
+									);
+									this.updateStatus(
+										`❌ Error creating chart: ${error.message}`,
+									);
+								},
+							},
+						);
+					} catch (error) {
+						console.error("❌ Error creating chart:", error);
+						this.updateStatus(
+							`❌ Error creating chart: ${error.message}`,
+						);
+						throw error; // Re-throw so recreateChart can handle it
+					}
+				}
+
+				setupEventListeners() {
+					// 1. AutoFit Testing
+					document
+						.getElementById("autofit-test-btn")
+						.addEventListener("click", () => {
+							this.runAutofitTests();
+						});
+
+					// 2. Add Indicator
+					document
+						.getElementById("add-indicator-btn")
+						.addEventListener("click", () => {
+							this.addIndicatorDemo();
+						});
+
+					// 3. Add Drawing
+					document
+						.getElementById("add-drawing-btn")
+						.addEventListener("click", () => {
+							this.addDrawingDemo();
+						});
+
+					// 4. Delete Object
+					document
+						.getElementById("delete-object-btn")
+						.addEventListener("click", () => {
+							this.deleteObjectDemo();
+						});
+
+					// 5. Destroy Chart
+					document
+						.getElementById("destroy-chart-btn")
+						.addEventListener("click", () => {
+							this.destroyChart();
+						});
+
+					// 6. Change Defaults
+					document
+						.getElementById("change-defaults-btn")
+						.addEventListener("click", () => {
+							this.showSettingsPanel();
+						});
+
+					// Settings Panel Event Listeners
+					document
+						.getElementById("apply-settings-btn")
+						.addEventListener("click", () => {
+							this.applySettings();
+						});
+
+					document
+						.getElementById("cancel-settings-btn")
+						.addEventListener("click", () => {
+							this.hideSettingsPanel();
+						});
+				}
+
+				// 1. AutoFit Testing (similar to test-autofit-builtin.html)
+				runAutofitTests() {
+					if (!this.chartInstance) {
+						this.updateStatus(
+							"❌ No chart instance available for AutoFit testing",
+						);
+						return;
+					}
+
+					this.updateStatus("🔄 Starting AutoFit tests...");
+
+					const container =
+						document.getElementById("chart-container");
+					const originalWidth = container.style.width || "100%";
+					const originalHeight = container.style.height || "500px";
+
+					// Test 1: Resize container to smaller size
+					setTimeout(() => {
+						container.style.width = "600px";
+						container.style.height = "400px";
+						this.updateStatus(
+							"📐 AutoFit Test 1: Resized container to 600x400",
+						);
+					}, 1000);
+
+					// Test 2: Resize container to larger size
+					setTimeout(() => {
+						container.style.width = "1000px";
+						container.style.height = "600px";
+						this.updateStatus(
+							"📐 AutoFit Test 2: Resized container to 1000x600",
+						);
+						console.log(
+							"📐 AutoFit Test 2 - New size:",
+							container.getBoundingClientRect(),
+						);
+					}, 3000);
+
+					// Test 3: Restore original size
+					setTimeout(() => {
+						container.style.width = originalWidth;
+						container.style.height = originalHeight;
+						this.updateStatus(
+							"✅ AutoFit Test 3: Restored original size - AutoFit tests complete!",
+						);
+						console.log(
+							"📐 AutoFit Test 3 - Restored size:",
+							container.getBoundingClientRect(),
+						);
+					}, 5000);
+				}
+
+				// 3. Destroy Chart
+				destroyChart() {
+					try {
+						this.updateStatus("Destroying chart...");
+
+						// Clean up streaming connections
+						if (
+							this.currentDatafeed &&
+							typeof this.currentDatafeed.destroy === "function"
+						) {
+							this.currentDatafeed.destroy();
+						}
+
+						// Get the container
+						const container =
+							document.getElementById("chart-container");
+						if (container) {
+							// Properly unmount React component if ReactDOM is available
+							if (
+								window.GoChartingSDK &&
+								window.GoChartingSDK.ReactDOM
+							) {
+								try {
+									window.GoChartingSDK.ReactDOM.unmountComponentAtNode(
+										container,
+									);
+									console.log(
+										"✅ React component unmounted successfully",
+									);
+								} catch (error) {
+									console.warn(
+										"⚠️ Error unmounting React component:",
+										error,
+									);
+								}
+							}
+
+							// Clear the container completely
+							container.innerHTML = "";
+
+							// Add destroyed message
+							container.innerHTML = `
+								<div class="loading" style="color: #888;">
+									🗑️ Chart destroyed successfully
+									<br><br>
+									<small>Use "Change Defaults" to recreate the chart</small>
+								</div>
+							`;
+						}
+
+						// Reset chart instance and datafeed
+						this.chartInstance = null;
+						this.currentDatafeed = null;
+
+						this.updateStatus("✅ Chart destroyed successfully");
+						console.log("🗑️ Chart destruction complete");
+					} catch (error) {
+						console.error("❌ Error destroying chart:", error);
+						this.updateStatus(
+							`❌ Error destroying chart: ${error.message}`,
+						);
+					}
+				}
+
+				// 4. Show Settings Panel
+				showSettingsPanel() {
+					const panel = document.getElementById("settings-panel");
+					panel.style.display = "block";
+
+					// Update selectors with current values
+					document.getElementById("symbol-selector").value =
+						this.currentSymbol;
+					document.getElementById("interval-selector").value =
+						this.currentInterval;
+					document.getElementById("theme-selector").value =
+						this.currentTheme;
+
+					this.updateStatus(
+						"⚙️ Settings panel opened - Configure chart defaults",
+					);
+				}
+
+				// Hide Settings Panel
+				hideSettingsPanel() {
+					const panel = document.getElementById("settings-panel");
+					panel.style.display = "none";
+					this.updateStatus("⚙️ Settings panel closed");
+				}
+
+				// Apply Settings and Recreate Chart
+				applySettings() {
+					// Get new values from selectors
+					const newSymbol =
+						document.getElementById("symbol-selector").value;
+					const newInterval =
+						document.getElementById("interval-selector").value;
+					const newTheme =
+						document.getElementById("theme-selector").value;
+
+					// Check if anything actually changed
+					const hasChanges =
+						newSymbol !== this.currentSymbol ||
+						newInterval !== this.currentInterval ||
+						newTheme !== this.currentTheme;
+
+					if (!hasChanges) {
+						this.updateStatus(
+							"⚙️ No changes detected - keeping current settings",
+						);
+						this.hideSettingsPanel();
+						return;
+					}
+
+					// Update current values
+					this.currentSymbol = newSymbol;
+					this.currentInterval = newInterval;
+					this.currentTheme = newTheme;
+					// Update data source tracking
+					this.isUsingRealData = newSymbol.includes("BYBIT");
+
+					// Hide settings panel
+					this.hideSettingsPanel();
+
+					// Update status and recreate chart
+					this.updateStatus(
+						`⚙️ Applying new settings: ${newSymbol}, ${newInterval}, ${newTheme}...`,
+					);
+					this.recreateChart();
+				}
+
+				async recreateChart() {
+					try {
+						// Clean up existing chart and its subscriptions
+						if (
+							this.currentChart &&
+							typeof this.currentChart.destroy === "function"
+						) {
+							console.log(
+								"🔄 [Demo] Calling ProfessionalChart.destroy()",
+							);
+							this.currentChart.destroy();
+						}
+
+						// Clear the container and recreate the chart with new settings
+						const container =
+							document.getElementById("chart-container");
+						if (container) {
+							// Properly unmount any existing React component
+							if (
+								window.GoChartingSDK &&
+								window.GoChartingSDK.ReactDOM
+							) {
+								try {
+									window.GoChartingSDK.ReactDOM.unmountComponentAtNode(
+										container,
+									);
+								} catch (error) {
+									console.warn(
+										"⚠️ Error unmounting existing component:",
+										error,
+									);
+								}
+							}
+
+							// Clear and set loading message
+							container.innerHTML =
+								'<div class="loading">Loading chart...</div>';
+
+							// Force a small delay to ensure proper cleanup
+							await new Promise((resolve) =>
+								setTimeout(resolve, 100),
+							);
+
+							// Always use the same datafeed object (it handles both real and demo data)
+							this.currentDatafeed = demoDatafeed;
+							await this.createChart();
+
+							// After chart creation, try to reset chart layout for proper axis positioning
+							if (this.chartInstance) {
+								setTimeout(() => {
+									try {
+										// Try to access chart context and reset if available
+										console.log(
+											"🔄 [Demo] Attempting chart layout reset for symbol:",
+											this.currentSymbol,
+										);
+
+										// Force a chart refresh by triggering a resize event
+										window.dispatchEvent(
+											new Event("resize"),
+										);
+									} catch (error) {
+										console.warn(
+											"⚠️ Could not reset chart layout:",
+											error,
+										);
+									}
+								}, 500);
+							}
+						}
+					} catch (error) {
+						console.error("❌ Error recreating chart:", error);
+						this.updateStatus(
+							`❌ Error loading chart: ${error.message}`,
+						);
+
+						// Show error in container
+						const container =
+							document.getElementById("chart-container");
+						if (container) {
+							container.innerHTML = `
 								<div class="loading" style="color: #ff6b6b;">
 									❌ Error loading chart: ${error.message}
 									<br><br>
@@ -1632,24 +2120,64 @@
 									</button>
 								</div>
 							`;
-                    }
-                }
-            }
+						}
+					}
+				}
 
-            updateStatus (message) {
-                document.getElementById("status").textContent = message;
-            }
-        }
+				updateStatus(message) {
+					document.getElementById("status").textContent = message;
+				}
+			}
 
-        // CRITICAL FIX: Override the passive event listener detection
-        // The SDK has backwards logic for passive events
-        window.passiveeventlisteners = false;
+			// Create a global mock socket before initializing the chart
+			window.createMockSocket = function () {
+				return {
+					_eventListeners: {},
+					on: function (event, callback) {
+						if (!this._eventListeners[event]) {
+							this._eventListeners[event] = [];
+						}
+						this._eventListeners[event].push(callback);
+						return this;
+					},
+					emit: function (event, data) {
+						if (this._eventListeners[event]) {
+							this._eventListeners[event].forEach((callback) =>
+								callback(data),
+							);
+						}
+						return this;
+					},
+					off: function (event, callback) {
+						if (this._eventListeners[event]) {
+							const index =
+								this._eventListeners[event].indexOf(callback);
+							if (index > -1) {
+								this._eventListeners[event].splice(index, 1);
+							}
+						}
+						return this;
+					},
+					readyState: 1,
+					send: function (data) {
+						console.log(`[GlobalMockSocket] Data sent:`, data);
+						return this;
+					},
+					close: function () {
+						console.log(`[GlobalMockSocket] Connection closed`);
+						return this;
+					},
+				};
+			};
 
-        // Initialize when DOM is ready
-        document.addEventListener("DOMContentLoaded", () => {
-            window.chartApp = new ChartApp();
-        });
-    </script>
-</body>
+			// CRITICAL FIX: Override the passive event listener detection
+			// The SDK has backwards logic for passive events
+			window.passiveeventlisteners = false;
 
+			// Initialize when DOM is ready
+			document.addEventListener("DOMContentLoaded", () => {
+				window.chartApp = new ChartApp();
+			});
+		</script>
+	</body>
 </html>
