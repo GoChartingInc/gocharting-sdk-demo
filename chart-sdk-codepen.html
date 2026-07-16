@@ -12,171 +12,21 @@
 				box-sizing: border-box;
 			}
 
+			html,
+			body {
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+			}
+
 			body {
 				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				color: white;
-				min-height: 100vh;
-				padding: 20px;
-			}
-
-			.container {
-				max-width: 1200px;
-				margin: 0 auto;
-			}
-
-			.header {
-				text-align: center;
-				margin-bottom: 30px;
-			}
-
-			.header h1 {
-				font-size: 2.5rem;
-				margin-bottom: 10px;
-				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-			}
-
-			.controls {
-				display: flex;
-				gap: 15px;
-				justify-content: center;
-				margin-bottom: 20px;
-				flex-wrap: wrap;
-				background: rgba(255, 255, 255, 0.1);
-				padding: 20px;
-				border-radius: 12px;
-				backdrop-filter: blur(10px);
-			}
-
-			.controls select,
-			.controls button {
-				padding: 10px 15px;
-				border: none;
-				border-radius: 8px;
-				background: rgba(255, 255, 255, 0.2);
-				color: white;
-				font-size: 14px;
-				cursor: pointer;
-				transition: all 0.3s ease;
-			}
-
-			.controls select:hover,
-			.controls button:hover {
-				background: rgba(255, 255, 255, 0.3);
-				transform: translateY(-2px);
-			}
-
-			/* Button Styles */
-			.btn {
-				border: none;
-				padding: 12px 24px;
-				border-radius: 8px;
-				cursor: pointer;
-				font-size: 14px;
-				font-weight: 600;
-				transition: all 0.3s ease;
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-				color: white;
-			}
-
-			.btn:hover {
-				transform: translateY(-2px);
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-			}
-
-			.btn.primary {
-				background: #4a90e2;
-			}
-
-			.btn.primary:hover {
-				background: #357abd;
-			}
-
-			.btn.secondary {
-				background: #6c757d;
-			}
-
-			.btn.secondary:hover {
-				background: #545b62;
-			}
-
-			.btn.danger {
-				background: #dc3545;
-			}
-
-			.btn.danger:hover {
-				background: #c82333;
-			}
-
-			.btn.info {
-				background: #17a2b8;
-			}
-
-			.btn.info:hover {
-				background: #138496;
-			}
-
-			.btn.success {
-				background: #28a745;
-			}
-
-			.btn.success:hover {
-				background: #218838;
-			}
-
-			/* Settings Panel Styles */
-			.settings-panel {
-				background: rgba(255, 255, 255, 0.1);
-				padding: 20px;
-				border-radius: 12px;
-				backdrop-filter: blur(10px);
-				margin-bottom: 20px;
-				border: 1px solid rgba(255, 255, 255, 0.2);
-			}
-
-			.settings-panel h3 {
-				margin-bottom: 20px;
-				text-align: center;
-				color: white;
-			}
-
-			.settings-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-				gap: 20px;
-				align-items: start;
-			}
-
-			.setting-group {
-				display: flex;
-				flex-direction: column;
-				gap: 8px;
-			}
-
-			.setting-group label {
-				color: white;
-				font-weight: 600;
-				font-size: 14px;
-			}
-
-			.setting-actions {
-				grid-column: 1 / -1;
-				display: flex;
-				gap: 15px;
-				justify-content: center;
-				margin-top: 20px;
 			}
 
 			#chart-container {
-				width: 800px;
-				/* Fixed width for proper DrawingsMenu positioning */
-				height: 500px;
-				border-radius: 12px;
-				overflow: hidden;
-				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+				width: 100vw;
+				height: 100vh;
 				background: #1a1a1a;
-				/* AutoFit will handle the internal sizing automatically */
 			}
 
 			.loading {
@@ -185,123 +35,18 @@
 				justify-content: center;
 				height: 100%;
 				font-size: 18px;
-			}
-
-			.status {
-				margin-top: 20px;
-				padding: 15px;
-				background: rgba(255, 255, 255, 0.1);
-				border-radius: 8px;
-				text-align: center;
-			}
-
-			@media (max-width: 768px) {
-				.controls {
-					flex-direction: column;
-					align-items: center;
-				}
-
-				#chart-container {
-					height: 400px;
-				}
+				color: white;
 			}
 		</style>
 	</head>
 
 	<body>
-		<div class="container">
-			<div class="header">
-				<h1>📈 GoCharting SDK Demo</h1>
-				<p>Professional Financial Charts with Built-in AutoFit ✨</p>
-			</div>
-
-			<div class="controls">
-				<button id="autofit-test-btn" class="btn secondary">
-					📐 AutoFit Testing
-				</button>
-				<button id="add-indicator-btn" class="btn success">
-					📊 Add RSI Indicator
-				</button>
-				<button id="add-drawing-btn" class="btn success">
-					✏️ Add Trendline
-				</button>
-				<button id="delete-object-btn" class="btn danger">
-					🗑️ Delete Last Object
-				</button>
-				<button id="destroy-chart-btn" class="btn danger">
-					💥 Destroy Chart
-				</button>
-				<button id="change-defaults-btn" class="btn info">
-					⚙️ Change Defaults
-				</button>
-			</div>
-
-			<!-- Settings Panel (initially hidden) -->
-			<div
-				id="settings-panel"
-				class="settings-panel"
-				style="display: none"
-			>
-				<h3>📊 Chart Settings</h3>
-				<div class="settings-grid">
-					<div class="setting-group">
-						<label for="symbol-selector">Symbol:</label>
-						<select id="symbol-selector">
-							<option value="BYBIT:FUTURE:BTCUSDT" selected>
-								Bitcoin Future (BTCUSDT)
-							</option>
-							<option value="BYBIT:FUTURE:ETHUSDT">
-								Ethereum Future (ETHUSDT)
-							</option>
-							<option value="BYBIT:FUTURE:10000COQUSDT">
-								10000COQUSDT
-							</option>
-							<option value="BYBIT:FUTURE:OGNUSDT">
-								OGN/USDT
-							</option>
-						</select>
-					</div>
-
-					<div class="setting-group">
-						<label for="interval-selector">Interval:</label>
-						<select id="interval-selector">
-							<option value="1m">1 Minute</option>
-							<option value="5m">5 Minutes</option>
-							<option value="15m">15 Minutes</option>
-							<option value="1h">1 Hour</option>
-							<option value="1D" selected>1 Day</option>
-						</select>
-					</div>
-
-					<div class="setting-group">
-						<label for="theme-selector">Theme:</label>
-						<select id="theme-selector">
-							<option value="dark" selected>Dark Theme</option>
-							<option value="light">Light Theme</option>
-						</select>
-					</div>
-
-					<div class="setting-actions">
-						<button id="apply-settings-btn" class="btn success">
-							✅ Apply & Recreate Chart
-						</button>
-						<button id="cancel-settings-btn" class="btn secondary">
-							❌ Cancel
-						</button>
-					</div>
-				</div>
-			</div>
-
-			<div id="chart-container">
-				<div class="loading">Loading chart...</div>
-			</div>
-
-			<div id="status" class="status">Ready to load chart...</div>
+		<div id="chart-container">
+			<div class="loading">Loading chart...</div>
 		</div>
 
-		<!-- GoCharting SDK - Local Build with AutoFit -->
-		<!--<script src="https://gocharting.com/sdk/library/demo-550e8400-e29b-41d4-a716-446655440000/index.umd.js"></script>-->
-		<script src="../dist/index.umd.js"></script>
+		<!-- GoCharting SDK - hosted UMD build -->
+		<script src="https://gocharting.com/sdk/library/demo-550e8400-e29b-41d4-a716-446655440000/index.umd.js"></script>
 
 		<script>
 			// Simple datafeed object that implements datafeed interface
@@ -1653,25 +1398,26 @@
 			class ChartApp {
 				constructor() {
 					this.chartInstance = null;
-					this.currentDatafeed = null; // Will be created after SDK loads
+					this.currentChart = null;
 					this.currentSymbol = "BYBIT:FUTURE:BTCUSDT";
 					this.currentInterval = "1m";
 					this.currentTheme = "dark";
-					this.isUsingRealData = true; // Start with real data (BYBIT symbol)
+					this.lastPrice = 0;
+					// Mock broker state
+					this.currentAccountList = null;
+					this.currentOrderBook = [];
+					this.currentTradeBook = [];
+					this.currentPositions = [];
+					this.closedPositions = [];
 					this.init();
 				}
 
 				async init() {
 					try {
-						this.updateStatus("Waiting for SDK to load...");
 						await this.waitForSDK();
-						this.updateStatus("Initializing chart...");
 						await this.createChart();
-						this.setupEventListeners();
-						this.updateStatus("Chart ready!");
 					} catch (error) {
-						this.updateStatus("Failed to initialize chart");
-						console.error(error);
+						console.error("Failed to initialize chart", error);
 					}
 				}
 
@@ -1693,439 +1439,1450 @@
 				}
 
 				async createChart() {
-					try {
-						// 🚀 NEW: Use the simplified API!
-						this.currentChart = window.GoChartingSDK.createChart(
-							"#chart-container",
-							{
-								symbol: this.currentSymbol,
-								interval: this.currentInterval,
-								datafeed: demoDatafeed,
-								debugLog: true,
-								licenseKey:
-									"demo-550e8400-e29b-41d4-a716-446655440000",
-								exclude: {
-									indicators: [
-										"ACC",
-										"CHAIKINMFI",
-										"CHAIKINVOLATILITY",
-										"COPPOCK",
-										"EOM",
-										"FORCEINDEX",
-										"KLINGER",
-										"KST",
-										"MFI",
-										"ONBALANCEVOLUME",
-										"ROC",
-										"SMA",
-										"TWIGGSMONEYFLOW",
-										"VOLUMEUNDERLAY",
-										"VWAP",
-										"VWMA",
-										"WMFI",
-										"OI",
-										"SANBAND",
-										"TRADEVOLUMEINDEX",
-										"VOLUMEOSCILLATOR",
-										"VOLUMEROC",
-									],
-								},
-								theme: this.currentTheme,
-								onReady: (chartInstance) => {
-									this.chartInstance = chartInstance;
-									console.log(
-										"✅ Chart created with simplified API:",
-										chartInstance,
-									);
-									this.updateStatus(
-										"Chart loaded with simplified API!",
-									);
-
-									// Debug: Check if chart has proper dimensions
-									setTimeout(() => {
-										const container =
-											document.getElementById(
-												"chart-container",
-											);
-										const chartElement =
-											container.querySelector(
-												".gocharting-autofit-container",
-											);
-										if (chartElement) {
-											const chartRect =
-												chartElement.getBoundingClientRect();
-											console.log(
-												"📊 Chart element dimensions:",
-												{
-													width: chartRect.width,
-													height: chartRect.height,
-												},
-											);
-										}
-									}, 1000);
-								},
-								onError: (error) => {
-									console.error(
-										"Chart creation error:",
-										error,
-									);
-									console.error(
-										"🔍 [CodePen] Error type:",
-										typeof error,
-									);
-									console.error(
-										"🔍 [CodePen] Error details:",
-										error,
-									);
-									this.updateStatus(
-										`❌ Error creating chart: ${error.message}`,
-									);
-								},
+					this.currentChart = window.GoChartingSDK.createChart(
+						"#chart-container",
+						{
+							symbol: this.currentSymbol,
+							interval: this.currentInterval,
+							datafeed: demoDatafeed,
+							debugLog: true,
+							licenseKey:
+								"demo-550e8400-e29b-41d4-a716-446655440000",
+							theme: this.currentTheme,
+							// Turn on the SDK's built-in trading UI
+							enableTrading: true,
+							trading: {
+								showReverseButton: true,
+								supportStopOrders: true,
+								supportStopLimitOrders: false,
 							},
-						);
-					} catch (error) {
-						console.error("❌ Error creating chart:", error);
-						this.updateStatus(
-							`❌ Error creating chart: ${error.message}`,
-						);
-						throw error; // Re-throw so recreateChart can handle it
+							exclude: {
+								indicators: [
+									"ACC",
+									"CHAIKINMFI",
+									"CHAIKINVOLATILITY",
+									"COPPOCK",
+									"EOM",
+									"FORCEINDEX",
+									"KLINGER",
+									"KST",
+									"MFI",
+									"ONBALANCEVOLUME",
+									"ROC",
+									"SMA",
+									"TWIGGSMONEYFLOW",
+									"VOLUMEUNDERLAY",
+									"VWAP",
+									"VWMA",
+									"WMFI",
+									"OI",
+									"SANBAND",
+									"TRADEVOLUMEINDEX",
+									"VOLUMEOSCILLATOR",
+									"VOLUMEROC",
+								],
+							},
+							// Native trading events (right-click Buy/Sell, drag
+							// SL/TP, cancel-order X, close-position X) arrive here
+							appCallback: ({ eventType, message }) => {
+								this.handleTradingEvent(eventType, message);
+							},
+							onReady: (chartInstance) => {
+								this.chartInstance = chartInstance;
+								this.setupDemoBrokerData(chartInstance);
+								this.startLTPPolling();
+							},
+							onError: (error) => {
+								console.error("Chart creation error:", error);
+							},
+						},
+					);
+				}
+
+				// Poll the active symbol's last price so closePosition can show an
+				// exit P&L. ponytail: single-symbol poll; entry price comes from the
+				// SDK event's ltp, so this only feeds manual position closes.
+				startLTPPolling() {
+					const poll = async () => {
+						try {
+							const sym = (this.currentSymbol || "").split(":").pop();
+							const res = await fetch(
+								`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${sym}`,
+							);
+							const data = await res.json();
+							const p = parseFloat(data.result?.list?.[0]?.lastPrice);
+							if (p) this.lastPrice = p;
+						} catch (e) {
+							/* ignore transient ticker errors */
+						}
+					};
+					poll();
+					setInterval(poll, 3000);
+				}
+
+				getCurrentLTP() {
+					return this.lastPrice || 0;
+				}
+
+				// No status bar in this pen — mirror to console
+				updateStatus(message) {
+					const el = document.getElementById("status");
+					if (el) el.textContent = message;
+					else console.log("[status]", message);
+				}
+
+				closePosition(positionId) {
+					const index = this.currentPositions?.findIndex(
+						(p) => p.id === positionId,
+					);
+					if (index === undefined || index < 0) {
+						console.warn("Position not found:", positionId);
+						return;
+					}
+					const position = this.currentPositions[index];
+					const exitPrice = this.getCurrentLTP() || position.price || 0;
+					const avgPrice = position.price || 0;
+					const size = Math.abs(position.size || 0);
+					const isBuy = position.side === "buy" || position.size > 0;
+					const pnl = isBuy
+						? (exitPrice - avgPrice) * size
+						: (avgPrice - exitPrice) * size;
+					this.closedPositions.push({
+						...position,
+						exitPrice,
+						pnl,
+						closedAt: new Date(),
+					});
+					this.currentPositions.splice(index, 1);
+					this.updateChartBrokerData();
+					this.updateStatus(
+						`Position ${positionId} closed, P&L: ${
+							pnl >= 0 ? "+" : ""
+						}${pnl.toFixed(2)}`,
+					);
+				}
+
+				cancelOrder(orderId) {
+					const index = this.currentOrderBook?.findIndex(
+						(o) => o.orderId === orderId || o.id === orderId,
+					);
+					if (index !== undefined && index >= 0) {
+						this.currentOrderBook.splice(index, 1);
+						this.updateChartBrokerData();
+						this.updateStatus(`Order ${orderId} cancelled`);
+					} else {
+						console.warn("Order not found:", orderId);
 					}
 				}
 
-				setupEventListeners() {
-					// 1. AutoFit Testing
-					document
-						.getElementById("autofit-test-btn")
-						.addEventListener("click", () => {
-							this.runAutofitTests();
-						});
+				handleTradingEvent(eventType, message) {
+					// ALWAYS LOG ALL TRADING EVENTS
+					console.log("===== TRADING EVENT RECEIVED =====");
+					console.log("Event Type:", eventType);
+					console.log(
+						"Event Message:",
+						JSON.stringify(message, null, 2),
+					);
+					console.log("Timestamp:", new Date().toISOString());
+					console.log("=====================================");
 
-					// 2. Add Indicator
-					document
-						.getElementById("add-indicator-btn")
-						.addEventListener("click", () => {
-							this.addIndicatorDemo();
-						});
+					switch (eventType) {
+						case "CREATE_ORDER":
+							console.log(
+								"� Order creation requested from chart:",
+								message,
+							);
+							this.updateStatus(
+								`📝 Order creation: ${message.side} ${
+									message.quantity || "N/A"
+								} @ ${message.price || "Market"}`,
+							);
+							break;
+						case "PLACE_ORDER":
+							console.log("Order placed from chart:", message);
+							// Check if this is an exit position request (X button on position)
+							const order = message.order || message;
+							if (order.exitPosition) {
+								console.log(
+									"🔴 Exit position requested from chart X button",
+								);
+								// Extract position ID from the order - it's in order.id for exit positions
+								const positionId =
+									order.id ||
+									order.positionId ||
+									order.position?.id;
+								if (positionId) {
+									this.closePosition(positionId);
+								} else {
+									console.warn(
+										"Could not find position ID for exit:",
+										message,
+									);
+								}
+							} else {
+								console.log("Calling addOrderToOrderBook...");
+								this.addOrderToOrderBook(message);
+								this.updateStatus(
+									`✅ Order placed: ${message.side} ${
+										message.quantity || "N/A"
+									} @ ${message.price || "Market"}`,
+								);
+							}
+							break;
 
-					// 3. Add Drawing
-					document
-						.getElementById("add-drawing-btn")
-						.addEventListener("click", () => {
-							this.addDrawingDemo();
-						});
+						case "CANCEL_ORDER":
+							console.log(
+								"❌ Order cancelled from chart:",
+								JSON.stringify(message, null, 2),
+							);
+							// Extract orderId from various possible message structures
+							const orderId =
+								message.orderId ||
+								message.order?.orderId ||
+								message.id ||
+								message.order?.id;
+							console.log(
+								"📝 Extracted orderId for cancellation:",
+								orderId,
+							);
 
-					// 4. Delete Object
-					document
-						.getElementById("delete-object-btn")
-						.addEventListener("click", () => {
-							this.deleteObjectDemo();
-						});
-
-					// 5. Destroy Chart
-					document
-						.getElementById("destroy-chart-btn")
-						.addEventListener("click", () => {
-							this.destroyChart();
-						});
-
-					// 6. Change Defaults
-					document
-						.getElementById("change-defaults-btn")
-						.addEventListener("click", () => {
-							this.showSettingsPanel();
-						});
-
-					// Settings Panel Event Listeners
-					document
-						.getElementById("apply-settings-btn")
-						.addEventListener("click", () => {
-							this.applySettings();
-						});
-
-					document
-						.getElementById("cancel-settings-btn")
-						.addEventListener("click", () => {
-							this.hideSettingsPanel();
-						});
+							if (orderId) {
+								this.removeOrderFromOrderBook(orderId);
+								this.updateStatus(
+									`🗑️ Order cancelled: ${orderId}`,
+								);
+							} else {
+								console.error(
+									"❌ No orderId found in cancel order message:",
+									message,
+								);
+								this.updateStatus(
+									"❌ Failed to cancel order: No order ID found",
+								);
+							}
+							break;
+						case "MODIFY_ORDER":
+							console.log(
+								"✏️ Order modified from chart:",
+								message,
+							);
+							this.modifyOrderInOrderBook(message);
+							this.updateStatus(
+								`✏️ Order modified: ${message.orderId}`,
+							);
+							break;
+						case "MODIFY_ORDER_DIRECT":
+							console.log(
+								"✏️ Direct order modification from trading widget:",
+								message,
+							);
+							console.log(
+								"Processing MODIFY_ORDER_DIRECT event...",
+							);
+							// Note: MODIFY_ORDER_DIRECT functionality removed
+							console.warn(
+								"MODIFY_ORDER_DIRECT is no longer supported",
+							);
+							break;
+						case "OPEN_TRADING_WIDGET":
+							console.log("🎛️ Trading widget opened from chart");
+							this.updateStatus(`🎛️ Trading widget opened`);
+							break;
+						case "MODIFY_POSITION":
+							console.log(
+								"✏️ Position modified from chart:",
+								message,
+							);
+							this.modifyPositionInPositions(message);
+							this.updateStatus(
+								`✏️ Position modified: ${
+									message.position?.id || message.id
+								}`,
+							);
+							break;
+						case "CLOSE_POSITION":
+							console.log(
+								"🔴 Position close requested from chart:",
+								message,
+							);
+							// Extract position ID from message
+							const positionId =
+								message.position?.id ||
+								message.id ||
+								message.positionId;
+							if (positionId) {
+								this.closePosition(positionId);
+							} else {
+								console.warn(
+									"Could not extract position ID from close event:",
+									message,
+								);
+							}
+							break;
+						default:
+							console.log(
+								`🔔 Chart event: ${eventType}`,
+								message,
+							);
+							break;
+					}
 				}
 
-				// 1. AutoFit Testing (similar to test-autofit-builtin.html)
-				runAutofitTests() {
+				// Add order to order book and update chart
+				addOrderToOrderBook(orderData) {
+					console.log("🔍 ===== ADD ORDER TO ORDER BOOK DEBUG =====");
+					console.log(
+						"📝 Raw order data received:",
+						JSON.stringify(orderData, null, 2),
+					);
+					console.log("📝 Current symbol:", this.currentSymbol);
+					console.log(
+						"📝 Chart instance available:",
+						!!this.chartInstance,
+					);
+
 					if (!this.chartInstance) {
+						console.warn("Chart instance not available");
+						return;
+					}
+
+					// Extract order details from the nested structure
+					// The PLACE_ORDER event has structure: { order: {...}, security: {...}, ltp: ... }
+					const order = orderData.order || orderData;
+					const security = orderData.security || {};
+					const ltp = orderData.ltp || 0;
+
+					console.log(
+						"📝 Extracted order:",
+						JSON.stringify(order, null, 2),
+					);
+					console.log(
+						"📝 Extracted security:",
+						JSON.stringify(security, null, 2),
+					);
+					console.log("📝 Extracted LTP:", ltp);
+
+					// Generate unique order ID if not provided
+					const orderId =
+						order.orderId ||
+						orderData.orderId ||
+						`ORDER_${Date.now()}_${Math.random()
+							.toString(36)
+							.substr(2, 9)}`;
+
+					console.log("📝 Generated order ID:", orderId);
+
+					// Create order in the exact format from the demo data structure
+					const newOrder = {
+						orderId: orderId,
+						datetime: new Date(),
+						timeStamp: new Date().getTime(),
+						lastTradeTimestamp: null,
+						status: "open", // open, filled, cancelled
+						price: order.price || orderData.price || 0,
+						size:
+							order.size ||
+							order.quantity ||
+							orderData.quantity ||
+							orderData.size ||
+							0,
+						productId:
+							order.productId ||
+							security.full_name ||
+							orderData.symbol ||
+							this.currentSymbol,
+						remainingSize:
+							order.size ||
+							order.quantity ||
+							orderData.quantity ||
+							orderData.size ||
+							0,
+						orderType:
+							order.orderType ||
+							orderData.orderType ||
+							orderData.type ||
+							"limit", // limit, market, stop, stopLimit
+						side: order.side || orderData.side || "buy", // buy, sell
+						cost: null,
+						trades: [],
+						fee: {
+							currency: "USDT",
+							cost: 0.0,
+							rate: 0.0,
+						},
+						info: {},
+						fillPrice: null,
+						avgFillPrice: null,
+						filledSize: 0,
+						modifiedAt: null,
+						exchange: security.exchange || "BYBIT",
+						symbol: (
+							security.symbol ||
+							order.symbol ||
+							orderData.symbol ||
+							this.currentSymbol
+						).replace("BYBIT:FUTURE:", ""),
+						takeProfit:
+							order.takeProfit || orderData.takeProfit || null,
+						stopLoss: order.stopLoss || orderData.stopLoss || null,
+						isGC: true,
+						paperTraderKey: null,
+						key: `demo-${
+							order.productId ||
+							security.full_name ||
+							orderData.symbol ||
+							this.currentSymbol
+						}-${orderId}`,
+						validity: "DAY",
+						commissions: 0,
+						broker: "demo",
+						stopPrice:
+							order.stopPrice || orderData.stopPrice || null,
+						productType: "FUTURE",
+						rejReason: null,
+						security: {
+							symbol: (
+								orderData.symbol || this.currentSymbol
+							).replace("BYBIT:FUTURE:", ""),
+							exchange: "BYBIT",
+							segment: "FUTURE",
+							quote_currency: "USDT",
+							tick_size: security.tick_size || 0.01,
+							lot_size: security.lot_size || 0.001,
+							quote_currency: security.quote_currency || "USDT",
+						},
+						userTag: null,
+						showStopLossButton: true,
+						showTakeProfitButton: true,
+						pnlMultiplier: order.pnlMultiplier || 1,
+					};
+
+					console.log(
+						"📝 Created new order object:",
+						JSON.stringify(newOrder, null, 2),
+					);
+
+					// Add to current order book
+					if (!this.currentOrderBook) {
+						console.log("📝 Initializing empty order book");
+						this.currentOrderBook = [];
+					}
+
+					console.log(
+						"📝 Order book before adding:",
+						this.currentOrderBook.length,
+						"orders",
+					);
+					this.currentOrderBook.push(newOrder);
+					console.log(
+						"📝 Order book after adding:",
+						this.currentOrderBook.length,
+						"orders",
+					);
+
+					// Check if this is a market order - if so, create position and trade
+					const isMarketOrder =
+						(
+							order.orderType ||
+							orderData.orderType ||
+							""
+						).toLowerCase() === "market";
+					console.log(
+						"📝 Order type:",
+						order.orderType || orderData.orderType,
+					);
+					console.log("📝 Is market order:", isMarketOrder);
+
+					if (isMarketOrder) {
+						console.log(
+							"🚀 Market order detected - creating position and trade...",
+						);
+						this.createPositionAndTrade(
+							newOrder,
+							order,
+							security,
+							ltp,
+						);
+
+						// Check if market order has take profit and/or stop loss
+						// If so, place additional orders automatically
+						this.handleMarketOrderWithTPSL(
+							newOrder,
+							order,
+							security,
+							ltp,
+						);
+					} else {
+						console.log(
+							"📋 Limit order detected - only adding to orderbook (no position/trade)",
+						);
+					}
+
+					console.log(
+						"📝 Current order book contents:",
+						JSON.stringify(this.currentOrderBook, null, 2),
+					);
+
+					console.log("📝 Calling updateChartBrokerData...");
+					// Update chart with new broker data
+					this.updateChartBrokerData();
+
+					console.log("✅ Order added to order book successfully");
+					console.log("🔍 ===== END ADD ORDER DEBUG =====");
+				}
+
+				// Create position and trade for market orders
+				createPositionAndTrade(newOrder, order, security, ltp) {
+					console.log(
+						"🔍 ===== CREATE POSITION AND TRADE DEBUG =====",
+					);
+					console.log(
+						"📝 Creating position and trade for market order:",
+						newOrder.orderId,
+					);
+
+					// Initialize arrays if they don't exist
+					if (!this.currentPositions) {
+						console.log("📝 Initializing empty positions array");
+						this.currentPositions = [];
+					}
+					if (!this.currentTradeBook) {
+						console.log("📝 Initializing empty trade book array");
+						this.currentTradeBook = [];
+					}
+
+					// Create trade entry using LTP price
+					const tradeId = `TRADE_${Date.now()}_${Math.random()
+						.toString(36)
+						.substr(2, 9)}`;
+					const executionPrice = ltp; // Always use LTP for execution
+					console.log(
+						"📝 Using LTP for trade execution:",
+						executionPrice,
+					);
+
+					const newTrade = {
+						tradeId: tradeId,
+						orderId: newOrder.orderId,
+						datetime: new Date(),
+						timeStamp: new Date().getTime(),
+						price: executionPrice,
+						tradeSize: newOrder.size,
+						productId: newOrder.productId,
+						side: newOrder.side,
+						status: "filled",
+						cost: executionPrice * newOrder.size,
+						fee: {
+							currency: "USDT",
+							cost: executionPrice * newOrder.size * 0.001, // 0.1% fee
+							rate: 0.001,
+						},
+						exchange: newOrder.exchange,
+						symbol: newOrder.symbol,
+						broker: "demo",
+						productType: "FUTURE",
+						security: {
+							symbol: newOrder.symbol,
+							exchange: newOrder.exchange,
+							segment: "FUTURE",
+							tick_size: security.tick_size || 0.01,
+							lot_size: security.contract_size || 1,
+						},
+						key: `demo-${newOrder.productId}-${tradeId}`,
+					};
+
+					console.log(
+						"📝 Created trade:",
+						JSON.stringify(newTrade, null, 2),
+					);
+					this.currentTradeBook.push(newTrade);
+
+					// Create or update position
+					const existingPositionIndex =
+						this.currentPositions.findIndex(
+							(pos) =>
+								pos.productId === newOrder.productId &&
+								pos.symbol === newOrder.symbol,
+						);
+
+					if (existingPositionIndex !== -1) {
+						// Update existing position
+						const existingPosition =
+							this.currentPositions[existingPositionIndex];
+						const oldSize = existingPosition.size;
+						const oldPrice = existingPosition.price;
+
+						if (newOrder.side === existingPosition.side) {
+							// Same side - add to position using LTP
+							const totalSize = oldSize + newOrder.size;
+							const avgPrice =
+								(oldPrice * oldSize +
+									executionPrice * newOrder.size) /
+								totalSize;
+							existingPosition.size = totalSize;
+							existingPosition.price = avgPrice;
+						} else {
+							// Opposite side - reduce position
+							existingPosition.size = oldSize - newOrder.size;
+							if (existingPosition.size <= 0) {
+								// Position closed
+								this.currentPositions.splice(
+									existingPositionIndex,
+									1,
+								);
+								console.log("📝 Position closed and removed");
+							}
+						}
+						console.log(
+							"📝 Updated existing position:",
+							JSON.stringify(existingPosition, null, 2),
+						);
+					} else {
+						// Create new position using LTP
+						const positionId = `POS_${Date.now()}_${Math.random()
+							.toString(36)
+							.substr(2, 9)}`;
+						const newPosition = {
+							id: positionId,
+							productId: newOrder.productId,
+							symbol: newOrder.symbol,
+							size:
+								newOrder.side === "sell"
+									? -newOrder.size
+									: newOrder.size,
+							price: executionPrice, // Use LTP for position price
+							side: newOrder.side,
+							pnl: 0,
+							unPnl: 0,
+							rPnl: 0,
+							exchange: newOrder.exchange,
+							broker: "demo",
+							productType: "FUTURE",
+							underlying: newOrder.symbol,
+							security: {
+								symbol: newOrder.symbol,
+								exchange: newOrder.exchange,
+								segment: "FUTURE",
+								tick_size: security.tick_size || 0.01,
+								lot_size: security.contract_size || 1,
+								quote_currency:
+									security.quote_currency || "USDT",
+							},
+							key: `demo-${newOrder.productId}-${positionId}`,
+							showStopLossButton: true,
+							showTakeProfitButton: true,
+							takeProfit: newOrder.takeProfit || null,
+							stopLoss: newOrder.stopLoss || null,
+							pnlMultiplier: newOrder.pnlMultiplier || 1,
+						};
+
+						console.log(
+							"📝 Created new position:",
+							JSON.stringify(newPosition, null, 2),
+						);
+						this.currentPositions.push(newPosition);
+					}
+
+					// Update order status to filled for market orders using LTP
+					newOrder.status = "filled";
+					newOrder.filledSize = newOrder.size;
+					newOrder.remainingSize = 0;
+					newOrder.fillPrice = executionPrice; // Use LTP for fill price
+					newOrder.avgFillPrice = executionPrice; // Use LTP for average fill price
+
+					console.log("📝 Updated order status to filled");
+					console.log(
+						"📝 Total positions:",
+						this.currentPositions.length,
+					);
+					console.log(
+						"📝 Total trades:",
+						this.currentTradeBook.length,
+					);
+					console.log(
+						"🔍 ===== END CREATE POSITION AND TRADE DEBUG =====",
+					);
+				}
+
+				// Handle market orders with take profit and/or stop loss
+				// Automatically place additional limit/stop orders
+				handleMarketOrderWithTPSL(newOrder, order, security, ltp) {
+					console.log(
+						"🔍 ===== HANDLE MARKET ORDER WITH TP/SL =====",
+					);
+					console.log("📝 Checking for take profit and stop loss...");
+					console.log("📝 Take Profit:", order.takeProfit);
+					console.log("📝 Stop Loss:", order.stopLoss);
+
+					const hasTP =
+						order.takeProfit && parseFloat(order.takeProfit) > 0;
+					const hasSL =
+						order.stopLoss && parseFloat(order.stopLoss) > 0;
+
+					if (!hasTP && !hasSL) {
+						console.log("📝 No take profit or stop loss specified");
+						return;
+					}
+
+					// Place Take Profit order (Limit Order)
+					if (hasTP) {
+						console.log("🎯 Placing Take Profit limit order...");
+						this.placeTPSLOrder(
+							newOrder,
+							order,
+							security,
+							ltp,
+							"takeProfit",
+						);
 						this.updateStatus(
-							"❌ No chart instance available for AutoFit testing",
+							`🎯 Take Profit order placed @ $${order.takeProfit}`,
+						);
+					}
+
+					// Place Stop Loss order (Stop Order)
+					if (hasSL) {
+						console.log("🛑 Placing Stop Loss order...");
+						this.placeTPSLOrder(
+							newOrder,
+							order,
+							security,
+							ltp,
+							"stopLoss",
+						);
+						this.updateStatus(
+							`🛑 Stop Loss order placed @ $${order.stopLoss}`,
+						);
+					}
+
+					console.log(
+						"🔍 ===== END HANDLE MARKET ORDER WITH TP/SL =====",
+					);
+				}
+
+				// Place individual TP or SL order
+				placeTPSLOrder(originalOrder, order, security, ltp, type) {
+					console.log(
+						`🔍 ===== PLACE ${type.toUpperCase()} ORDER =====`,
+					);
+
+					const isTP = type === "takeProfit";
+					const price = parseFloat(
+						isTP ? order.takeProfit : order.stopLoss,
+					);
+					const orderType = isTP ? "limit" : "stop";
+
+					// Determine the opposite side for TP/SL orders
+					const oppositeSide =
+						originalOrder.side === "buy" ? "sell" : "buy";
+
+					console.log(`📝 ${type} price:`, price);
+					console.log(`📝 Order type:`, orderType);
+					console.log(`📝 Original side:`, originalOrder.side);
+					console.log(`📝 TP/SL side:`, oppositeSide);
+
+					// Generate unique order ID
+					const tpslOrderId = `${type.toUpperCase()}_${Date.now()}_${Math.random()
+						.toString(36)
+						.substr(2, 9)}`;
+
+					// Create the TP/SL order object
+					const tpslOrder = {
+						orderId: tpslOrderId,
+						datetime: new Date(),
+						timeStamp: new Date().getTime(),
+						lastTradeTimestamp: null,
+						status: "open",
+						price: isTP ? price : 0, // Limit orders have price, stop orders use stopPrice
+						stopPrice: isTP ? null : price, // Stop orders use stopPrice
+						size: originalOrder.size, // Same quantity as original order
+						productId: originalOrder.productId,
+						remainingSize: originalOrder.size,
+						orderType: orderType,
+						side: oppositeSide,
+						cost: null,
+						trades: [],
+						fee: {
+							currency: "USDT",
+							cost: 0.0,
+							rate: 0.0,
+						},
+						info: {},
+						fillPrice: null,
+						avgFillPrice: null,
+						filledSize: 0,
+						modifiedAt: null,
+						exchange: originalOrder.exchange,
+						symbol: originalOrder.symbol,
+						takeProfit: null,
+						stopLoss: null,
+						isGC: true,
+						paperTraderKey: null,
+						key: `demo-${originalOrder.productId}-${tpslOrderId}`,
+						validity: "DAY",
+						commissions: 0,
+						broker: "demo",
+						productType: "FUTURE",
+						rejReason: null,
+						security: originalOrder.security,
+						userTag: `${type}_for_${originalOrder.orderId}`,
+						parentOrderId: originalOrder.orderId, // Link to original order
+					};
+
+					console.log(
+						`📝 Created ${type} order:`,
+						JSON.stringify(tpslOrder, null, 2),
+					);
+
+					// Add to order book
+					if (!this.currentOrderBook) {
+						this.currentOrderBook = [];
+					}
+
+					this.currentOrderBook.push(tpslOrder);
+					console.log(`✅ ${type} order added to order book`);
+
+					console.log(
+						`🔍 ===== END PLACE ${type.toUpperCase()} ORDER =====`,
+					);
+				}
+
+				// Remove order from order book
+				removeOrderFromOrderBook(orderId) {
+					console.log(
+						"🔍 ===== REMOVE ORDER FROM ORDER BOOK DEBUG =====",
+					);
+					console.log("📝 Attempting to remove orderId:", orderId);
+					console.log(
+						"📝 Current orderbook length:",
+						this.currentOrderBook?.length || 0,
+					);
+
+					if (!this.chartInstance || !this.currentOrderBook) {
+						console.warn(
+							"Chart instance or order book not available",
 						);
 						return;
 					}
 
-					this.updateStatus("🔄 Starting AutoFit tests...");
+					// Log all current order IDs for debugging
+					console.log(
+						"📝 Current order IDs in orderbook:",
+						this.currentOrderBook.map((order) => order.orderId),
+					);
 
-					const container =
-						document.getElementById("chart-container");
-					const originalWidth = container.style.width || "100%";
-					const originalHeight = container.style.height || "500px";
-
-					// Test 1: Resize container to smaller size
-					setTimeout(() => {
-						container.style.width = "600px";
-						container.style.height = "400px";
-						this.updateStatus(
-							"📐 AutoFit Test 1: Resized container to 600x400",
-						);
-					}, 1000);
-
-					// Test 2: Resize container to larger size
-					setTimeout(() => {
-						container.style.width = "1000px";
-						container.style.height = "600px";
-						this.updateStatus(
-							"📐 AutoFit Test 2: Resized container to 1000x600",
+					// Find and remove the order
+					const orderIndex = this.currentOrderBook.findIndex(
+						(order) => order.orderId === orderId,
+					);
+					if (orderIndex !== -1) {
+						const removedOrder = this.currentOrderBook.splice(
+							orderIndex,
+							1,
+						)[0];
+						console.log(
+							"✅ Order removed from order book:",
+							JSON.stringify(removedOrder, null, 2),
 						);
 						console.log(
-							"📐 AutoFit Test 2 - New size:",
-							container.getBoundingClientRect(),
+							"📝 New orderbook length:",
+							this.currentOrderBook.length,
 						);
-					}, 3000);
 
-					// Test 3: Restore original size
-					setTimeout(() => {
-						container.style.width = originalWidth;
-						container.style.height = originalHeight;
-						this.updateStatus(
-							"✅ AutoFit Test 3: Restored original size - AutoFit tests complete!",
-						);
+						// Update chart with new broker data
 						console.log(
-							"📐 AutoFit Test 3 - Restored size:",
-							container.getBoundingClientRect(),
+							"📝 Calling updateChartBrokerData after order removal...",
 						);
-					}, 5000);
+						this.updateChartBrokerData();
+						console.log(
+							"✅ Order removal and chart update completed",
+						);
+					} else {
+						console.warn(
+							"❌ Order not found in order book:",
+							orderId,
+						);
+						console.warn(
+							"❌ Available order IDs:",
+							this.currentOrderBook.map((order) => order.orderId),
+						);
+					}
+					console.log("🔍 ===== END REMOVE ORDER DEBUG =====");
 				}
 
-				// 3. Destroy Chart
-				destroyChart() {
-					try {
-						this.updateStatus("Destroying chart...");
+				// Modify order in order book
+				modifyOrderInOrderBook(orderData) {
+					console.log("🔍 ===== MODIFY ORDER DEBUG =====");
+					console.log(
+						"📝 Modify order data received:",
+						JSON.stringify(orderData, null, 2),
+					);
 
-						// Clean up streaming connections
-						if (
-							this.currentDatafeed &&
-							typeof this.currentDatafeed.destroy === "function"
-						) {
-							this.currentDatafeed.destroy();
-						}
+					if (!this.chartInstance || !this.currentOrderBook) {
+						console.warn(
+							"Chart instance or order book not available",
+						);
+						return;
+					}
 
-						// Get the container
-						const container =
-							document.getElementById("chart-container");
-						if (container) {
-							// Properly unmount React component if ReactDOM is available
-							if (
-								window.GoChartingSDK &&
-								window.GoChartingSDK.ReactDOM
-							) {
-								try {
-									window.GoChartingSDK.ReactDOM.unmountComponentAtNode(
-										container,
+					// Extract order details from nested structure if needed
+					const order = orderData.order || orderData;
+					const orderId = order.orderId || orderData.orderId;
+
+					console.log("📝 Extracted order ID:", orderId);
+					console.log("📝 Update type:", order.update);
+
+					// Find and update the order
+					const orderIndex = this.currentOrderBook.findIndex(
+						(existingOrder) => existingOrder.orderId === orderId,
+					);
+
+					if (orderIndex !== -1) {
+						const existingOrder = this.currentOrderBook[orderIndex];
+						console.log(
+							"📝 Found existing order:",
+							JSON.stringify(existingOrder, null, 2),
+						);
+
+						// Handle specific update types
+						if (order.update) {
+							switch (order.update) {
+								case "DELETE_SL":
+									console.log("🗑️ Deleting stop loss");
+									existingOrder.stopLoss = null;
+									break;
+								case "DELETE_TP":
+									console.log("🗑️ Deleting take profit");
+									existingOrder.takeProfit = null;
+									break;
+								case "SHAPE_MODIFY":
+									console.log(
+										"🔧 Shape modification detected",
 									);
 									console.log(
-										"✅ React component unmounted successfully",
+										"📝 Update type:",
+										order.updateType,
 									);
-								} catch (error) {
-									console.warn(
-										"⚠️ Error unmounting React component:",
-										error,
+
+									if (
+										order.updateType === "TAKE_PROFIT" ||
+										order.updateType === "NEW_TAKE_PROFIT"
+									) {
+										console.log(
+											"📈 Updating/Adding take profit:",
+											order.takeProfit,
+										);
+										existingOrder.takeProfit =
+											order.takeProfit;
+									} else if (
+										order.updateType === "STOP_LOSS" ||
+										order.updateType === "NEW_STOP_LOSS"
+									) {
+										console.log(
+											"📉 Updating/Adding stop loss:",
+											order.stopLoss,
+										);
+										existingOrder.stopLoss = order.stopLoss;
+									} else if (
+										order.updateType ===
+										"DELETE_TAKE_PROFIT"
+									) {
+										console.log(
+											"🗑️ Deleting take profit from order",
+										);
+										existingOrder.takeProfit = null;
+									} else if (
+										order.updateType === "DELETE_STOP_LOSS"
+									) {
+										console.log(
+											"🗑️ Deleting stop loss from order",
+										);
+										existingOrder.stopLoss = null;
+									} else if (
+										order.updateType === "LIMIT_PRICE"
+									) {
+										console.log(
+											"💰 Updating limit price:",
+											order.price,
+										);
+										existingOrder.price = order.price;
+									} else {
+										console.log(
+											"📝 Other shape modification:",
+											order.updateType,
+										);
+										// Handle other shape modifications if needed
+										if (order.price !== undefined)
+											existingOrder.price = order.price;
+										if (
+											order.quantity !== undefined ||
+											order.size !== undefined
+										) {
+											const newSize =
+												order.quantity || order.size;
+											existingOrder.size = newSize;
+											existingOrder.remainingSize =
+												newSize;
+										}
+									}
+									break;
+								default:
+									console.log(
+										"📝 Standard order modification",
 									);
-								}
+									// Handle standard modifications
+									if (order.price !== undefined)
+										existingOrder.price = order.price;
+									if (
+										order.quantity !== undefined ||
+										order.size !== undefined
+									) {
+										const newSize =
+											order.quantity || order.size;
+										existingOrder.size = newSize;
+										existingOrder.remainingSize = newSize;
+									}
+									if (order.orderType !== undefined)
+										existingOrder.orderType =
+											order.orderType;
+									if (order.takeProfit !== undefined)
+										existingOrder.takeProfit =
+											order.takeProfit;
+									if (order.stopLoss !== undefined)
+										existingOrder.stopLoss = order.stopLoss;
+									break;
 							}
-
-							// Clear the container completely
-							container.innerHTML = "";
-
-							// Add destroyed message
-							container.innerHTML = `
-								<div class="loading" style="color: #888;">
-									🗑️ Chart destroyed successfully
-									<br><br>
-									<small>Use "Change Defaults" to recreate the chart</small>
-								</div>
-							`;
+						} else {
+							// Handle standard modifications when no update type specified
+							console.log(
+								"📝 Standard order modification (no update type)",
+							);
+							if (order.price !== undefined)
+								existingOrder.price = order.price;
+							if (
+								order.quantity !== undefined ||
+								order.size !== undefined
+							) {
+								const newSize = order.quantity || order.size;
+								existingOrder.size = newSize;
+								existingOrder.remainingSize = newSize;
+							}
+							if (order.orderType !== undefined)
+								existingOrder.orderType = order.orderType;
+							if (order.takeProfit !== undefined)
+								existingOrder.takeProfit = order.takeProfit;
+							if (order.stopLoss !== undefined)
+								existingOrder.stopLoss = order.stopLoss;
 						}
 
-						// Reset chart instance and datafeed
-						this.chartInstance = null;
-						this.currentDatafeed = null;
+						existingOrder.modifiedAt = new Date().getTime();
 
-						this.updateStatus("✅ Chart destroyed successfully");
-						console.log("🗑️ Chart destruction complete");
-					} catch (error) {
-						console.error("❌ Error destroying chart:", error);
-						this.updateStatus(
-							`❌ Error destroying chart: ${error.message}`,
+						console.log(
+							"✅ Order modified in order book:",
+							JSON.stringify(existingOrder, null, 2),
+						);
+
+						// Update chart with new broker data
+						this.updateChartBrokerData();
+					} else {
+						console.warn(
+							"Order not found for modification:",
+							orderId,
 						);
 					}
+					console.log("🔍 ===== END MODIFY ORDER DEBUG =====");
 				}
 
-				// 4. Show Settings Panel
-				showSettingsPanel() {
-					const panel = document.getElementById("settings-panel");
-					panel.style.display = "block";
-
-					// Update selectors with current values
-					document.getElementById("symbol-selector").value =
-						this.currentSymbol;
-					document.getElementById("interval-selector").value =
-						this.currentInterval;
-					document.getElementById("theme-selector").value =
-						this.currentTheme;
-
-					this.updateStatus(
-						"⚙️ Settings panel opened - Configure chart defaults",
+				// Modify position in positions array (for TP/SL line drag events)
+				modifyPositionInPositions(positionData) {
+					console.log("🔍 ===== MODIFY POSITION DEBUG =====");
+					console.log(
+						"📝 Modify position data received:",
+						JSON.stringify(positionData, null, 2),
 					);
-				}
 
-				// Hide Settings Panel
-				hideSettingsPanel() {
-					const panel = document.getElementById("settings-panel");
-					panel.style.display = "none";
-					this.updateStatus("⚙️ Settings panel closed");
-				}
-
-				// Apply Settings and Recreate Chart
-				applySettings() {
-					// Get new values from selectors
-					const newSymbol =
-						document.getElementById("symbol-selector").value;
-					const newInterval =
-						document.getElementById("interval-selector").value;
-					const newTheme =
-						document.getElementById("theme-selector").value;
-
-					// Check if anything actually changed
-					const hasChanges =
-						newSymbol !== this.currentSymbol ||
-						newInterval !== this.currentInterval ||
-						newTheme !== this.currentTheme;
-
-					if (!hasChanges) {
-						this.updateStatus(
-							"⚙️ No changes detected - keeping current settings",
+					if (!this.chartInstance || !this.currentPositions) {
+						console.warn(
+							"Chart instance or positions not available",
 						);
-						this.hideSettingsPanel();
 						return;
 					}
 
-					// Update current values
-					this.currentSymbol = newSymbol;
-					this.currentInterval = newInterval;
-					this.currentTheme = newTheme;
-					// Update data source tracking
-					this.isUsingRealData = newSymbol.includes("BYBIT");
+					// Extract position details from nested structure if needed
+					const position = positionData.position || positionData;
+					const positionId = position.id || positionData.id;
 
-					// Hide settings panel
-					this.hideSettingsPanel();
+					console.log("📝 Extracted position ID:", positionId);
+					console.log("📝 Update type:", position.update);
+					console.log("📝 Update subtype:", position.updateType);
 
-					// Update status and recreate chart
-					this.updateStatus(
-						`⚙️ Applying new settings: ${newSymbol}, ${newInterval}, ${newTheme}...`,
+					// Find and update the position
+					const positionIndex = this.currentPositions.findIndex(
+						(existingPosition) =>
+							existingPosition.id === positionId,
 					);
-					this.recreateChart();
-				}
 
-				async recreateChart() {
-					try {
-						// Clean up existing chart and its subscriptions
-						if (
-							this.currentChart &&
-							typeof this.currentChart.destroy === "function"
-						) {
-							console.log(
-								"🔄 [Demo] Calling ProfessionalChart.destroy()",
-							);
-							this.currentChart.destroy();
-						}
-
-						// Clear the container and recreate the chart with new settings
-						const container =
-							document.getElementById("chart-container");
-						if (container) {
-							// Properly unmount any existing React component
-							if (
-								window.GoChartingSDK &&
-								window.GoChartingSDK.ReactDOM
-							) {
-								try {
-									window.GoChartingSDK.ReactDOM.unmountComponentAtNode(
-										container,
-									);
-								} catch (error) {
-									console.warn(
-										"⚠️ Error unmounting existing component:",
-										error,
-									);
-								}
-							}
-
-							// Clear and set loading message
-							container.innerHTML =
-								'<div class="loading">Loading chart...</div>';
-
-							// Force a small delay to ensure proper cleanup
-							await new Promise((resolve) =>
-								setTimeout(resolve, 100),
-							);
-
-							// Always use the same datafeed object (it handles both real and demo data)
-							this.currentDatafeed = demoDatafeed;
-							await this.createChart();
-
-							// After chart creation, try to reset chart layout for proper axis positioning
-							if (this.chartInstance) {
-								setTimeout(() => {
-									try {
-										// Try to access chart context and reset if available
-										console.log(
-											"🔄 [Demo] Attempting chart layout reset for symbol:",
-											this.currentSymbol,
-										);
-
-										// Force a chart refresh by triggering a resize event
-										window.dispatchEvent(
-											new Event("resize"),
-										);
-									} catch (error) {
-										console.warn(
-											"⚠️ Could not reset chart layout:",
-											error,
-										);
-									}
-								}, 500);
-							}
-						}
-					} catch (error) {
-						console.error("❌ Error recreating chart:", error);
-						this.updateStatus(
-							`❌ Error loading chart: ${error.message}`,
+					if (positionIndex !== -1) {
+						const existingPosition =
+							this.currentPositions[positionIndex];
+						console.log(
+							"📝 Found existing position:",
+							JSON.stringify(existingPosition, null, 2),
 						);
 
-						// Show error in container
-						const container =
-							document.getElementById("chart-container");
-						if (container) {
-							container.innerHTML = `
-								<div class="loading" style="color: #ff6b6b;">
-									❌ Error loading chart: ${error.message}
-									<br><br>
-									<button onclick="window.chartApp.recreateChart()" style="padding: 10px 20px; background: #4a90e2; color: white; border: none; border-radius: 5px; cursor: pointer;">
-										🔄 Retry
-									</button>
-								</div>
-							`;
+						// Handle specific update types
+						if (position.update === "SHAPE_MODIFY") {
+							switch (position.updateType) {
+								case "DELETE_STOP_LOSS":
+									console.log(
+										"🗑️ Deleting stop loss from position",
+									);
+									existingPosition.stopLoss = null;
+									break;
+								case "DELETE_TAKE_PROFIT":
+									console.log(
+										"🗑️ Deleting take profit from position",
+									);
+									existingPosition.takeProfit = null;
+									break;
+								case "STOP_LOSS":
+								case "NEW_STOP_LOSS":
+									console.log(
+										"📉 Updating position stop loss:",
+										position.stopLoss,
+									);
+									existingPosition.stopLoss =
+										position.stopLoss;
+									// Also update the associated order with the stop loss
+									this.updateOrderTPSL(
+										existingPosition.productId,
+										existingPosition.symbol,
+										{ stopLoss: position.stopLoss },
+									);
+									break;
+								case "TAKE_PROFIT":
+								case "NEW_TAKE_PROFIT":
+									console.log(
+										"📈 Updating position take profit:",
+										position.takeProfit,
+									);
+									existingPosition.takeProfit =
+										position.takeProfit;
+									// Also update the associated order with the take profit
+									this.updateOrderTPSL(
+										existingPosition.productId,
+										existingPosition.symbol,
+										{ takeProfit: position.takeProfit },
+									);
+									break;
+								default:
+									console.log(
+										"📝 Other position shape modification:",
+										position.updateType,
+									);
+									// Handle other modifications
+									if (position.takeProfit !== undefined) {
+										existingPosition.takeProfit =
+											position.takeProfit;
+									}
+									if (position.stopLoss !== undefined) {
+										existingPosition.stopLoss =
+											position.stopLoss;
+									}
+									break;
+							}
+						} else {
+							// Handle standard modifications when no update type specified
+							console.log(
+								"📝 Standard position modification (no update type)",
+							);
+							if (position.takeProfit !== undefined) {
+								existingPosition.takeProfit =
+									position.takeProfit;
+							}
+							if (position.stopLoss !== undefined) {
+								existingPosition.stopLoss = position.stopLoss;
+							}
 						}
+
+						console.log(
+							"✅ Position modified:",
+							JSON.stringify(existingPosition, null, 2),
+						);
+
+						// Update chart with new broker data
+						this.updateChartBrokerData();
+					} else {
+						console.warn(
+							"Position not found for modification:",
+							positionId,
+						);
 					}
+					console.log("🔍 ===== END MODIFY POSITION DEBUG =====");
 				}
 
-				updateStatus(message) {
-					document.getElementById("status").textContent = message;
+				// Update order TP/SL when position TP/SL is modified
+				updateOrderTPSL(productId, symbol, updates) {
+					console.log("🔍 ===== UPDATE ORDER TP/SL DEBUG =====");
+					console.log(
+						"📝 Looking for order with productId:",
+						productId,
+					);
+					console.log("📝 Symbol:", symbol);
+					console.log("📝 Updates to apply:", updates);
+
+					if (
+						!this.currentOrderBook ||
+						this.currentOrderBook.length === 0
+					) {
+						console.log("📝 No orders in order book to update");
+						return;
+					}
+
+					// Find the matching order(s) for this position
+					const matchingOrders = this.currentOrderBook.filter(
+						(order) =>
+							(order.productId === productId ||
+								order.symbol === symbol) &&
+							order.status === "open",
+					);
+
+					if (matchingOrders.length === 0) {
+						console.log(
+							"📝 No matching open orders found for this position",
+						);
+						return;
+					}
+
+					console.log(
+						`📝 Found ${matchingOrders.length} matching order(s)`,
+					);
+
+					matchingOrders.forEach((order) => {
+						if (updates.stopLoss !== undefined) {
+							console.log(
+								`📉 Adding stopLoss ${updates.stopLoss} to order ${order.orderId}`,
+							);
+							order.stopLoss = updates.stopLoss;
+						}
+						if (updates.takeProfit !== undefined) {
+							console.log(
+								`📈 Adding takeProfit ${updates.takeProfit} to order ${order.orderId}`,
+							);
+							order.takeProfit = updates.takeProfit;
+						}
+						order.modifiedAt = new Date().getTime();
+						console.log(
+							"✅ Order updated:",
+							JSON.stringify(order, null, 2),
+						);
+					});
+
+					console.log("🔍 ===== END UPDATE ORDER TP/SL DEBUG =====");
+				}
+
+				// Update chart with current broker data
+				updateChartBrokerData() {
+					if (!this.chartInstance) {
+						console.warn(
+							"Chart instance not available for broker data update",
+						);
+						return;
+					}
+
+					// Filter out hidden orders for chart display
+					const visibleOrders = (this.currentOrderBook || []).filter(
+						(order) => !order.hidden,
+					);
+
+					const demoBrokerData = {
+						accountList: this.currentAccountList || [
+							{
+								account_id: "DEMO_001",
+								AccountID: "DEMO_001",
+								AccountType: "Demo Trading",
+								label: "Demo Account (Trading)",
+								currency: "USDT",
+								balance: 100000,
+								equity: 100000,
+								margin: 0,
+								freeMargin: 100000,
+							},
+						],
+						orderBook: visibleOrders,
+						tradeBook: this.currentTradeBook || [],
+						positions: this.currentPositions || [],
+					};
+
+					// 🔍 DETAILED LOGGING FOR DEBUGGING
+					console.log("🔍 ===== BROKER DATA UPDATE DEBUG =====");
+					console.log("📊 Current Symbol:", this.currentSymbol);
+					console.log(
+						"📊 Chart Instance Available:",
+						!!this.chartInstance,
+					);
+					console.log(
+						"📊 setBrokerAccounts Method Available:",
+						typeof this.chartInstance.setBrokerAccounts,
+					);
+
+					console.log(
+						"📊 Account List:",
+						JSON.stringify(demoBrokerData.accountList, null, 2),
+					);
+					console.log(
+						"📊 Order Book Count:",
+						demoBrokerData.orderBook.length,
+					);
+					console.log(
+						"📊 Trade Book Count:",
+						demoBrokerData.tradeBook.length,
+					);
+					console.log(
+						"📊 Positions Count:",
+						demoBrokerData.positions.length,
+					);
+
+					// Log each order in detail
+					if (demoBrokerData.orderBook.length > 0) {
+						console.log("📋 ORDER BOOK DETAILS:");
+						demoBrokerData.orderBook.forEach((order, index) => {
+							console.log(`📋 Order ${index + 1}:`, {
+								orderId: order.orderId,
+								symbol: order.symbol,
+								productId: order.productId,
+								side: order.side,
+								orderType: order.orderType,
+								price: order.price,
+								size: order.size,
+								status: order.status,
+								exchange: order.exchange,
+								broker: order.broker,
+								key: order.key,
+								security: order.security,
+							});
+						});
+					} else {
+						console.log("📋 No orders in order book");
+					}
+
+					// Log each trade in detail
+					if (demoBrokerData.tradeBook.length > 0) {
+						console.log("📈 TRADE BOOK DETAILS:");
+						demoBrokerData.tradeBook.forEach((trade, index) => {
+							console.log(`📈 Trade ${index + 1}:`, {
+								tradeId: trade.tradeId,
+								orderId: trade.orderId,
+								symbol: trade.security?.symbol,
+								productId: trade.productId,
+								side: trade.side,
+								price: trade.price,
+								tradeSize: trade.tradeSize,
+								status: trade.status,
+								broker: trade.broker,
+							});
+						});
+					} else {
+						console.log("📈 No trades in trade book");
+					}
+
+					// Log each position in detail
+					if (demoBrokerData.positions.length > 0) {
+						console.log("💼 POSITIONS DETAILS:");
+						demoBrokerData.positions.forEach((position, index) => {
+							console.log(`💼 Position ${index + 1}:`, {
+								id: position.id,
+								symbol: position.symbol,
+								productId: position.productId,
+								size: position.size,
+								price: position.price,
+								pnl: position.pnl,
+								unPnl: position.unPnl,
+								rPnl: position.rPnl,
+								broker: position.broker,
+								underlying: position.underlying,
+								security: position.security,
+							});
+						});
+					} else {
+						console.log("💼 No positions");
+					}
+
+					// Log the complete broker data structure
+					console.log("📊 COMPLETE BROKER DATA STRUCTURE:");
+					console.log(JSON.stringify(demoBrokerData, null, 2));
+
+					try {
+						console.log(
+							"🔄 Calling chartInstance.setBrokerAccounts(demoBrokerData)...",
+						);
+						this.chartInstance.setBrokerAccounts(demoBrokerData);
+						console.log(
+							"✅ setBrokerAccounts call completed successfully",
+						);
+						console.log(
+							`📊 Summary: ${demoBrokerData.orderBook.length} orders, ${demoBrokerData.tradeBook.length} trades, ${demoBrokerData.positions.length} positions`,
+						);
+					} catch (error) {
+						console.error(
+							"❌ Failed to update chart broker data:",
+							error,
+						);
+						console.error("❌ Error details:", error.message);
+						console.error("❌ Error stack:", error.stack);
+					}
+
+					// Update account manager tables
+
+					console.log("🔍 ===== END BROKER DATA DEBUG =====");
+				}
+
+				// Setup Demo Broker Data for Trading
+				setupDemoBrokerData(chartInstance) {
+					console.log(
+						"🏦 Setting up demo broker data for trading...",
+					);
+
+					// Initialize broker data arrays for the instance
+					this.currentAccountList = [
+						{
+							account_id: "DEMO_001",
+							AccountID: "DEMO_001",
+							AccountType: "Demo Trading",
+							label: "Demo Account (Trading)",
+							currency: "USDT",
+							balance: 100000,
+							equity: 100000,
+							margin: 0,
+							freeMargin: 100000,
+						},
+					];
+
+					// Initialize with empty arrays - no demo data
+					console.log(
+						"📝 Initializing empty orderbook, positions, and tradebook",
+					);
+					this.currentOrderBook = [];
+					this.currentTradeBook = [];
+					this.currentPositions = [];
+
+					const demoBrokerData = {
+						accountList: this.currentAccountList,
+						orderBook: this.currentOrderBook,
+						tradeBook: this.currentTradeBook,
+						positions: this.currentPositions,
+					};
+
+					try {
+						chartInstance.setBrokerAccounts(demoBrokerData);
+						console.log("✅ Demo broker data set successfully");
+						console.log(
+							`📊 Loaded: ${this.currentOrderBook.length} orders, ${this.currentTradeBook.length} trades, ${this.currentPositions.length} positions`,
+						);
+						this.updateStatus("🏦 Demo trading data loaded");
+					} catch (error) {
+						console.error("❌ Failed to set broker data:", error);
+						this.updateStatus("❌ Failed to load trading data");
+					}
 				}
 			}
 
