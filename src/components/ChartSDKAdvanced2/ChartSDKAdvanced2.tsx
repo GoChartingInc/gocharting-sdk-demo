@@ -1050,6 +1050,40 @@ export const ChartSDKAdvanced2 = () => {
 		({ eventType, message, onClose: _onClose }) => {
 			console.log("📞 App Callback:", eventType, message);
 
+			// Emitted by the position line's X button (SDK forwards
+			// CLOSE_POSITION_WITH_CONFIRMATION as CLOSE_POSITION). Handled
+			// outside the switch because the npm-published SDK typings don't
+			// include this event in the eventType union yet.
+			if ((eventType as string) === "CLOSE_POSITION") {
+				console.log("🔴 Close position from chart X button:", message);
+				const closeMsg = message as Record<string, any>;
+				const position = (closeMsg.position ?? closeMsg) as Record<
+					string,
+					any
+				>;
+				// The chart round-trips the position we set via
+				// setBrokerAccounts — resolve it back to our open position.
+				const match = currentPositions.current.find(
+					(p) =>
+						p.id === position?.id ||
+						(p as Record<string, any>).productId ===
+							position?.productId ||
+						p.id === position?.productId
+				);
+				const positionId =
+					match?.id ?? position?.id ?? position?.productId;
+				if (positionId) {
+					closePosition(positionId);
+				} else {
+					console.warn(
+						"CLOSE_POSITION: could not resolve position",
+						message
+					);
+					setStatus("❌ Could not close position (not found)");
+				}
+				return;
+			}
+
 			switch (eventType) {
 				case "CREATE_ORDER": {
 					console.log(
@@ -1159,38 +1193,6 @@ export const ChartSDKAdvanced2 = () => {
 							updateChartBrokerData();
 						},
 					});
-					break;
-				}
-
-				case "CLOSE_POSITION": {
-					// Emitted by the position line's X button (SDK forwards
-					// CLOSE_POSITION_WITH_CONFIRMATION as CLOSE_POSITION).
-					console.log("🔴 Close position from chart X button:", message);
-					const closeMsg = message as Record<string, any>;
-					const position = (closeMsg.position ?? closeMsg) as Record<
-						string,
-						any
-					>;
-					// The chart round-trips the position we set via
-					// setBrokerAccounts — resolve it back to our open position.
-					const match = currentPositions.current.find(
-						(p) =>
-							p.id === position?.id ||
-							(p as Record<string, any>).productId ===
-								position?.productId ||
-							p.id === position?.productId
-					);
-					const positionId =
-						match?.id ?? position?.id ?? position?.productId;
-					if (positionId) {
-						closePosition(positionId);
-					} else {
-						console.warn(
-							"CLOSE_POSITION: could not resolve position",
-							message
-						);
-						setStatus("❌ Could not close position (not found)");
-					}
 					break;
 				}
 
