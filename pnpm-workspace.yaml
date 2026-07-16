@@ -1,4 +1,5 @@
 allowBuilds:
+  '@parcel/watcher': true
   core-js: false
   core-js-pure: false
   react-intl-universal: true
