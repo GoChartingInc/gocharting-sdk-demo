@@ -1097,7 +1097,7 @@ export const ChartSDKAdvanced = () => {
 													: order.status ===
 														  "Modified"
 														? "#ff9800"
-														: "#4a90e2",
+														: "#ffaa01",
 									}}
 								>
 									{order.status}

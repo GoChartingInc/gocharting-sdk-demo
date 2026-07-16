@@ -343,6 +343,17 @@ export const createChartDatafeed = (): Datafeed => {
 				clearInterval(interval as ReturnType<typeof setInterval>);
 			});
 			this.streamingIntervals = {};
+			// Close WebSocket connection
+			if (this.demoSocket) {
+				try {
+					this.demoSocket.close();
+				} catch (_) {}
+				this.demoSocket = null;
+			}
+			// Clear subscriptions
+			if (this.channelToSubscription) {
+				this.channelToSubscription.clear();
+			}
 			// Abort any pending search requests
 			if (this.searchSymbolController) {
 				this.searchSymbolController.abort();
@@ -786,6 +797,7 @@ export const createChartDatafeed = (): Datafeed => {
 			periodParams: PeriodParams
 		): Promise<RawBar[]> {
 			const { from, to, firstDataRequest, rows } = periodParams;
+			console.log("ByBit Bars [Period]", periodParams);
 			// Use the same logic as real datafeed.js
 			// Handle both string and object resolution formats
 			let scale: number;
@@ -799,10 +811,17 @@ export const createChartDatafeed = (): Datafeed => {
 				units = resolutionObj.units;
 				interval = resolutionObj.label;
 			} else if (resolution && typeof resolution === "object") {
-				scale = resolution.units as unknown as number;
-				units = resolution.scale as unknown as string;
-				// Derive label from scale and units
-				interval = this.deriveIntervalLabel(scale, units);
+				scale = resolution.scale;
+				units = resolution.units;
+				// Use type string if available for direct lookup, otherwise derive
+				if (resolution.type) {
+					const resolutionObj = this.convertIntervalToResolution(
+						resolution.type
+					);
+					interval = resolutionObj.label;
+				} else {
+					interval = this.deriveIntervalLabel(scale, units);
+				}
 			} else {
 				console.error("❌ Invalid resolution format:", resolution);
 				throw new Error("Invalid resolution format");
@@ -856,15 +875,27 @@ export const createChartDatafeed = (): Datafeed => {
 
 		convertIntervalToResolution(intervalString: string): ResolutionInfo {
 			const intervalMap: Record<string, ResolutionInfo> = {
+				// SDK/TradingView format (numbers = minutes, D/W/M for day/week/month)
+				"1": { scale: 1, units: "minutes", label: "1" },
+				"3": { scale: 3, units: "minutes", label: "3" },
+				"5": { scale: 5, units: "minutes", label: "5" },
+				"15": { scale: 15, units: "minutes", label: "15" },
+				"30": { scale: 30, units: "minutes", label: "30" },
+				"60": { scale: 60, units: "minutes", label: "60" },
+				"120": { scale: 120, units: "minutes", label: "120" },
+				"240": { scale: 240, units: "minutes", label: "240" },
+				"360": { scale: 360, units: "minutes", label: "360" },
+				"720": { scale: 720, units: "minutes", label: "720" },
+				"1D": { scale: 1, units: "days", label: "D" },
+				"1W": { scale: 1, units: "weeks", label: "W" },
+				"1M": { scale: 1, units: "months", label: "M" },
+				// Legacy format fallbacks
 				"1m": { scale: 1, units: "minutes", label: "1" },
 				"5m": { scale: 5, units: "minutes", label: "5" },
 				"15m": { scale: 15, units: "minutes", label: "15" },
 				"30m": { scale: 30, units: "minutes", label: "30" },
-				"1h": { scale: 1, units: "hours", label: "60" },
-				"4h": { scale: 4, units: "hours", label: "240" },
-				"1D": { scale: 1, units: "days", label: "D" },
-				"1W": { scale: 1, units: "weeks", label: "W" },
-				"1M": { scale: 1, units: "months", label: "M" },
+				"1h": { scale: 60, units: "minutes", label: "60" },
+				"4h": { scale: 240, units: "minutes", label: "240" },
 			};
 			const resolutionResult = intervalMap[intervalString];
 			if (!resolutionResult) {
@@ -882,16 +913,21 @@ export const createChartDatafeed = (): Datafeed => {
 
 		deriveIntervalLabel(scale: number, units: string): string {
 			switch (units) {
+				case "m":
 				case "minutes":
 					return scale.toString();
+				case "h":
 				case "hours":
 					return (scale * 60).toString();
+				case "D":
 				case "days":
-					return scale === 1 ? "D" : `${scale}D`;
+					return "D";
+				case "W":
 				case "weeks":
-					return scale === 1 ? "W" : `${scale * 7}W`;
+					return "W";
+				case "M":
 				case "months":
-					return scale === 1 ? "M" : `${scale * 30}M`;
+					return "M";
 				default:
 					console.warn(`Unknown units: ${units}, defaulting to D`);
 					return "D";

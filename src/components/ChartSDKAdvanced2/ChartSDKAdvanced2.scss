@@ -82,7 +82,7 @@
 .advanced-trading-container-2 .trading-group input:focus,
 .advanced-trading-container-2 .trading-group select:focus {
 	outline: none;
-	border-color: #4a90e2;
+	border-color: #ffaa01;
 	background-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -193,13 +193,13 @@
 }
 
 .advanced-trading-container-2 .symbol-btn:hover {
-	background: rgba(74, 144, 226, 0.2);
-	border-color: rgba(74, 144, 226, 0.5);
+	background: rgba(255, 170, 1, 0.2);
+	border-color: rgba(255, 170, 1, 0.5);
 }
 
 .advanced-trading-container-2 .symbol-btn.active {
-	background: rgba(74, 144, 226, 0.3);
-	border-color: #4a90e2;
+	background: rgba(255, 170, 1, 0.3);
+	border-color: #ffaa01;
 }
 
 .advanced-trading-container-2 .symbol-btn .symbol-name {
@@ -273,9 +273,9 @@
 }
 
 .advanced-trading-container-2 .account-tab.active {
-	color: #4a90e2;
-	border-bottom-color: #4a90e2;
-	background: rgba(74, 144, 226, 0.1);
+	color: #ffaa01;
+	border-bottom-color: #ffaa01;
+	background: rgba(255, 170, 1, 0.1);
 }
 
 .advanced-trading-container-2 .account-content {
@@ -464,10 +464,10 @@
 	}
 
 	.advanced-trading-container-2 .bottom-bar-item.active {
-		color: #4a90e2;
+		color: #ffaa01;
 	}
 
 	.advanced-trading-container-2 .bottom-bar-item.active .icon {
-		filter: drop-shadow(0 0 8px rgba(74, 144, 226, 0.5));
+		filter: drop-shadow(0 0 8px rgba(255, 170, 1, 0.5));
 	}
 }

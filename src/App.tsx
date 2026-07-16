@@ -3,6 +3,7 @@ import HomePage from "./pages/HomePage";
 import AdvancedTradingPage from "./pages/AdvancedTradingPage";
 import Advanced2TradingPage from "./pages/Advanced2TradingPage";
 import MultiBasicPage from "./pages/MultiBasicPage";
+import PositionsTestPage from "./pages/PositionsTestPage";
 
 function App() {
 	return (
@@ -19,6 +20,7 @@ function App() {
 					element={<Advanced2TradingPage />}
 				/>
 				<Route path='/multi-basic' element={<MultiBasicPage />} />
+				<Route path='/positions-test' element={<PositionsTestPage />} />
 			</Routes>
 		</Router>
 	);

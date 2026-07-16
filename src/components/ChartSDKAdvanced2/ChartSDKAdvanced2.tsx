@@ -163,21 +163,14 @@ export const ChartSDKAdvanced2 = () => {
 			return;
 		}
 
-		// Update positions with latest bid/ask for accurate P/L before first TradeMessage
-		currentPositions.current.forEach((pos) => {
-			const symbolParts = (pos.symbol || "").split(":");
-			const baseSymbol =
-				symbolParts[symbolParts.length - 1] || pos.symbol;
-			const currentPrice = symbolPrices[baseSymbol] || 0;
-			if (currentPrice > 0) {
-				(pos as any).bid = currentPrice;
-				(pos as any).ask = currentPrice;
-			}
-		});
+		// Filter out hidden orders for chart display
+		const visibleOrders = currentOrderBook.current.filter(
+			(order) => !order.hidden
+		);
 
 		const demoBrokerData: GoChartingSDK.BrokerAccountData = {
 			accountList: currentAccountList.current,
-			orderBook: currentOrderBook.current,
+			orderBook: visibleOrders,
 			tradeBook: currentTradeBook.current,
 			positions: currentPositions.current,
 		};
@@ -188,8 +181,7 @@ export const ChartSDKAdvanced2 = () => {
 		} catch (error) {
 			console.error("❌ Failed to update chart broker data:", error);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [triggerUpdate, symbolPrices]);
+	}, [triggerUpdate]);
 
 	const setupDemoBrokerData = (chartInstance: ChartInstance) => {
 		const demoBrokerData: GoChartingSDK.BrokerAccountData = {
@@ -278,38 +270,6 @@ export const ChartSDKAdvanced2 = () => {
 				setStatus(`Order ${orderId} cancelled`);
 			} else {
 				console.warn("Order not found:", orderId);
-			}
-		},
-		[updateChartBrokerData]
-	);
-
-	// Hide position from chart display
-	const hidePosition = useCallback(
-		(positionId: string) => {
-			console.log("👁️ Hide position:", positionId);
-			const position = currentPositions.current.find(
-				(p) => p.id === positionId
-			);
-			if (position) {
-				(position as any).hidden = true;
-				updateChartBrokerData();
-				setStatus(`Position ${positionId} hidden from chart`);
-			}
-		},
-		[updateChartBrokerData]
-	);
-
-	// Unhide position
-	const unhidePosition = useCallback(
-		(positionId: string) => {
-			console.log("👁️ Unhide position:", positionId);
-			const position = currentPositions.current.find(
-				(p) => p.id === positionId
-			);
-			if (position) {
-				(position as any).hidden = false;
-				updateChartBrokerData();
-				setStatus(`Position ${positionId} shown on chart`);
 			}
 		},
 		[updateChartBrokerData]
@@ -542,18 +502,14 @@ export const ChartSDKAdvanced2 = () => {
 
 			const cleanup = () => overlay.remove();
 
-			overlay
-				.querySelector("#sltp-modal-cancel")
-				?.addEventListener("click", () => {
-					cleanup();
-					onCancel();
-				});
-			overlay
-				.querySelector("#sltp-modal-confirm")
-				?.addEventListener("click", () => {
-					cleanup();
-					onConfirm();
-				});
+			overlay.querySelector("#sltp-modal-cancel")?.addEventListener("click", () => {
+				cleanup();
+				onCancel();
+			});
+			overlay.querySelector("#sltp-modal-confirm")?.addEventListener("click", () => {
+				cleanup();
+				onConfirm();
+			});
 		},
 		[]
 	);
@@ -885,10 +841,7 @@ export const ChartSDKAdvanced2 = () => {
 				showStopLossButton: true,
 				showTakeProfitButton: true,
 				pnlMultiplier: newOrder.pnlMultiplier || 1,
-			} as Position;
-			// Set bid/ask for immediate P/L calculation
-			newPosition.bid = executionPrice;
-			newPosition.ask = executionPrice;
+			};
 
 			console.log(
 				"📝 Created new position:",
@@ -1161,53 +1114,19 @@ export const ChartSDKAdvanced2 = () => {
 				case "MODIFY_ORDER": {
 					console.log("✏️ Order modified from chart:", message);
 					const orderUpdate = message as Record<string, any>;
-					const orderUpdateType = String(
-						orderUpdate.updateType || "MODIFY"
-					);
+					const orderUpdateType = String(orderUpdate.updateType || "MODIFY");
 					showConfirmationModal({
-						title: orderUpdateType.includes("STOP_LOSS")
-							? "Update Stop Loss"
-							: orderUpdateType.includes("TAKE_PROFIT")
-								? "Update Take Profit"
-								: "Modify Order",
+						title: orderUpdateType.includes("STOP_LOSS") ? "Update Stop Loss" : orderUpdateType.includes("TAKE_PROFIT") ? "Update Take Profit" : "Modify Order",
 						details: [
-							{
-								label: "Order ID",
-								value: String(orderUpdate.orderId || "N/A"),
-							},
+							{ label: "Order ID", value: String(orderUpdate.orderId || "N/A") },
 							{ label: "Update Type", value: orderUpdateType },
-							...(orderUpdate.stopLoss != null
-								? [
-										{
-											label: "Stop Loss",
-											value: String(orderUpdate.stopLoss),
-										},
-									]
-								: []),
-							...(orderUpdate.takeProfit != null
-								? [
-										{
-											label: "Take Profit",
-											value: String(
-												orderUpdate.takeProfit
-											),
-										},
-									]
-								: []),
-							...(orderUpdate.price != null
-								? [
-										{
-											label: "Price",
-											value: String(orderUpdate.price),
-										},
-									]
-								: []),
+							...(orderUpdate.stopLoss != null ? [{ label: "Stop Loss", value: String(orderUpdate.stopLoss) }] : []),
+							...(orderUpdate.takeProfit != null ? [{ label: "Take Profit", value: String(orderUpdate.takeProfit) }] : []),
+							...(orderUpdate.price != null ? [{ label: "Price", value: String(orderUpdate.price) }] : []),
 						],
 						onConfirm: () => {
 							modifyOrderInOrderBook(message);
-							setStatus(
-								`✏️ Order modified: ${orderUpdate.orderId}`
-							);
+							setStatus(`✏️ Order modified: ${orderUpdate.orderId}`);
 						},
 						onCancel: () => {
 							setStatus(`❌ Order modification cancelled`);
@@ -1220,68 +1139,76 @@ export const ChartSDKAdvanced2 = () => {
 				case "MODIFY_POSITION": {
 					console.log("✏️ Position modified from chart:", message);
 					const posUpdate = message as Record<string, any>;
-					const posPosition = (posUpdate.position || {}) as Record<
-						string,
-						any
-					>;
-					const posUpdateType = String(
-						posPosition.updateType || "MODIFY"
-					);
+					const posPosition = (posUpdate.position || {}) as Record<string, any>;
+					const posUpdateType = String(posPosition.updateType || "MODIFY");
 					showConfirmationModal({
-						title: posUpdateType.includes("STOP_LOSS")
-							? "Update Stop Loss"
-							: posUpdateType.includes("TAKE_PROFIT")
-								? "Update Take Profit"
-								: posUpdateType.includes("DELETE")
-									? "Delete Level"
-									: "Modify Position",
+						title: posUpdateType.includes("STOP_LOSS") ? "Update Stop Loss" : posUpdateType.includes("TAKE_PROFIT") ? "Update Take Profit" : posUpdateType.includes("DELETE") ? "Delete Level" : "Modify Position",
 						details: [
-							{
-								label: "Position",
-								value: String(
-									posPosition.productId ||
-										posPosition.id ||
-										"N/A"
-								),
-							},
+							{ label: "Position", value: String(posPosition.productId || posPosition.id || "N/A") },
 							{ label: "Update Type", value: posUpdateType },
-							{
-								label: "Side",
-								value:
-									Number(posPosition.size) > 0
-										? "Buy"
-										: "Sell",
-							},
-							...(posPosition.stopLoss != null
-								? [
-										{
-											label: "Stop Loss",
-											value: String(posPosition.stopLoss),
-										},
-									]
-								: []),
-							...(posPosition.takeProfit != null
-								? [
-										{
-											label: "Take Profit",
-											value: String(
-												posPosition.takeProfit
-											),
-										},
-									]
-								: []),
+							{ label: "Side", value: Number(posPosition.size) > 0 ? "Buy" : "Sell" },
+							...(posPosition.stopLoss != null ? [{ label: "Stop Loss", value: String(posPosition.stopLoss) }] : []),
+							...(posPosition.takeProfit != null ? [{ label: "Take Profit", value: String(posPosition.takeProfit) }] : []),
 						],
 						onConfirm: () => {
 							modifyPositionInPositions(message);
-							setStatus(
-								`✏️ Position modified: ${posPosition.id}`
-							);
+							setStatus(`✏️ Position modified: ${posPosition.id}`);
 						},
 						onCancel: () => {
 							setStatus(`❌ Position modification cancelled`);
 							updateChartBrokerData();
 						},
 					});
+					break;
+				}
+
+				case "CLOSE_POSITION": {
+					// Emitted by the position line's X button (SDK forwards
+					// CLOSE_POSITION_WITH_CONFIRMATION as CLOSE_POSITION).
+					console.log("🔴 Close position from chart X button:", message);
+					const closeMsg = message as Record<string, any>;
+					const position = (closeMsg.position ?? closeMsg) as Record<
+						string,
+						any
+					>;
+					// The chart round-trips the position we set via
+					// setBrokerAccounts — resolve it back to our open position.
+					const match = currentPositions.current.find(
+						(p) =>
+							p.id === position?.id ||
+							(p as Record<string, any>).productId ===
+								position?.productId ||
+							p.id === position?.productId
+					);
+					const positionId =
+						match?.id ?? position?.id ?? position?.productId;
+					if (positionId) {
+						closePosition(positionId);
+					} else {
+						console.warn(
+							"CLOSE_POSITION: could not resolve position",
+							message
+						);
+						setStatus("❌ Could not close position (not found)");
+					}
+					break;
+				}
+
+				case "EXIT_ALL_POSITIONS": {
+					console.log("🔴 Exit all positions from chart:", message);
+					const ids = currentPositions.current.map((p) => p.id);
+					ids.forEach((id) => closePosition(id));
+					setStatus(`🔴 Closed ${ids.length} position(s)`);
+					break;
+				}
+
+				case "CANCEL_ALL_ORDERS": {
+					console.log("🗑️ Cancel all orders from chart:", message);
+					const orderIds = currentOrderBook.current.map(
+						(o) => o.orderId
+					);
+					orderIds.forEach((id) => removeOrderFromOrderBook(id));
+					setStatus(`🗑️ Cancelled ${orderIds.length} order(s)`);
 					break;
 				}
 
@@ -1292,12 +1219,7 @@ export const ChartSDKAdvanced2 = () => {
 
 				case "CHART_SELECTED":
 					console.log("CHART_SELECTED", message);
-					if (message.symbol) {
-						const fullSymbol = `BYBIT:FUTURE:${message.symbol}`;
-						currentSymbol.current = fullSymbol;
-						setSelectedSymbol(fullSymbol);
-						setStatus(`Chart selected: ${message.symbol}`);
-					}
+					setStatus("CHART_SELECTED");
 					break;
 
 				case "CHART_MODE_CHANGED":
@@ -1446,11 +1368,6 @@ export const ChartSDKAdvanced2 = () => {
 		if (datafeedRef.current && datafeedRef.current.destroy) {
 			datafeedRef.current.destroy();
 		}
-		// Clear the container's innerHTML so React doesn't try to remove
-		// DOM nodes that destroy() already removed (causes removeChild error)
-		if (chartContainerRef.current) {
-			chartContainerRef.current.innerHTML = "";
-		}
 		chartWrapperRef.current = null;
 		chartInstanceRef.current = null;
 		datafeedRef.current = null;
@@ -1467,13 +1384,10 @@ export const ChartSDKAdvanced2 = () => {
 		}
 	}, [isChartMounted, destroyChart]);
 
-	// Chart initialization — delay by a frame so the container is visible
-	// before createChart measures its dimensions (prevents zoom glitch on remount)
+	// Chart initialization
 	useEffect(() => {
 		if (isChartMounted) {
-			requestAnimationFrame(() => {
-				initChart();
-			});
+			initChart();
 		}
 
 		return () => {
@@ -1505,7 +1419,7 @@ export const ChartSDKAdvanced2 = () => {
 						<Link
 							to='/examples'
 							style={{
-								color: "#4a90e2",
+								color: "#ffaa01",
 								textDecoration: "none",
 								fontSize: "14px",
 								fontWeight: "600",
@@ -1655,27 +1569,23 @@ export const ChartSDKAdvanced2 = () => {
 
 					{/* Chart Area */}
 					<div className='chart-area'>
-						{/* Container stays mounted (display toggle) and stays a leaf:
-						    the SDK's ReactDOM.render replaces all children, so
-						    React-owned children here would crash on unmount. */}
-						<div
-							ref={chartContainerRef}
-							id='gocharting-chart-container-advanced2'
-							style={{
-								display: isChartMounted ? "block" : "none",
-							}}
-						/>
-						{!isChartMounted && (
+						{isChartMounted ? (
+							// Must stay a leaf: the SDK's ReactDOM.render replaces all
+							// children, so React-owned children here would crash on unmount
+							// (removeChild on a node the SDK already removed).
+							<div
+								ref={chartContainerRef}
+								id='gocharting-chart-container-advanced2'
+							/>
+						) : (
 							<div
 								style={{
 									display: "flex",
 									alignItems: "center",
 									justifyContent: "center",
-									height: "500px",
+									height: "100%",
 									color: "#888",
 									fontSize: "16px",
-									background: "#1a1a1a",
-									borderRadius: "12px",
 								}}
 							>
 								Chart is unmounted. Click "Mount Chart" to
@@ -1809,15 +1719,6 @@ export const ChartSDKAdvanced2 = () => {
 															return (
 																<tr
 																	key={pos.id}
-																	style={{
-																		opacity:
-																			(
-																				pos as any
-																			)
-																				.hidden
-																				? 0.5
-																				: 1,
-																	}}
 																>
 																	<td>
 																		{pos.symbol ||
@@ -1880,47 +1781,9 @@ export const ChartSDKAdvanced2 = () => {
 																					pos.id
 																				)
 																			}
-																			style={{
-																				marginRight:
-																					"4px",
-																			}}
 																		>
 																			Close
 																		</button>
-																		{(
-																			pos as any
-																		)
-																			.hidden ? (
-																			<button
-																				className='action-btn'
-																				onClick={() =>
-																					unhidePosition(
-																						pos.id
-																					)
-																				}
-																				style={{
-																					backgroundColor:
-																						"#4a90e2",
-																				}}
-																			>
-																				Show
-																			</button>
-																		) : (
-																			<button
-																				className='action-btn'
-																				onClick={() =>
-																					hidePosition(
-																						pos.id
-																					)
-																				}
-																				style={{
-																					backgroundColor:
-																						"#6c757d",
-																				}}
-																			>
-																				Hide
-																			</button>
-																		)}
 																	</td>
 																</tr>
 															);
@@ -2042,7 +1905,7 @@ export const ChartSDKAdvanced2 = () => {
 																				}
 																				style={{
 																					backgroundColor:
-																						"#4a90e2",
+																						"#ffaa01",
 																				}}
 																			>
 																				Show

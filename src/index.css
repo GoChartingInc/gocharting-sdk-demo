@@ -36,7 +36,7 @@ body {
 /* 
 a {
 	font-weight: 500;
-	color: #4a90e2;
+	color: #ffaa01;
 	text-decoration: inherit;
 }
 
@@ -67,7 +67,7 @@ button:hover:not(:disabled) {
 
 button:focus,
 button:focus-visible {
-	outline: 2px solid #4a90e2;
+	outline: 2px solid #ffaa01;
 	outline-offset: 2px;
 }
 
