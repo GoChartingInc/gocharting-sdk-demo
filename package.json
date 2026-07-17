@@ -18,7 +18,7 @@
 	"dependencies": {
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.1",
-		"@gocharting/chart-sdk": "1.0.66",
+		"@gocharting/chart-sdk": "1.0.67",
 		"framer-motion": "^12.23.24",
 		"moment": "^2.30.1",
 		"react": "^19.2.0",

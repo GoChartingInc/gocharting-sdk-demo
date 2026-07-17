@@ -15,8 +15,8 @@ importers:
         specifier: ^11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.4))(@types/react@19.2.14)(react@19.2.4)
       '@gocharting/chart-sdk':
-        specifier: 1.0.66
-        version: 1.0.66(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 1.0.67
+        version: 1.0.67(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       framer-motion:
         specifier: ^12.23.24
         version: 12.34.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -994,8 +994,8 @@ packages:
     resolution: {integrity: sha512-KWk80UPIzPmUg+P0rKh6TqspRw0G6eux1PuJr+zz47ftMaZ9QDwbGzHZbtzWkl5hgayM/qrKRutllRC7D/vVXQ==}
     deprecated: the package is rather renamed to @formatjs/ecma-abstract with some changes in functionality (primarily selectUnit is removed and we don't plan to make any further changes to this package
 
-  '@gocharting/chart-sdk@1.0.66':
-    resolution: {integrity: sha512-gsuD9AORF+Bsjw58G8jvL2Qy0iD4chngnjl+6v0a4fi2Gw/w4awIJfA1f5FjmEbJUyC03c+gjnVZmZzy6Frxbg==}
+  '@gocharting/chart-sdk@1.0.67':
+    resolution: {integrity: sha512-9JLw26x/sJt+MKFXSNk/NigJSfJmfja98qod7guGKgEMXs55uhDS7MGz4PXum4P48jqsh2534EEpHE4Ro477RQ==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -7244,7 +7244,7 @@ snapshots:
 
   '@formatjs/intl-utils@2.3.0': {}
 
-  '@gocharting/chart-sdk@1.0.66(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@gocharting/chart-sdk@1.0.67(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@emotion/babel-plugin': 11.13.5
       '@emotion/core': 11.0.0

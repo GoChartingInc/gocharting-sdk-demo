@@ -4,4 +4,4 @@ allowBuilds:
   core-js-pure: true
   react-intl-universal: true
 minimumReleaseAgeExclude:
-  - '@gocharting/chart-sdk@1.0.66'
+  - '@gocharting/chart-sdk@1.0.67'
