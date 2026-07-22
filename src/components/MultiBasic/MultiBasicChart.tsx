@@ -187,15 +187,6 @@ const MultiBasicChart = () => {
 						Ξ ETH/USDT
 					</button>
 					<button
-						id='symbol-ogn-btn'
-						className='btn primary'
-						onClick={() =>
-							handleSymbolChange("BYBIT:FUTURE:OGNUSDT")
-						}
-					>
-						🌐 OGN/USDT
-					</button>
-					<button
 						id='resubscribe-btn'
 						className='btn success'
 						onClick={handleResubscribeAll}

@@ -78,20 +78,18 @@ interface DemoAccount {
 	freeMargin?: number;
 }
 
-// Watchlist symbols (always Bybit format — prices fetched from Bybit API)
+// Watchlist symbols. The GoCharting demo WebSocket feed is allowlisted to
+// BTCUSDT / ETHUSDT only, so the watchlist is limited to those two — selecting
+// an unsupported symbol would leave the chart with no data.
 const WATCHLIST_SYMBOLS = [
 	{ symbol: "BYBIT:FUTURE:BTCUSDT", name: "BTCUSDT" },
 	{ symbol: "BYBIT:FUTURE:ETHUSDT", name: "ETHUSDT" },
-	{ symbol: "BYBIT:FUTURE:SOLUSDT", name: "SOLUSDT" },
-	{ symbol: "BYBIT:FUTURE:XRPUSDT", name: "XRPUSDT" },
 ];
 
 // Map Bybit watchlist symbols → Twelve Data chart symbols
 const BYBIT_TO_TWELVEDATA_SYMBOL: Record<string, string> = {
 	"BYBIT:FUTURE:BTCUSDT": "Coinbase Pro:SPOT:BTC/USD",
 	"BYBIT:FUTURE:ETHUSDT": "Coinbase Pro:SPOT:ETH/USD",
-	"BYBIT:FUTURE:SOLUSDT": "Coinbase Pro:SPOT:SOL/USD",
-	"BYBIT:FUTURE:XRPUSDT": "Coinbase Pro:SPOT:XRP/USD",
 };
 
 export const ChartSDKAdvanced2 = () => {

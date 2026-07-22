@@ -22,7 +22,6 @@ type ChartDatafeed = ReturnType<typeof createChartDatafeed>;
 const SYMBOLS = {
 	BTC: "BYBIT:FUTURE:BTCUSDT",
 	ETH: "BYBIT:FUTURE:ETHUSDT",
-	OGN: "BYBIT:FUTURE:OGNUSDT",
 } as const;
 
 // Excluded indicators list from codepen reference
@@ -240,15 +239,6 @@ export const ChartDemo = () => {
 					disabled={!isChartReady}
 				>
 					Ξ ETH/USDT
-				</button>
-				<button
-					className={`btn primary ${
-						currentSymbol === SYMBOLS.OGN ? "active" : ""
-					}`}
-					onClick={() => changeSymbol(SYMBOLS.OGN)}
-					disabled={!isChartReady}
-				>
-					🌐 OGN/USDT
 				</button>
 			</div>
 
