@@ -368,6 +368,7 @@ export const createChartDatafeed = (): Datafeed => {
 				// exchange_info (hours / valid_intervals) is consumed by the
 				// symbol-switch path; omitting it crashes setSymbol.
 				exchange_info: {
+					name: "bybit",
 					code: "BYBIT",
 					zone: "UTC",
 					hours: Array.from({ length: 7 }, () => ({ open: true })),
