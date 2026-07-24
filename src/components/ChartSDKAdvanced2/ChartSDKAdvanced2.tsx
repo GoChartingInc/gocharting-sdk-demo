@@ -94,9 +94,13 @@ const BYBIT_TO_TWELVEDATA_SYMBOL: Record<string, string> = {
 
 export const ChartSDKAdvanced2 = () => {
 	const [searchParams] = useSearchParams();
-	const datafeed = (searchParams.get("datafeed") ?? "bybit") as
-		| "bybit"
-		| "twelvedata";
+	// Pinned to the GoCharting demo WebSocket (wss://gocharting.com/sdk/ws) —
+	// "bybit" selects createChartDatafeed(), the GoCharting feed (Bybit is only
+	// the symbol namespace it streams). The ?datafeed=twelvedata override, which
+	// would stream from the external Twelve Data API, is intentionally disabled
+	// so the public demo only ever pulls data from GoCharting. To re-enable the
+	// multi-feed demo, restore: searchParams.get("datafeed") ?? "bybit".
+	const datafeed = "bybit" as "bybit" | "twelvedata";
 	const chartSymbol = searchParams.get("symbol");
 	const chartContainerRef = useRef<HTMLDivElement>(null);
 	const chartInstanceRef = useRef<ChartInstance | null>(null);
