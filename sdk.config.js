@@ -1,5 +1,5 @@
 // Single source of truth for the local SDK path
-const SDK_DIR = '../gocharting-web-sdk/GoCharting-SDK';
+const SDK_DIR = '../gocharting-web/GoCharting-SDK';
 
 // When run directly (node sdk.config.js), print the path for shell scripts
 if (require.main === module) {

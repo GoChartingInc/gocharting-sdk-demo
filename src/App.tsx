@@ -7,7 +7,7 @@ import PositionsTestPage from "./pages/PositionsTestPage";
 
 function App() {
 	return (
-		<Router>
+		<Router basename="/sdk/demo">
 			<Routes>
 				<Route path='/' element={<Advanced2TradingPage />} />
 				<Route path='/examples' element={<HomePage />} />

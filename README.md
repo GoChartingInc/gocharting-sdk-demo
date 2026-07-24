@@ -58,12 +58,12 @@ this one:
 ```
 parent/
 ├── gocharting-sdk-demo/            # this repo (on `develop`)
-└── gocharting-web-sdk/GoCharting-SDK/
+└── gocharting-web/GoCharting-SDK/
 ```
 
 The wiring lives in:
 
-- `package.json` → `"@gocharting/chart-sdk": "file:../gocharting-web-sdk/GoCharting-SDK/dist"`
+- `package.json` → `"@gocharting/chart-sdk": "file:../gocharting-web/GoCharting-SDK/dist"`
 - `craco.config.js` → webpack alias pointing `@gocharting/chart-sdk` at the local
   SDK `dist/`
 
