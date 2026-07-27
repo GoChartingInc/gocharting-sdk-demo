@@ -5,6 +5,14 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import * as GoChartingSDK from "@gocharting/chart-sdk";
+
+// The SDK's lazy vendor scripts (drawTypeIcons, topBar, …) are IIFEs that
+// resolve react etc. from window.GoChartingSDK.*. That global only exists
+// when the SDK is loaded via <script src="index.umd.js">; when webpack
+// bundles the npm package we must expose it ourselves.
+(window as unknown as Record<string, unknown>).GoChartingSDK ??=
+	GoChartingSDK;
 
 // Suppress React import warning (needed for jsx-runtime compatibility)
 void React;
