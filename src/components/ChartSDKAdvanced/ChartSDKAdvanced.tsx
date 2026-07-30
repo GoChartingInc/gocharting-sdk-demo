@@ -955,6 +955,14 @@ export const ChartSDKAdvanced = () => {
 						Professional Financial Charts with Integrated Trading
 						Interface ⚡
 					</p>
+					<a
+						href='https://github.com/GoChartingInc/gocharting-sdk-demo/blob/main/src/components/ChartSDKAdvanced/ChartSDKAdvanced.tsx'
+						target='_blank'
+						rel='noopener noreferrer'
+						style={{ color: "#ffaa01", fontWeight: 600 }}
+					>
+						See Code →
+					</a>
 				</div>
 
 				{/* Trading Panel */}

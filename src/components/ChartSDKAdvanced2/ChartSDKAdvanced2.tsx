@@ -1420,17 +1420,32 @@ export const ChartSDKAdvanced2 = () => {
 						>
 							📈 GoCharting SDK - Advanced Trading 2
 						</h1>
-						<Link
-							to='/examples'
-							style={{
-								color: "#ffaa01",
-								textDecoration: "none",
-								fontSize: "14px",
-								fontWeight: "600",
-							}}
-						>
-							← View All Examples
-						</Link>
+						<div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+							<a
+								href='https://github.com/GoChartingInc/gocharting-sdk-demo/blob/main/src/components/ChartSDKAdvanced2/ChartSDKAdvanced2.tsx'
+								target='_blank'
+								rel='noopener noreferrer'
+								style={{
+									color: "#ffaa01",
+									textDecoration: "none",
+									fontSize: "14px",
+									fontWeight: "600",
+								}}
+							>
+								See Code →
+							</a>
+							<Link
+								to='/examples'
+								style={{
+									color: "#ffaa01",
+									textDecoration: "none",
+									fontSize: "14px",
+									fontWeight: "600",
+								}}
+							>
+								← View All Examples
+							</Link>
+						</div>
 					</div>
 					<p>
 						Professional Financial Charts with Integrated Trading

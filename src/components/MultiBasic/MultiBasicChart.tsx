@@ -62,6 +62,9 @@ const MultiBasicChart = () => {
 							],
 						},
 						theme: "dark",
+						trading: {
+							enableTrading: false,
+						},
 						onReady: (chartInstance: any) => {
 							// Store the actual chart instance from the callback
 							chartInstanceRef.current = chartInstance;
@@ -165,6 +168,14 @@ const MultiBasicChart = () => {
 					<p>
 						Professional Financial Charts with Built-in AutoFit ✨
 					</p>
+					<a
+						href='https://github.com/GoChartingInc/gocharting-sdk-demo/blob/main/src/components/MultiBasic/MultiBasicChart.tsx'
+						target='_blank'
+						rel='noopener noreferrer'
+						style={{ color: "#ffaa01", fontWeight: 600 }}
+					>
+						See Code →
+					</a>
 				</div>
 
 				<div className='controls'>
