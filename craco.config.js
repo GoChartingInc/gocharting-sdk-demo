@@ -43,5 +43,27 @@ module.exports = {
       return webpackConfig;
     },
   },
+  devServer: (devServerConfig) => {
+    // The SDK pulls drawTypeIcons, topBar, contextMenu, html2canvas and friends
+    // at runtime with a <script> tag rather than bundling them, resolving them
+    // against /vendor/. Here the SDK is a webpack alias, not a script tag, so
+    // nothing served that path: the requests fell through to CRA's index.html
+    // and the loader choked on "Unexpected token '<'".
+    const existing = Array.isArray(devServerConfig.static)
+      ? devServerConfig.static
+      : [devServerConfig.static].filter(Boolean);
+    devServerConfig.static = [
+      ...existing,
+      {
+        directory: path.resolve(
+          __dirname,
+          '../gocharting-web/GoCharting-SDK/dist/vendor'
+        ),
+        publicPath: '/vendor',
+        watch: false,
+      },
+    ];
+    return devServerConfig;
+  },
 };
 
