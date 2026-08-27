@@ -1,108 +1,105 @@
 # GoCharting SDK Demo
 
 A React (Create React App + CRACO) demo application showcasing the
-[`@gocharting/chart-sdk`](https://www.npmjs.com/package/@gocharting/chart-sdk).
-It includes a multi-page navigation system with several chart examples — see
-[`NAVIGATION.md`](./NAVIGATION.md) and
-[`ADVANCED_TRADING_EXAMPLE.md`](./ADVANCED_TRADING_EXAMPLE.md).
+[`@gocharting/chart-sdk`](https://www.npmjs.com/package/@gocharting/chart-sdk) —
+GoCharting's embeddable charting and trading library.
 
-## Branch Strategy
+Use this repository as a **reference implementation**: it shows how to create
+charts, wire a datafeed, enable trading, handle SDK events, and theme the UI.
+See [`NAVIGATION.md`](./NAVIGATION.md) and
+[`ADVANCED_TRADING_EXAMPLE.md`](./ADVANCED_TRADING_EXAMPLE.md) for a tour of the
+examples.
 
-This repository uses two branches with **different SDK wiring**. Pick the branch
-that matches what you're doing:
+> **SDK access required to run the demo.**
+> `@gocharting/chart-sdk` is a **private npm package**. To install and run this
+> demo you need an npm access token and a license key from GoCharting — visit
+> [gocharting.com](https://gocharting.com/) to get in touch. Without access you
+> can still browse the source freely; the integration patterns in
+> [`src/components/`](./src/components/) and the standalone HTML examples
+> (`chart-sdk-codepen.html`, `codepen-advanced2.html`) are the useful parts.
 
-| Branch | Purpose | SDK source |
-| --- | --- | --- |
-| **`main`** | Test the demo against the **published SDK from npm** | `@gocharting/chart-sdk` (pinned npm version) |
-| **`develop`** | **Local development** against a checkout of the SDK | `@gocharting/chart-sdk` resolved from a local folder |
+## What's inside
 
-> Keep changes to SDK-source wiring (`package.json` dependency,
-> `craco.config.js` alias, `sdk.config.js`) on the branch they belong to — do not
-> merge local-dev wiring from `develop` into `main`.
+| Example | Shows |
+| --- | --- |
+| `src/components/ChartSDK/` | Basic chart + simple trading panel |
+| `src/components/ChartSDKAdvanced/` | Orders, positions, broker data round-trip |
+| `src/components/ChartSDKAdvanced2/` | Full trading workflow: watchlist, order/position management, SL/TP modals, multiple datafeeds |
+| `src/components/MultiBasic/` | Multiple charts on one page |
+| `src/utils/chart-datafeed.ts` | Datafeed implementation against GoCharting APIs |
+| `src/utils/twelve-chart-datafeed.ts` | Datafeed implementation against Twelve Data |
+| `chart-sdk-codepen.html` | Self-contained single-file integration (UMD build, no bundler) |
 
 ## Prerequisites
 
 - Node.js 18+
 - [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
+- npm access to `@gocharting/chart-sdk` (see note above)
 
----
+## Quick start
 
-## `main` — Test using the SDK from npm
+Authenticate npm for the private package by creating an `.npmrc` in the repo
+root (do **not** commit it):
 
-On `main`, the SDK is consumed as a normal published dependency
-(`"@gocharting/chart-sdk": "<version>"` in `package.json`). No local SDK checkout
-is required.
-
-```bash
-git checkout main
-pnpm install
-pnpm start          # runs on http://localhost:3000
+```ini
+registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=<your npm token>
 ```
 
-To test a different published SDK version, bump the version in `package.json` and
-reinstall:
+Then:
+
+```bash
+pnpm install
+pnpm start          # http://localhost:3000
+```
+
+Set your license key in the chart config (`licenseKey` in the examples) — the
+demo ships with a placeholder key.
+
+To try a different SDK version:
 
 ```bash
 pnpm add @gocharting/chart-sdk@<version>
 pnpm start
 ```
 
----
-
-## `develop` — Local development for gocharting-sdk
-
-On `develop`, the SDK is resolved from a **local checkout** so you can develop the
-demo and the SDK side by side. The demo expects the SDK repository to sit next to
-this one:
-
-```
-parent/
-├── gocharting-sdk-demo/            # this repo (on `develop`)
-└── gocharting-web-sdk/GoCharting-SDK/
-```
-
-The wiring lives in:
-
-- `package.json` → `"@gocharting/chart-sdk": "file:../gocharting-web-sdk/GoCharting-SDK/dist"`
-- `craco.config.js` → webpack alias pointing `@gocharting/chart-sdk` at the local
-  SDK `dist/`
-
-### Setup
-
-```bash
-git checkout develop
-pnpm install
-```
-
-### Build the SDK and run the demo
-
-```bash
-pnpm run build:sdk      # builds the local SDK (build:webpack)
-pnpm start              # runs the demo on http://localhost:3000
-```
-
-Or do both in one step (build SDK, reinstall, start):
-
-```bash
-pnpm run build:start
-```
-
-> If you change the local SDK path, update it in **both** `package.json` and
-> `craco.config.js`.
-
----
-
-## Available Scripts
+## Available scripts
 
 | Script | Description |
 | --- | --- |
 | `pnpm start` | Run the demo in development mode (http://localhost:3000). |
 | `pnpm run build` | Production build into `build/`. |
 | `pnpm test` | Run the test runner in watch mode. |
-| `pnpm run build:sdk` | Build the local SDK (`develop` workflow). |
-| `pnpm run build:start` | Build the local SDK, reinstall, then start (`develop` workflow). |
 
-## Learn More
+---
+
+## For GoCharting developers
+
+External users can ignore this section.
+
+The **`develop`** branch resolves the SDK from a local checkout instead of npm,
+so the demo and the SDK can be developed side by side. It expects the SDK
+repository next to this one:
+
+```
+parent/
+├── gocharting-sdk-demo/            # this repo (on `develop`)
+└── gocharting-web/GoCharting-SDK/  # SDK source
+```
+
+Wiring lives in `package.json` (`file:` dependency), `craco.config.js`
+(webpack alias), and `tsconfig.json` (type paths) — keep those changes on
+`develop` and never merge them into `main`, which must stay on the published
+npm package.
+
+```bash
+git checkout develop
+pnpm install
+pnpm run build:sdk      # build the local SDK
+pnpm start              # or: pnpm run build:start (build SDK, reinstall, start)
+```
+
+## Learn more
 
 - [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started)
 - [CRACO documentation](https://craco.js.org/)
